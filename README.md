@@ -1,4 +1,7 @@
 # PlayTimeTracker
+
+[![Build Status](https://travis-ci.org/NyaaCat/PlayTimeTracker.svg)](https://travis-ci.org/NyaaCat/PlayTimeTracker)
+
 Playtime tracking plugin for Bukkit/Spigot
 
 ### Features
