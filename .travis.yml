@@ -1,0 +1,28 @@
+language: java
+
+before_install: "sed -i \"s/^\\(version:.*\\)/\\1.$TRAVIS_BUILD_NUMBER/\" src/main/resources/plugin.yml"
+
+before_deploy:
+- git config --global user.email "builds@travis-ci.com"
+- git config --global user.name "Travis CI"
+- export GIT_TAG=$TRAVIS_BRANCH-v0.1.$TRAVIS_BUILD_NUMBER
+- git tag $GIT_TAG -a -m "Generated tag from TravisCI for build $TRAVIS_BUILD_NUMBER"
+- git push -q https://$GITHUB_KEY@github.com/NyaaCat/PlayTimeTracker --follow-tags
+
+deploy:
+  skip_cleanup: true
+  provider: releases
+  api_key:
+    secure: "gfdq9ihU/FgqNEwFuuzG1Aclpah+EAgOhXYF5cnjh/dNT2zextNUTf3eWwtdJHRC6Rf8LbeQozwIhzWs8EgCtyH/1oSQ6KZD1I+PLV20DaUPy9jWUQ+V6EqFn6b2nl4xT2+jh4yJwMe1nF+V/BOmn9QLE2B+y+md6Yo80IoPEDCb9mK2HkxoXzo2fe9XOcmMSFdnh+Bh85PSWYZVCo1xx0ArQmgs/aO6U8k3145pfz7lAzvWzFmwE/6KSNEDAbseQrq9e1kwPacHqQUVbTLqGwZzS6BjS8K0s4Epn5VU2ckWThc4ho3lXVMQntSH+gTWGBxbcYybl04Gjte7fCuTqFZ/MK7C8QvYUTPZyJL+xlHKrvWHWuCFscNjJIK8Na7TVVpKwaWM9XL4OnZTeDiQ+6vm3fJpdWo2guoqiPgrwbAY+hYJ9TAdmtEYDdtBF4UaXtIXwvP8rN8mxk554CDr1tAsQNAIdxtThzDDIhuiFoCRpTknoo0Oc4tnQogTuynrCwKo1jECBaKfKkvOFD7KuDJRFZmOPDsR/Hm+KPF4vO1P2oYy6oBFa5bOgLuaZmm0MKBHSvJkYdbYCK8QbIdAium8XX3RbbZgeMFhOKv8IizPdG/jGPFbAQEFs6mRy6dAHzRw16gXghOkmMJvvA59RPnVbktGeA/UEfUqEzmAJnE="
+  file: build/libs/PlayTimeTracker.jar
+  on:
+    tags: false
+    all_branches: true
+
+branches:
+  except:
+  - "/^*-v[0-9]/"
+
+env:
+  global:
+  - secure: YxgZsNvatLQ91FS8KOGwUJ3EtmZtIWGuAuVcXLofNPNamY11QDvMIlHLbZOeaDrikTEdTKIbhpYZWohuYNztd8R2RCI02Oi4wKP9Yq0eYEPaOhRYlffLhmufmrS+vRDu8tExcanv5rMZG4mC4/fy2rGVu/TCmuqAAqTWkpw0fFtiY4RtqNITH7ijDvYPoPYqRnkNx68fLa+8b4Pqrca45QWD4+Er1a9Z6V4cohMyulM15BohpdxG5k8WBYRPAwTxzBQGPrgzZZEvtB3FJ711MZcGZSUOgeaVvqAsWAoKvAqacQ/fEYU+VCsroVK7qyLC1t5gikMJQnih28m2K/goDRZFr3pGSY/v92Xolu6XzXjczJteOyx+wBajhtkL3IRLUl+ug2GycSW76IqJQZVn126YRGB6YbsNONYnVRSWq2n3uuxTh2eRtkZvfnf/yZNSz6lBGRHckzc4YzwEfVL3kPsH2aRNJBPE/W8U8m0uZwW8OYv5XQFOMrHHJkhA6AAgnwa8cNnxPXrb/4gSnUbs1b/ELeoWwFlk1aA9Kr1Tq8FVcKwIOO/HeceKqeX/OspBE6YQ5mk7IUJ1g19SWnYJnsp1p7BLW1/lrONuvcypuPfEE4o3+PyxgNo1Ckg4lIJuf383AkevOZKhsVzBoyHKEU5a48Rl/vpvRGeP0BNoMLs=
