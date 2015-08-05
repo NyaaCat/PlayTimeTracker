@@ -1,5 +1,7 @@
 language: java
 
+jdk: oraclejdk8
+
 before_install: "sed -i \"s/^\\(version:.*\\)/\\1.$TRAVIS_BUILD_NUMBER/\" src/main/resources/plugin.yml"
 
 before_deploy:
