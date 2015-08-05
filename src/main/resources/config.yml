@@ -17,9 +17,12 @@ rules:
     period: "day" # week|month|disposable|session
     require: 60 # total online *minutes* to meet the reward requirement
     auto-give: false # automatically give the reward
+    timeout: 60 # the time player able to acquire the reward, in minutes.
+                # Ignored when auto-give is true. Omit this means "unlimited".
+                # Always timeout at the end of each period
     reward: some-reward
   rule3:
-    period: "playerback" # rewards are given when players back after a long period time of away, in hours
+    period: "longtimenosee" # rewards are given when players back after a long period time of away, in hours
     require: 60 # how long the player left, *IN DAYS*
-    auto-give: false # automatically give the reward
+    auto-give: true # automatically give the reward
     reward: another-reward
