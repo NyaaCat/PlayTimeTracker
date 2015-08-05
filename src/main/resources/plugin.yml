@@ -1,0 +1,28 @@
+name: PlayTimeTracker
+main: cat.nyaa.playtimetracker.Main
+version: 0.1
+
+commands:
+  playtimetracker:
+    description: Main command for PlayTimeTracker
+    aliases: ptt
+    permission: ptt.view
+    permission-message: You do not have permission node <permission>
+    usage: "/<command> [{PlayerName}|reset <{PlayerName}|all>|reload|acquire [{RuleName}]]"
+
+permissions:
+  ptt.view:
+    description: Basic command permission
+    default: true
+  ptt.acquire:
+    description: Redeem the reward related to the rule
+    default: true
+  ptt.view.others:
+    description: See other player's statistic
+    default: op
+  ptt.reset:
+    description: Reset statistic for some players
+    default: op
+  ptt.reload:
+    description: Reload configure
+    default: op

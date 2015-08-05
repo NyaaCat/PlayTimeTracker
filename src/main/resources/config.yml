@@ -1,0 +1,25 @@
+message:
+  placeholder: "placeholder"
+
+ignore-afk: true
+save-interval: 60 #seconds
+
+rewards:
+  some-reward:
+    description: "Placeholder reward"
+    command: "/give {playerName} 1 1"
+  another-reward:
+    description: "Placeholder reward 2"
+    command: "/give {playerName} 1 2"
+
+rules:
+  rule1:
+    period: "day" # week|month|disposable|session
+    require: 60 # total online *minutes* to meet the reward requirement
+    auto-give: false # automatically give the reward
+    reward: some-reward
+  rule3:
+    period: "playerback" # rewards are given when players back after a long period time of away, in hours
+    require: 60 # how long the player left, *IN DAYS*
+    auto-give: false # automatically give the reward
+    reward: another-reward
