@@ -1,161 +1,143 @@
 package cat.nyaa.playtimetracker;
 
-import com.avaje.ebean.validation.NotEmpty;
-import com.avaje.ebean.validation.NotNull;
+import org.bukkit.command.CommandSender;
 
-import javax.persistence.Entity;
-import javax.persistence.Table;
-import javax.persistence.Id;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.UUID;
+import java.util.*;
 
-@Entity
-@Table(name = "playtimetracker")
 public class OnlineRecord {
-    @Id
-    @NotEmpty
-    private String uuid;
-    @NotNull
+    private boolean parsed;
+    private boolean modified;
+    private String data;
+    private UUID uuid;
+
     private long lastSeen; // timestamp millisecond
-    @NotNull
     private long dayDay; // timestamp millisecond
-    @NotNull
     private long weekDay; // timestamp millisecond
-    @NotNull
     private long monthDay; // timestamp millisecond
-    @NotNull
     private long dayTime; // millisecond
-    @NotNull
     private long weekTime; // millisecond
-    @NotNull
     private long monthTime; // millisecond
-    @NotNull
     private long totalTime; // millisecond
-    @NotNull
-    private String disposableComplete; // ',' comma split string
-    @NotNull
-    private String dayComplete; // ',' comma split string
-    @NotNull
-    private String weekComplete; // ',' comma split string
-    @NotNull
-    private String monthComplete; // ',' comma split string
+    private Set<String> dayComplete;
+    private Set<String> weekComplete;
+    private Set<String> monthComplete;
+    private Set<String> disposableComplete;
 
-    public String getUuid() {
+    //phantom data
+    private long sessionTime;
+    private Set<String> sessionComplete;
+    private long ltnsDay; // timestamp millisecond
+    private Set<String> ltnsAvailable;
+
+    public UUID getUuid() {
         return uuid;
-    }
-
-    public void setUuid(String uuid) {
-        this.uuid = uuid;
     }
 
     public long getLastSeen() {
         return lastSeen;
     }
 
-    public void setLastSeen(long lastSeen) {
-        this.lastSeen = lastSeen;
-    }
-
-    public long getDayDay() {
-        return dayDay;
-    }
-
-    public void setDayDay(long dayDay) {
-        this.dayDay = dayDay;
-    }
-
-    public long getWeekDay() {
-        return weekDay;
-    }
-
-    public void setWeekDay(long weekDay) {
-        this.weekDay = weekDay;
-    }
-
-    public long getMonthDay() {
-        return monthDay;
-    }
-
-    public void setMonthDay(long monthDay) {
-        this.monthDay = monthDay;
-    }
-
     public long getDayTime() {
         return dayTime;
-    }
-
-    public void setDayTime(long dayTime) {
-        this.dayTime = dayTime;
     }
 
     public long getWeekTime() {
         return weekTime;
     }
 
-    public void setWeekTime(long weekTime) {
-        this.weekTime = weekTime;
-    }
-
     public long getMonthTime() {
         return monthTime;
-    }
-
-    public void setMonthTime(long monthTime) {
-        this.monthTime = monthTime;
     }
 
     public long getTotalTime() {
         return totalTime;
     }
 
-    public void setTotalTime(long totalTime) {
-        this.totalTime = totalTime;
+    public long getSessionTime() {
+        return sessionTime;
     }
 
-    public String getDisposableComplete() {
-        return disposableComplete;
+    public long getLtnsDay() {
+        return ltnsDay;
     }
 
-    public void setDisposableComplete(String disposableComplete) {
-        this.disposableComplete = disposableComplete;
+    public static OnlineRecord fromString(UUID id, String str) {
+        OnlineRecord r = new OnlineRecord();
+        r.uuid = id;
+        r.data = str;
+        r.modified = false;
+        r.parsed = false;
+        return r;
+    }
+
+    public void parse() {
+        if (parsed) return;
+        String[] tmp = data.split(" ");
+
+        lastSeen = Long.parseLong(tmp[0]);
+        dayDay = Long.parseLong(tmp[1]);
+        weekDay = Long.parseLong(tmp[2]);
+        monthDay = Long.parseLong(tmp[3]);
+        dayTime = Long.parseLong(tmp[4]);
+        weekTime = Long.parseLong(tmp[5]);
+        monthTime = Long.parseLong(tmp[6]);
+        totalTime = Long.parseLong(tmp[7]);
+        dayComplete = deserializeSet(tmp[8]);
+        weekComplete = deserializeSet(tmp[9]);
+        monthComplete = deserializeSet(tmp[10]);
+        disposableComplete = deserializeSet(tmp[11]);
+        parsed = true;
+    }
+
+    @Override
+    public String toString() {
+        if (modified) {
+            String s1 = String.format("%d %d %d %d %d %d %d %d", lastSeen, dayDay, weekDay, monthDay,
+                    dayTime, weekTime, monthTime, totalTime);
+            s1 = String.format("%s %s %s %s %s", s1,
+                    serializeSet(dayComplete),
+                    serializeSet(weekComplete),
+                    serializeSet(monthComplete),
+                    serializeSet(disposableComplete));
+            data = s1;
+            modified = false;
+        }
+        return data;
+    }
+
+    private String serializeSet(Set<String> set) {
+        if (set.size() == 0) return "{}";
+        String ret = "";
+        for (String s : set) {
+            ret += "," + s;
+        }
+        return "{" + ret.substring(1) + "}";
+    }
+
+    private HashSet<String> deserializeSet(String str) {
+        if ("{}".equals(str)) return new HashSet<>();
+        HashSet<String> r = new HashSet<>();
+        r.addAll(Arrays.asList(str.substring(1, str.length() - 1).split(",")));
+        return r;
+    }
+
+    public OnlineRecord() {
+        reset();
     }
 
     public static OnlineRecord createFor(UUID uuid) {
-        Date date = new Date();
-        Calendar cal = Calendar.getInstance();
         OnlineRecord record = new OnlineRecord();
-        record.uuid = uuid.toString();
-        record.lastSeen = date.getTime();
-
-        cal.setTime(date);
-        cal.set(Calendar.HOUR_OF_DAY, 0);
-        cal.set(Calendar.MINUTE, 0);
-        cal.set(Calendar.SECOND, 0);
-        cal.set(Calendar.MILLISECOND, 0);
-        record.dayDay = cal.getTimeInMillis();
-        cal.set(Calendar.DAY_OF_WEEK, cal.getFirstDayOfWeek());
-        record.weekDay = cal.getTimeInMillis();
-        cal.set(Calendar.DAY_OF_MONTH,1);
-        record.monthDay = cal.getTimeInMillis();
-
-        record.dayTime=0;
-        record.weekTime=0;
-        record.monthTime=0;
-        record.totalTime=0;
-        record.disposableComplete = "";
-        record.dayComplete = "";
-        record.weekComplete = "";
-        record.monthComplete = "";
-
+        record.uuid = uuid;
         return record;
     }
 
     public void update(boolean accumulate) {
+        parse();
         Date date = new Date();
         Calendar cal = Calendar.getInstance();
         long nowTime = date.getTime();
         long delta = nowTime - lastSeen;
+        lastSeen = nowTime;
         if (accumulate) totalTime += delta;
 
         cal.setTime(date);
@@ -166,7 +148,7 @@ public class OnlineRecord {
         if (dayDay < cal.getTimeInMillis()) {
             dayDay = cal.getTimeInMillis();
             dayTime = 0;
-            dayComplete = "";
+            dayComplete = new HashSet<>();
         } else {
             if (accumulate) dayTime += delta;
         }
@@ -174,53 +156,123 @@ public class OnlineRecord {
         if (weekDay < cal.getTimeInMillis()) {
             weekDay = cal.getTimeInMillis();
             weekTime = 0;
-            weekComplete = "";
-        }else{
+            weekComplete = new HashSet<>();
+        } else {
             if (accumulate) weekTime += delta;
         }
-        cal.set(Calendar.DAY_OF_MONTH,1);
-        if (monthDay < cal.getTimeInMillis()){
+        cal.set(Calendar.DAY_OF_MONTH, 1);
+        if (monthDay < cal.getTimeInMillis()) {
             monthDay = cal.getTimeInMillis();
-            monthTime=0;
-            monthComplete = "";
-        }else{
-            if (accumulate) monthTime+=delta;
+            monthTime = 0;
+            monthComplete = new HashSet<>();
+        } else {
+            if (accumulate) monthTime += delta;
         }
+        if (accumulate) sessionTime += delta;
+
+        modified = true;
     }
 
-    public Boolean isCompleted(Rule.PeriodType type, String rule){
-        String a=null;
+    public Boolean isCompleted(Rule.PeriodType type, String rule) {
+        parse();
         switch (type) {
-            case DAY: {a=dayComplete;break;}
-            case WEEK: {a=weekComplete;break;}
-            case MONTH: {a=monthComplete;break;}
-            case DISPOSABLE: {a=disposableComplete;break;}
+            case DAY:
+                return dayComplete.contains(rule);
+            case WEEK:
+                return weekComplete.contains(rule);
+            case MONTH:
+                return monthComplete.contains(rule);
+            case DISPOSABLE:
+                return disposableComplete.contains(rule);
+            case SESSION:
+                return sessionComplete.contains(rule);
+            case LONGTIMENOSEE:
+                return !ltnsAvailable.contains(rule);
         }
-        if (a==null)return false;
-        return a.equals(rule) || a.startsWith(rule+",") || a.endsWith(","+rule);
+        return false;
     }
 
-    public void setCompleted(Rule.PeriodType type, String rule){
-        if (type== Rule.PeriodType.SESSION||isCompleted(type, rule)) return;
-        String a;
+    public void setCompleted(Rule.PeriodType type, String rule) {
+        parse();
+        if (isCompleted(type, rule)) return;
         switch (type) {
-            case DAY: {a=dayComplete;break;}
-            case WEEK: {a=weekComplete;break;}
-            case MONTH: {a=monthComplete;break;}
-            case DISPOSABLE: {a=disposableComplete;break;}
-            default: a=null;
+            case DAY: {
+                dayComplete.add(rule);
+                break;
+            }
+            case WEEK: {
+                weekComplete.add(rule);
+                break;
+            }
+            case MONTH: {
+                monthComplete.add(rule);
+                break;
+            }
+            case DISPOSABLE: {
+                disposableComplete.add(rule);
+                break;
+            }
+            case SESSION: {
+                sessionComplete.add(rule);
+                break;
+            }
+            case LONGTIMENOSEE: {
+                ltnsAvailable.remove(rule);
+                break;
+            }
         }
-        if (a==null) a="";
-        if ("".equals(a)){
-            a=rule;
-        }else{
-            a+=","+rule;
-        }
-        switch (type) {
-            case DAY: {dayComplete=a;break;}
-            case WEEK: {weekComplete=a;break;}
-            case MONTH: {monthComplete=a;break;}
-            case DISPOSABLE: {disposableComplete=a;break;}
+        modified = true;
+    }
+
+    public void reset() {
+        Date date = new Date();
+        Calendar cal = Calendar.getInstance();
+        lastSeen = date.getTime();
+
+        cal.setTime(date);
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        dayDay = cal.getTimeInMillis();
+        cal.set(Calendar.DAY_OF_WEEK, cal.getFirstDayOfWeek());
+        weekDay = cal.getTimeInMillis();
+        cal.set(Calendar.DAY_OF_MONTH, 1);
+        monthDay = cal.getTimeInMillis();
+
+        dayTime = 0;
+        weekTime = 0;
+        monthTime = 0;
+        totalTime = 0;
+        disposableComplete = new HashSet<>();
+        dayComplete = new HashSet<>();
+        weekComplete = new HashSet<>();
+        monthComplete = new HashSet<>();
+
+        sessionComplete = new HashSet<>();
+        sessionTime = 0;
+
+        modified = true;
+        parsed = true;
+    }
+
+    public void clearSession() {
+        sessionTime = 0;
+        sessionComplete = new HashSet<>();
+        ltnsAvailable = new HashSet<>();
+    }
+
+    public void addLtnsRule(String ruleName) {
+        ltnsAvailable.add(ruleName);
+    }
+
+    public void printStatistic(CommandSender s, boolean printSession) {
+        s.sendMessage(String.format("Total online: %f sec", getTotalTime() / 1000.0));
+        s.sendMessage(String.format("Month online: %f sec", getMonthTime() / 1000.0));
+        s.sendMessage(String.format("Week  online: %f sec", getWeekTime() / 1000.0));
+        s.sendMessage(String.format("Day   online: %f sec", getDayTime() / 1000.0));
+        if (printSession) {
+            s.sendMessage(String.format("Sessi online: %f sec", sessionTime / 1000.0));
         }
     }
 }

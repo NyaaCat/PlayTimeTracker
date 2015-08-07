@@ -2,7 +2,7 @@ message:
   placeholder: "placeholder"
 
 ignore-afk: true
-save-interval: 60 #seconds
+save-interval: 5 #seconds
 
 rewards:
   some-reward:

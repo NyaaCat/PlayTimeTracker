@@ -9,12 +9,12 @@ public class Reward {
     private String command;
 
     public Reward(ConfigurationSection s) {
-        description=s.getString("description");
+        description = s.getString("description");
         command = s.getString("command");
     }
 
     public void applyTo(Player p) {
         p.sendMessage(description);
-        Bukkit.getConsoleSender().sendMessage(command.replace("{playerName}", p.getName()));
+        Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), command.replace("{playerName}", p.getName()));
     }
 }

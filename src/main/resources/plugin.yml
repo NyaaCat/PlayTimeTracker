@@ -1,6 +1,7 @@
 name: PlayTimeTracker
 main: cat.nyaa.playtimetracker.Main
 version: 0.1
+depend: [Essentials]
 database: true
 
 commands:
