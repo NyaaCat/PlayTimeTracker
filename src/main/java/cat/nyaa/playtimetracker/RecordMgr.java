@@ -191,7 +191,7 @@ public class RecordMgr {
         if (recordMap.containsKey(player.getUniqueId())) {
             recordMap.get(player.getUniqueId()).printStatistic(target, player.isOnline());
         } else {
-            target.sendMessage("Player not found");
+            target.sendMessage(Locale.get("statistic-no-record"));
         }
     }
 }

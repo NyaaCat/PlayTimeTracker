@@ -1,8 +1,7 @@
 name: PlayTimeTracker
 main: cat.nyaa.playtimetracker.Main
 version: 0.1
-depend: [Essentials]
-database: true
+softdepend: [Essentials]
 
 commands:
   playtimetracker:
@@ -10,7 +9,7 @@ commands:
     aliases: ptt
     permission: ptt.view
     permission-message: You do not have permission node <permission>
-    usage: "/<command> [{PlayerName}|reset <{PlayerName}|all>|reload|acquire]"
+    usage: "/<command> [{PlayerName}|reset <{PlayerName}|all>|reload|acquire [{RuleName}]]"
 
 permissions:
   ptt.view:

@@ -13,6 +13,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.*;
 
@@ -42,6 +43,7 @@ public class Main extends JavaPlugin implements Runnable, Listener {
         saveDefaultConfig();
         reloadConfig();
         cfg = getConfig();
+        Locale.init(cfg.getConfigurationSection("message"));
 
         rewardMap = new HashMap<>();
         for (String i : cfg.getConfigurationSection("rewards").getValues(false).keySet()) {
@@ -77,21 +79,22 @@ public class Main extends JavaPlugin implements Runnable, Listener {
     }
 
     private void printStatistic(CommandSender s, OfflinePlayer p) {
+        s.sendMessage(Locale.get("statistic-for", p.getName()));
         recordMgr.printStatistic(s, p);
     }
 
     private void notifyReward(Player player, Collection<Rule> satisfiedRuleList) {
         if (satisfiedRuleList.size() == 0) return;
-        String str = "";
+        player.sendMessage(Locale.get("have-reward-redeem"));
         for (Rule s : satisfiedRuleList) {
-            str += ", " + s.name;
+            player.sendMessage(Locale.get("have-reward-redeem-format", s.name));
         }
-        ;
-        player.sendMessage("You have the following rewards to redeem: " + str.substring(2));
     }
 
     private void applyReward(Rule rule, Player p) {
         rewardMap.get(rule.reward).applyTo(p);
+        p.sendMessage(Locale.get("rule-applied", rule.name));
+        p.sendMessage(rewardMap.get(rule.reward).getDescription());
     }
 
     @Override
@@ -121,21 +124,18 @@ public class Main extends JavaPlugin implements Runnable, Listener {
         recordMgr.save();
     }
 
-    private void acquireAll(Player p) {
-        Set<Rule> satisfiedRules = recordMgr.getSatisfiedRules(p.getUniqueId());
-        for (Rule r : satisfiedRules) {
-            applyReward(r, p);
-            recordMgr.setRuleAcquired(p.getUniqueId(), r);
-        }
-        recordMgr.save();
-    }
-
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         UUID id = event.getPlayer().getUniqueId();
         recordMgr.sessionStart(id, rules.values());
         recordMgr.updateSingle(event.getPlayer(), false);
-        notifyAcquire(event.getPlayer());
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                printStatistic(event.getPlayer(), event.getPlayer());
+                notifyAcquire(event.getPlayer());
+            }
+        }.runTaskLater(this, 20L);
     }
 
     @EventHandler
@@ -150,21 +150,21 @@ public class Main extends JavaPlugin implements Runnable, Listener {
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (args.length == 0) {
             if (!(sender instanceof Player)) {
-                sender.sendMessage("Only player can do this");
+                sender.sendMessage(Locale.get("only-player-can-do"));
             } else if (sender.hasPermission("ptt.view")) {
                 recordMgr.updateSingle((Player) sender);
                 printStatistic(sender, (Player) sender);
             } else {
-                sender.sendMessage("You have no permission to do this");
+                sender.sendMessage(Locale.get("no-permission"));
             }
             return true;
         } else if ("reload".equalsIgnoreCase(args[0])) {
             if (sender.hasPermission("ptt.reload")) {
-                sender.sendMessage("Reloading...");
                 onDisable();
                 onEnable();
+                sender.sendMessage(Locale.get("reload-finished"));
             } else {
-                sender.sendMessage("You have no permission to do this");
+                sender.sendMessage(Locale.get("no-permission"));
             }
             return true;
         } else if ("reset".equalsIgnoreCase(args[0])) {
@@ -177,17 +177,40 @@ public class Main extends JavaPlugin implements Runnable, Listener {
                     recordMgr.reset(Bukkit.getOfflinePlayer(name).getUniqueId());
                 }
                 recordMgr.save();
-                sender.sendMessage("Executed.");
+                sender.sendMessage(Locale.get("command-done"));
             } else {
-                sender.sendMessage("You have no permission to do this");
+                sender.sendMessage(Locale.get("no-permission"));
             }
             return true;
         } else if ("acquire".equalsIgnoreCase(args[0])) {
             if (!(sender instanceof Player)) {
-                sender.sendMessage("Only player can do this");
-                return true;
+                sender.sendMessage(Locale.get("only-player-can-do"));
             }
-            acquireAll((Player) sender);
+            Set<Rule> satisfiedRules = recordMgr.getSatisfiedRules(((Player)sender).getUniqueId());
+            if (satisfiedRules.size() == 0) {
+                sender.sendMessage(Locale.get("nothing-to-acquire"));
+            }
+            breakpoint: if (args.length<=1){ // acquire all
+                for (Rule r : satisfiedRules) {
+                    applyReward(r, (Player) sender);
+                    recordMgr.setRuleAcquired(((Player)sender).getUniqueId(), r);
+                }
+                recordMgr.save();
+            } else {
+                if (!rules.containsKey(args[1])) {
+                    sender.sendMessage(Locale.get("no-such-rule"));
+                    return true;
+                }
+                for (Rule r : satisfiedRules) {
+                    if (r.name.equalsIgnoreCase(args[1])) {
+                        applyReward(r, (Player) sender);
+                        recordMgr.setRuleAcquired(((Player) sender).getUniqueId(), r);
+                        recordMgr.save();
+                        break breakpoint;
+                    }
+                }
+                sender.sendMessage(Locale.get("cannot-acquire", args[1]));
+            }
             return true;
         } else {
             if (sender.hasPermission("ptt.view.others")) {
@@ -197,9 +220,10 @@ public class Main extends JavaPlugin implements Runnable, Listener {
                 }
                 printStatistic(sender, p);
             } else {
-                sender.sendMessage("You have no permission to do this");
+                sender.sendMessage(Locale.get("no-permission"));
             }
             return true;
         }
     }
 }
+

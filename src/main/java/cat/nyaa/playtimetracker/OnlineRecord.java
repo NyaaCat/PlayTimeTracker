@@ -267,12 +267,13 @@ public class OnlineRecord {
     }
 
     public void printStatistic(CommandSender s, boolean printSession) {
-        s.sendMessage(String.format("Total online: %f sec", getTotalTime() / 1000.0));
-        s.sendMessage(String.format("Month online: %f sec", getMonthTime() / 1000.0));
-        s.sendMessage(String.format("Week  online: %f sec", getWeekTime() / 1000.0));
-        s.sendMessage(String.format("Day   online: %f sec", getDayTime() / 1000.0));
+        parse();
+        s.sendMessage(Locale.get("statistic-day", Locale.formatTime(getDayTime())));
+        s.sendMessage(Locale.get("statistic-week", Locale.formatTime(getWeekTime())));
+        s.sendMessage(Locale.get("statistic-month", Locale.formatTime(getMonthTime())));
+        s.sendMessage(Locale.get("statistic-total", Locale.formatTime(getTotalTime())));
         if (printSession) {
-            s.sendMessage(String.format("Sessi online: %f sec", sessionTime / 1000.0));
+            s.sendMessage(Locale.get("statistic-session", Locale.formatTime(sessionTime)));
         }
     }
 }

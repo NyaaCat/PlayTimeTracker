@@ -1,12 +1,33 @@
 message:
-  placeholder: "placeholder"
+  prefix: "[PlayTimeTracker]"
+
+  have-reward-redeem: "You have the following unacquired rewards, use `/ptt acquire [name]` to acquire"
+  have-reward-redeem-format: "- %s"
+  rule-applied: "Congratulations! The following rule has applies to you: %s"
+  nothing-to-acquire: "You have nothing to acquire"
+  cannot-acquire: "You can not acquire %s now"
+  no-such-rule: "Rule not found"
+
+  only-player-can-do: "Only players can do this"
+  no-permission: "You are not allowed to do this"
+  reload-finished: "Reload finished"
+  command-done: "Command executed successfully"
+
+  statistic-for: "Statistic for player: %s"
+  statistic-day: "Online time today: %s"
+  statistic-week: "Online time this week: %s"
+  statistic-month: "Online time this month: %s"
+  statistic-session: "Online time this session: %s"
+  statistic-total: "Online time total: %s"
+  #statistic-time-format: "D'd'H'h'm'm's's'S'ms'" # http://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html
+  statistic-no-record: "No record for that player."
 
 ignore-afk: true
 save-interval: 5 #seconds
 
 rewards:
   some-reward:
-    description: "Placeholder reward"
+    description: "You were given one stone."
     command: "/give {playerName} 1 1"
   another-reward:
     description: "Placeholder reward 2"
