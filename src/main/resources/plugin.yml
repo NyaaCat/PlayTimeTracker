@@ -9,7 +9,7 @@ commands:
     aliases: ptt
     permission: ptt.view
     permission-message: You do not have permission node <permission>
-    usage: "/<command> [{PlayerName}|reset <{PlayerName}|all>|reload|acquire [{RuleName}]]"
+    usage: "/<command> [{PlayerName}|reset <{PlayerName}|all>|reload|<acquire|ac> [{RuleName}]|help]"
 
 permissions:
   ptt.view:

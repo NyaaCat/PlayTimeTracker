@@ -191,38 +191,44 @@ public class Main extends JavaPlugin implements Runnable, Listener {
                 sender.sendMessage(Locale.get("no-permission"));
             }
             return true;
-        } else if ("acquire".equalsIgnoreCase(args[0])) {
-            if (!(sender instanceof Player)) {
-                sender.sendMessage(Locale.get("only-player-can-do"));
-            }
-            Set<Rule> satisfiedRules = recordMgr.getSatisfiedRules(((Player) sender).getUniqueId());
-            if (satisfiedRules.size() == 0) {
-                sender.sendMessage(Locale.get("nothing-to-acquire"));
-                return true;
-            }
-            breakpoint:
-            if (args.length <= 1) { // acquire all
-                for (Rule r : satisfiedRules) {
-                    applyReward(r, (Player) sender);
-                    recordMgr.setRuleAcquired(((Player) sender).getUniqueId(), r);
+        } else if ("acquire".equalsIgnoreCase(args[0]) || "ac".equalsIgnoreCase(args[0])) {
+            if (sender.hasPermission("ptt.acquire")) {
+                if (!(sender instanceof Player)) {
+                    sender.sendMessage(Locale.get("only-player-can-do"));
                 }
-                recordMgr.save();
-            } else {
-                if (!rules.containsKey(args[1])) {
-                    sender.sendMessage(Locale.get("no-such-rule"));
+                Set<Rule> satisfiedRules = recordMgr.getSatisfiedRules(((Player) sender).getUniqueId());
+                if (satisfiedRules.size() == 0) {
+                    sender.sendMessage(Locale.get("nothing-to-acquire"));
                     return true;
                 }
-                for (Rule r : satisfiedRules) {
-                    if (r.name.equalsIgnoreCase(args[1])) {
+                breakpoint:
+                if (args.length <= 1) { // acquire all
+                    for (Rule r : satisfiedRules) {
                         applyReward(r, (Player) sender);
                         recordMgr.setRuleAcquired(((Player) sender).getUniqueId(), r);
-                        recordMgr.save();
-                        break breakpoint;
                     }
+                    recordMgr.save();
+                } else {
+                    if (!rules.containsKey(args[1])) {
+                        sender.sendMessage(Locale.get("no-such-rule"));
+                        return true;
+                    }
+                    for (Rule r : satisfiedRules) {
+                        if (r.name.equalsIgnoreCase(args[1])) {
+                            applyReward(r, (Player) sender);
+                            recordMgr.setRuleAcquired(((Player) sender).getUniqueId(), r);
+                            recordMgr.save();
+                            break breakpoint;
+                        }
+                    }
+                    sender.sendMessage(Locale.get("cannot-acquire", args[1]));
                 }
-                sender.sendMessage(Locale.get("cannot-acquire", args[1]));
+            } else {
+                sender.sendMessage(Locale.get("no-permission"));
             }
             return true;
+        } else if ("help".equalsIgnoreCase(args[0])) {
+            return false;
         } else {
             if (sender.hasPermission("ptt.view.others")) {
                 OfflinePlayer p = Bukkit.getOfflinePlayer(args[0]);
