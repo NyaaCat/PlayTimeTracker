@@ -34,22 +34,27 @@ public class OnlineRecord {
     }
 
     public long getLastSeen() {
+        parse();
         return lastSeen;
     }
 
     public long getDayTime() {
+        parse();
         return dayTime;
     }
 
     public long getWeekTime() {
+        parse();
         return weekTime;
     }
 
     public long getMonthTime() {
+        parse();
         return monthTime;
     }
 
     public long getTotalTime() {
+        parse();
         return totalTime;
     }
 
@@ -59,6 +64,10 @@ public class OnlineRecord {
 
     public long getLtnsDay() {
         return ltnsDay;
+    }
+
+    public void setLtnsDay(long ltnsDay) {
+        this.ltnsDay = ltnsDay;
     }
 
     public static OnlineRecord fromString(UUID id, String str) {

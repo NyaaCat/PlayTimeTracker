@@ -108,8 +108,8 @@ public class RecordMgr {
         Set<Rule> ret = new HashSet<>();
         if (onlineRecord == null) return ret;
         for (Rule rule : plugin.getRules().values()) {
+            if (!plugin.inGroup(id, rule.group)) continue;
             String ruleName = rule.name;
-
             switch (rule.period) {
                 case LONGTIMENOSEE: {
                     if (!onlineRecord.isCompleted(Rule.PeriodType.LONGTIMENOSEE, ruleName)) {
@@ -181,6 +181,7 @@ public class RecordMgr {
                 }
             }
         }
+        r.setLtnsDay(nowTime);
     }
 
     public void sessionEnd(UUID id) {

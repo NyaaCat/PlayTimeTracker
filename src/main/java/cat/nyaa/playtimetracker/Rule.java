@@ -2,6 +2,9 @@ package cat.nyaa.playtimetracker;
 
 import org.bukkit.configuration.ConfigurationSection;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class Rule {
     public enum PeriodType {
         DAY,
@@ -18,6 +21,7 @@ public class Rule {
     public boolean autoGive;
     public long timeout;
     public String reward;
+    public Set<String> group;
 
     public Rule(String name, ConfigurationSection s) {
         this.name = name;
@@ -50,6 +54,7 @@ public class Rule {
         require = s.getLong("require");
         autoGive = s.getBoolean("auto-give");
         timeout = s.contains("timeout") ? s.getLong("timeout") : -1;
+        group = s.contains("eligible-group") ? new HashSet<>(s.getStringList("eligible-group")) : null;
         reward = s.getString("reward");
     }
 }
