@@ -1,6 +1,10 @@
 apply plugin: 'java'
 
 repositories {
+    flatDir {
+        dirs 'libs'
+    }
+    
     mavenCentral()
 
     maven {
@@ -11,4 +15,5 @@ repositories {
 
 dependencies {
     compile 'org.bukkit:bukkit:1.8.7-R0.1-SNAPSHOT'
+    compile name: 'Essentials-2.x-SNAPSHOT' // just use the api, version does not matter
 }
