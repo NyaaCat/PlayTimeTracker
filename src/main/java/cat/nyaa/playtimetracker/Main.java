@@ -78,7 +78,7 @@ public class Main extends JavaPlugin implements Runnable, Listener {
         else return ess.getUser(id).isAfk();
     }
 
-    public boolean inGroup(UUID id, Set<String> group) {
+    public boolean inGroup(String id, Set<String> group) {
         if (ess == null || group == null || id == null) return true;
         return group.contains(ess.getUser(id).getGroup());
     }
@@ -115,12 +115,12 @@ public class Main extends JavaPlugin implements Runnable, Listener {
     }
 
     private void notifyAcquire(Player p) {
-        Set<Rule> satisfiedRules = recordMgr.getSatisfiedRules(p.getUniqueId());
+        Set<Rule> satisfiedRules = recordMgr.getSatisfiedRules(p.getName());
         Set<Rule> unacquired = new HashSet<>();
         for (Rule r : satisfiedRules) {
             if (r.autoGive) {
                 applyReward(r, p);
-                recordMgr.setRuleAcquired(p.getUniqueId(), r);
+                recordMgr.setRuleAcquired(p.getName(), r);
             } else {
                 unacquired.add(r);
             }
@@ -133,7 +133,7 @@ public class Main extends JavaPlugin implements Runnable, Listener {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
-        UUID id = event.getPlayer().getUniqueId();
+        String id = event.getPlayer().getName();
         recordMgr.sessionStart(id, rules.values());
         recordMgr.updateSingle(event.getPlayer(), false);
         if (cfg.getBoolean("display-on-login")) {
@@ -149,7 +149,7 @@ public class Main extends JavaPlugin implements Runnable, Listener {
 
     @EventHandler
     public void onPlayerExit(PlayerQuitEvent event) {
-        UUID id = event.getPlayer().getUniqueId();
+        String id = event.getPlayer().getName();
         recordMgr.sessionEnd(id);
         recordMgr.updateSingle(event.getPlayer());
         recordMgr.save();
@@ -183,7 +183,7 @@ public class Main extends JavaPlugin implements Runnable, Listener {
                 if ("all".equalsIgnoreCase(name)) {
                     recordMgr.resetAll();
                 } else {
-                    recordMgr.reset(Bukkit.getOfflinePlayer(name).getUniqueId());
+                    recordMgr.reset(name);
                 }
                 recordMgr.save();
                 sender.sendMessage(Locale.get("command-done"));
@@ -196,7 +196,7 @@ public class Main extends JavaPlugin implements Runnable, Listener {
                 if (!(sender instanceof Player)) {
                     sender.sendMessage(Locale.get("only-player-can-do"));
                 }
-                Set<Rule> satisfiedRules = recordMgr.getSatisfiedRules(((Player) sender).getUniqueId());
+                Set<Rule> satisfiedRules = recordMgr.getSatisfiedRules(((Player) sender).getName());
                 if (satisfiedRules.size() == 0) {
                     sender.sendMessage(Locale.get("nothing-to-acquire"));
                     return true;
@@ -205,7 +205,7 @@ public class Main extends JavaPlugin implements Runnable, Listener {
                 if (args.length <= 1) { // acquire all
                     for (Rule r : satisfiedRules) {
                         applyReward(r, (Player) sender);
-                        recordMgr.setRuleAcquired(((Player) sender).getUniqueId(), r);
+                        recordMgr.setRuleAcquired(((Player) sender).getName(), r);
                     }
                     recordMgr.save();
                 } else {
@@ -216,7 +216,7 @@ public class Main extends JavaPlugin implements Runnable, Listener {
                     for (Rule r : satisfiedRules) {
                         if (r.name.equalsIgnoreCase(args[1])) {
                             applyReward(r, (Player) sender);
-                            recordMgr.setRuleAcquired(((Player) sender).getUniqueId(), r);
+                            recordMgr.setRuleAcquired(((Player) sender).getName(), r);
                             recordMgr.save();
                             break breakpoint;
                         }

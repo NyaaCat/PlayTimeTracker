@@ -14,17 +14,17 @@ import java.util.*;
 
 public class RecordMgr {
     private final Main plugin;
-    private Map<UUID, OnlineRecord> recordMap;
+    private Map<String, OnlineRecord> recordMap;
 
     public RecordMgr(Main plugin) {
         this.plugin = plugin;
         load();
     }
 
-    private OnlineRecord getRecord(UUID id) {
-        if (recordMap.containsKey(id)) return recordMap.get(id);
-        OnlineRecord r = OnlineRecord.createFor(id);
-        recordMap.put(id, r);
+    private OnlineRecord getRecord(String playerName) {
+        if (recordMap.containsKey(playerName)) return recordMap.get(playerName);
+        OnlineRecord r = OnlineRecord.createFor(playerName);
+        recordMap.put(playerName, r);
         return r;
     }
 
@@ -41,9 +41,9 @@ public class RecordMgr {
             while ((line = lr.readLine()) != null) {
                 String[] tmp = line.split(" ", 2);
                 if (tmp.length != 2) continue;
-                UUID a = null;
+                String a = null;
                 try {
-                    a = UUID.fromString(tmp[0]);
+                    a = tmp[0];
                 } catch (IllegalArgumentException ex) {
                     plugin.getLogger().warning("Illegal data line: " + line);
                     continue;
@@ -69,7 +69,7 @@ public class RecordMgr {
             fw = new FileWriter(flatFile);
 
             for (OnlineRecord r : recordMap.values()) {
-                fw.write(r.getUuid().toString() + " " + r.toString() + '\n');
+                fw.write(r.getPlayerName().toString() + " " + r.toString() + '\n');
             }
         } catch (IOException ex) {
             ex.printStackTrace();
@@ -99,11 +99,11 @@ public class RecordMgr {
     }
 
     public void updateSingle(Player p, boolean accumulate) {
-        OnlineRecord r = getRecord(p.getUniqueId());
+        OnlineRecord r = getRecord(p.getName());
         if (r != null) r.update(accumulate);
     }
 
-    public Set<Rule> getSatisfiedRules(UUID id) {
+    public Set<Rule> getSatisfiedRules(String id) {
         OnlineRecord onlineRecord = getRecord(id);
         Set<Rule> ret = new HashSet<>();
         if (onlineRecord == null) return ret;
@@ -155,7 +155,7 @@ public class RecordMgr {
         return ret;
     }
 
-    public void setRuleAcquired(UUID id, Rule rule) {
+    public void setRuleAcquired(String id, Rule rule) {
         getRecord(id).setCompleted(rule.period, rule.name);
     }
 
@@ -165,11 +165,11 @@ public class RecordMgr {
         }
     }
 
-    public void reset(UUID id) {
+    public void reset(String id) {
         getRecord(id).reset();
     }
 
-    public void sessionStart(UUID id, Collection<Rule> rules) {
+    public void sessionStart(String id, Collection<Rule> rules) {
         OnlineRecord r = getRecord(id);
         r.clearSession();
         long nowTime = new Date().getTime();
@@ -184,13 +184,13 @@ public class RecordMgr {
         r.setLtnsDay(nowTime);
     }
 
-    public void sessionEnd(UUID id) {
+    public void sessionEnd(String id) {
         getRecord(id).clearSession();
     }
 
     public void printStatistic(CommandSender target, OfflinePlayer player) {
-        if (recordMap.containsKey(player.getUniqueId())) {
-            recordMap.get(player.getUniqueId()).printStatistic(target, player.isOnline());
+        if (recordMap.containsKey(player.getName())) {
+            recordMap.get(player.getName()).printStatistic(target, player.isOnline());
         } else {
             target.sendMessage(Locale.get("statistic-no-record"));
         }

@@ -8,7 +8,7 @@ public class OnlineRecord {
     private boolean parsed;
     private boolean modified;
     private String data;
-    private UUID uuid;
+    private String playerName;
 
     private long lastSeen; // timestamp millisecond
     private long dayDay; // timestamp millisecond
@@ -29,8 +29,8 @@ public class OnlineRecord {
     private long ltnsDay; // timestamp millisecond
     private Set<String> ltnsAvailable;
 
-    public UUID getUuid() {
-        return uuid;
+    public String getPlayerName() {
+        return playerName;
     }
 
     public long getLastSeen() {
@@ -70,9 +70,9 @@ public class OnlineRecord {
         this.ltnsDay = ltnsDay;
     }
 
-    public static OnlineRecord fromString(UUID id, String str) {
+    public static OnlineRecord fromString(String playerName, String str) {
         OnlineRecord r = new OnlineRecord();
-        r.uuid = id;
+        r.playerName = playerName;
         r.data = str;
         r.modified = false;
         r.parsed = false;
@@ -134,9 +134,9 @@ public class OnlineRecord {
         reset();
     }
 
-    public static OnlineRecord createFor(UUID uuid) {
+    public static OnlineRecord createFor(String name) {
         OnlineRecord record = new OnlineRecord();
-        record.uuid = uuid;
+        record.playerName = name;
         return record;
     }
 
