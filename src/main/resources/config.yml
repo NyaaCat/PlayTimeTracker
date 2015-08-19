@@ -24,7 +24,6 @@ message:
     s: "%dseconds "
     m: "%dminutes "
     h: "%dhours "
-    d: "%ddays "
     zero: "No Record"
   statistic-no-record: "No record for that player."
 

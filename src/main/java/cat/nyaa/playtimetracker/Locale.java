@@ -34,11 +34,7 @@ public class Locale {
             ms = Math.floorDiv(ms, 60);
         }
         if (ms > 0) {
-            str = String.format(s.getString("h"), ms % 24) + str;
-            ms = Math.floorDiv(ms, 24);
-        }
-        if (ms > 0) {
-            str = String.format(s.getString("d"), ms) + str;
+            str = String.format(s.getString("h"), ms) + str;
         }
 
         return str;
