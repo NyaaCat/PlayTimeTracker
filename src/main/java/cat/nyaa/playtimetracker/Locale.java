@@ -16,28 +16,29 @@ public class Locale {
     }
 
     public static String formatTime(long ms) {
+        ConfigurationSection s = lang.getConfigurationSection("statistic-time-format");
         String str = "";
         if (ms == 0)
-            return "0";
+            return s.getString("zero");
 
         if (ms > 0) {
-            str = String.format("%dms", ms % 1000) + str;
+            str = String.format(s.getString("ms"), ms % 1000) + str;
             ms = Math.floorDiv(ms, 1000);
         }
         if (ms > 0) {
-            str = String.format("%ds ", ms % 60) + str;
+            str = String.format(s.getString("s"), ms % 60) + str;
             ms = Math.floorDiv(ms, 60);
         }
         if (ms > 0) {
-            str = String.format("%dm ", ms % 60) + str;
+            str = String.format(s.getString("m"), ms % 60) + str;
             ms = Math.floorDiv(ms, 60);
         }
         if (ms > 0) {
-            str = String.format("%dh ", ms % 24) + str;
+            str = String.format(s.getString("h"), ms % 24) + str;
             ms = Math.floorDiv(ms, 24);
         }
         if (ms > 0) {
-            str = String.format("%dd ", ms) + str;
+            str = String.format(s.getString("d"), ms) + str;
         }
 
         return str;

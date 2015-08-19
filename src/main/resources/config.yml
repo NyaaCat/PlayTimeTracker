@@ -19,7 +19,13 @@ message:
   statistic-month: "Online time this month: %s"
   statistic-session: "Online time this session: %s"
   statistic-total: "Online time total: %s"
-  #statistic-time-format: "D'd'H'h'm'm's's'S'ms'" # http://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html
+  statistic-time-format:
+    ms: "%dms"
+    s: "%dseconds "
+    m: "%dminutes "
+    h: "%dhours "
+    d: "%ddays "
+    zero: "No Record"
   statistic-no-record: "No record for that player."
 
 ignore-afk: true
