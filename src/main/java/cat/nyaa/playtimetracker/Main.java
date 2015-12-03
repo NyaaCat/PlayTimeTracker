@@ -73,9 +73,9 @@ public class Main extends JavaPlugin implements Runnable, Listener {
 
     private IEssentials ess = null;
 
-    public boolean isAFK(UUID id) {
-        if (!cfg.getBoolean("ignore-afk") || ess == null || id == null) return false;
-        else return ess.getUser(id).isAfk();
+    public boolean isAFK(String playerName) {
+        if (!cfg.getBoolean("ignore-afk") || ess == null || playerName == null) return false;
+        else return ess.getUser(playerName).isAfk();
     }
 
     public boolean inGroup(String id, Set<String> group) {

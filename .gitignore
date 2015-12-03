@@ -74,4 +74,4 @@ gradle-app.setting
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 
-!libs/Essentials-2.x-SNAPSHOT.jar
+!libs/Essentials-2.13.1.jar

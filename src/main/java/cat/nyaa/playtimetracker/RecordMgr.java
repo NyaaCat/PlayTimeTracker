@@ -95,7 +95,7 @@ public class RecordMgr {
     }
 
     public void updateSingle(Player p) {
-        updateSingle(p, !plugin.isAFK(p.getUniqueId()));
+        updateSingle(p, !plugin.isAFK(p.getName()));
     }
 
     public void updateSingle(Player p, boolean accumulate) {
