@@ -1,12 +1,11 @@
 apply plugin: 'java'
 
 repositories {
-    flatDir {
-        dirs 'libs'
+    jcenter()
+    maven {
+        name 'Sonatype'
+        url 'https://oss.sonatype.org/content/groups/public'
     }
-    
-    mavenCentral()
-
     maven {
         name 'Spigot'
         url 'https://hub.spigotmc.org/nexus/content/groups/public/'
@@ -14,6 +13,6 @@ repositories {
 }
 
 dependencies {
-    compile 'org.bukkit:bukkit:1.8.7-R0.1-SNAPSHOT'
-    compile name: 'Essentials-2.x-SNAPSHOT' // just use the api, version does not matter
+    compile 'org.spigotmc:spigot-api:1.10.2-R0.1-SNAPSHOT'
+    compile files('libs/Essentials-2.x-SNAPSHOT.jar')
 }
