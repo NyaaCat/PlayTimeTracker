@@ -1,5 +1,7 @@
 package cat.nyaa.playtimetracker;
 
+import cat.nyaa.playtimetracker.RecordManager.SessionedRecord;
+import com.avaje.ebean.validation.NotNull;
 import net.ess3.api.IEssentials;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -15,36 +17,39 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.io.File;
+import java.time.Duration;
+import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
+
+import static java.time.temporal.ChronoUnit.DAYS;
 
 public class Main extends JavaPlugin implements Runnable, Listener {
-    private FileConfiguration cfg;
-    private RecordMgr recordMgr;
+    private static Main instance;
+    private FileConfiguration cfg; // main config file
+    private DatabaseManager database;
+    private RecordManager updater;
 
     private Map<String, Rule> rules;
     private Map<String, Reward> rewardMap;
 
-    public Map<String, Rule> getRules() {
-        return rules;
-    }
-
     @Override
     public void onDisable() {
         Bukkit.getScheduler().cancelTasks(this);
-        recordMgr.updateOnline();
-        recordMgr.save();
+        updater.updateAllOnlinePlayers();
     }
 
     @Override
     public void onEnable() {
-        getCommand("playtimetracker").setExecutor(this);
-        getServer().getPluginManager().registerEvents(this, this);
-
+        // Basic config & events
+        instance = this;
         saveDefaultConfig();
         reloadConfig();
         cfg = getConfig();
         Locale.init(cfg.getConfigurationSection("message"));
 
+        // Load Reward config
         rewardMap = new HashMap<>();
         for (String i : cfg.getConfigurationSection("rewards").getValues(false).keySet()) {
             rewardMap.put(i, new Reward(cfg.getConfigurationSection("rewards." + i)));
@@ -54,12 +59,25 @@ public class Main extends JavaPlugin implements Runnable, Listener {
             rules.put(n, new Rule(n, cfg.getConfigurationSection("rules." + n)));
         }
 
-        recordMgr = new RecordMgr(this);
-        recordMgr.load();
-        for (Player p : Bukkit.getOnlinePlayers()) {
-            onPlayerJoin(new PlayerJoinEvent(p, null));
+        // Database
+        File legacyDataFile = new File(getDataFolder(), "data.txt");
+        File newDataFile = new File(getDataFolder(), "database.yml");
+        if (newDataFile.isFile()) {
+            getLogger().info("Loading database... database.yml");
+            if (legacyDataFile.isFile()) {
+                getLogger().info("You can manually remove the old database: data.txt");
+            }
+            database = new DatabaseManager(newDataFile);
+        } else {
+            if (legacyDataFile.isFile()) { // migrate old db
+                database = new DatabaseManager(newDataFile, legacyDataFile);
+            } else { // no database
+                getLogger().info("Creating database... database.yml");
+                database = new DatabaseManager(newDataFile);
+            }
         }
 
+        // Essential Hook
         Plugin p = getServer().getPluginManager().getPlugin("Essentials");
         if (p instanceof IEssentials) {
             ess = (IEssentials) p;
@@ -68,34 +86,39 @@ public class Main extends JavaPlugin implements Runnable, Listener {
             ess = null;
         }
 
+        // refresh online players
+        updater = new RecordManager(database);
+        for (Player player : getServer().getOnlinePlayers()) {
+            updater.sessionStart(player.getUniqueId());
+        }
+
+        // Schedule event
+        getCommand("playtimetracker").setExecutor(this);
+        getServer().getPluginManager().registerEvents(this, this);
         Bukkit.getScheduler().runTaskTimer(this, this, cfg.getLong("save-interval") * 20L, cfg.getLong("save-interval") * 20L);
     }
 
+    // Essential Hooks
     private IEssentials ess = null;
 
-    public boolean isAFK(UUID id) {
+    public static boolean isAFK(UUID id) {
+        return instance != null && instance._isAFK(id);
+    }
+
+    private boolean _isAFK(UUID id) {
         if (!cfg.getBoolean("ignore-afk") || ess == null || id == null) return false;
         else return ess.getUser(id).isAfk();
     }
 
-    public boolean inGroup(UUID id, Set<String> group) {
+    private boolean inGroup(UUID id, Set<String> group) {
         if (ess == null || group == null || id == null) return true;
         return group.contains(ess.getUser(id).getGroup());
     }
 
-    private void printStatistic(CommandSender s, OfflinePlayer p) {
-        s.sendMessage(Locale.get("statistic-for", p.getName()));
-        recordMgr.printStatistic(s, p);
-    }
-
-    private void notifyReward(Player player, Collection<Rule> satisfiedRuleList) {
-        if (satisfiedRuleList.size() == 0) return;
-        player.sendMessage(Locale.get("have-reward-redeem"));
-        for (Rule s : satisfiedRuleList) {
-            player.sendMessage(Locale.get("have-reward-redeem-format", s.name));
-        }
-    }
-
+    /**
+     * naively apply the rule to the player
+     * database untouched
+     */
     private void applyReward(Rule rule, Player p) {
         Reward reward = rewardMap.get(rule.reward);
         reward.applyTo(p);
@@ -105,37 +128,53 @@ public class Main extends JavaPlugin implements Runnable, Listener {
         }
     }
 
+    private void notifyAcquire(Player p) {
+        Set<Rule> unacquired = getSatisfiedRules(p.getUniqueId()).stream()
+                .filter(r -> { // apply all auto apply rule, leave unapplied
+                    if (r.autoGive) {
+                        applyReward(r, p);
+                        updater.markRuleAsApplied(p.getUniqueId(), r);
+                        return false;
+                    } else {
+                        return true;
+                    }
+                }).collect(Collectors.toSet());
+        if (unacquired.size() > 0) {
+            p.sendMessage(Locale.get("have-reward-redeem"));
+            for (Rule s : unacquired) {
+                p.sendMessage(Locale.get("have-reward-redeem-format", s.name));
+            }
+        }
+    }
+
     @Override
-    public void run() { // Save interval
-        recordMgr.updateOnline();
+    public void run() { // Auto-save timer
+        Set<UUID> affectedPlayers = updater.updateAllOnlinePlayers();
         for (Player p : Bukkit.getOnlinePlayers()) {
             notifyAcquire(p);
         }
-        recordMgr.save();
-    }
-
-    private void notifyAcquire(Player p) {
-        Set<Rule> satisfiedRules = recordMgr.getSatisfiedRules(p.getUniqueId());
-        Set<Rule> unacquired = new HashSet<>();
-        for (Rule r : satisfiedRules) {
-            if (r.autoGive) {
-                applyReward(r, p);
-                recordMgr.setRuleAcquired(p.getUniqueId(), r);
-            } else {
-                unacquired.add(r);
-            }
-        }
-        if (unacquired.size() > 0) {
-            notifyReward(p, unacquired);
-        }
-        recordMgr.save();
     }
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         UUID id = event.getPlayer().getUniqueId();
-        recordMgr.sessionStart(id, rules.values());
-        recordMgr.updateSingle(event.getPlayer(), false);
+
+        // afkRevive reward automatically applied
+        SessionedRecord rec = updater.getFullRecord(id);
+        if (rec != null && rec.dbRec != null && rec.dbRec.lastSeen != null) {
+            ZonedDateTime lastSeen = rec.dbRec.lastSeen;
+            ZonedDateTime now = ZonedDateTime.now();
+            Duration gap = Duration.between(lastSeen, now);
+            for (Rule rule : rules.values()) {
+                if (rule.period == Rule.PeriodType.LONGTIMENOSEE &&
+                        Duration.of(rule.require, DAYS).minus(gap).isNegative() &&
+                        inGroup(id, rule.group)) {
+                    applyReward(rule, event.getPlayer());
+                }
+            }
+        }
+
+        updater.sessionStart(id);
         if (cfg.getBoolean("display-on-login")) {
             new BukkitRunnable() {
                 @Override
@@ -150,9 +189,7 @@ public class Main extends JavaPlugin implements Runnable, Listener {
     @EventHandler
     public void onPlayerExit(PlayerQuitEvent event) {
         UUID id = event.getPlayer().getUniqueId();
-        recordMgr.sessionEnd(id);
-        recordMgr.updateSingle(event.getPlayer());
-        recordMgr.save();
+        updater.sessionEnd(id);
     }
 
     @Override
@@ -161,7 +198,7 @@ public class Main extends JavaPlugin implements Runnable, Listener {
             if (!(sender instanceof Player)) {
                 sender.sendMessage(Locale.get("only-player-can-do"));
             } else if (sender.hasPermission("ptt.view")) {
-                recordMgr.updateSingle((Player) sender);
+                updater.updateSingle((Player) sender);
                 printStatistic(sender, (Player) sender);
             } else {
                 sender.sendMessage(Locale.get("no-permission"));
@@ -181,11 +218,10 @@ public class Main extends JavaPlugin implements Runnable, Listener {
                 if (args.length <= 1) return false;
                 String name = args[1];
                 if ("all".equalsIgnoreCase(name)) {
-                    recordMgr.resetAll();
+                    updater.resetAllStatistic();
                 } else {
-                    recordMgr.reset(Bukkit.getOfflinePlayer(name).getUniqueId());
+                    updater.resetSingleStatistic(Bukkit.getOfflinePlayer(name).getUniqueId());
                 }
-                recordMgr.save();
                 sender.sendMessage(Locale.get("command-done"));
             } else {
                 sender.sendMessage(Locale.get("no-permission"));
@@ -195,33 +231,19 @@ public class Main extends JavaPlugin implements Runnable, Listener {
             if (sender.hasPermission("ptt.acquire")) {
                 if (!(sender instanceof Player)) {
                     sender.sendMessage(Locale.get("only-player-can-do"));
+                    return true;
                 }
-                Set<Rule> satisfiedRules = recordMgr.getSatisfiedRules(((Player) sender).getUniqueId());
+                Player p = (Player) sender;
+
+                Set<Rule> satisfiedRules = getSatisfiedRules(p.getUniqueId());
                 if (satisfiedRules.size() == 0) {
                     sender.sendMessage(Locale.get("nothing-to-acquire"));
                     return true;
                 }
-                breakpoint:
-                if (args.length <= 1) { // acquire all
-                    for (Rule r : satisfiedRules) {
-                        applyReward(r, (Player) sender);
-                        recordMgr.setRuleAcquired(((Player) sender).getUniqueId(), r);
-                    }
-                    recordMgr.save();
-                } else {
-                    if (!rules.containsKey(args[1])) {
-                        sender.sendMessage(Locale.get("no-such-rule"));
-                        return true;
-                    }
-                    for (Rule r : satisfiedRules) {
-                        if (r.name.equalsIgnoreCase(args[1])) {
-                            applyReward(r, (Player) sender);
-                            recordMgr.setRuleAcquired(((Player) sender).getUniqueId(), r);
-                            recordMgr.save();
-                            break breakpoint;
-                        }
-                    }
-                    sender.sendMessage(Locale.get("cannot-acquire", args[1]));
+                // feature removed: acquire particular reward
+                for (Rule r : satisfiedRules) {
+                    applyReward(r, p);
+                    updater.markRuleAsApplied(p.getUniqueId(), r);
                 }
             } else {
                 sender.sendMessage(Locale.get("no-permission"));
@@ -233,7 +255,7 @@ public class Main extends JavaPlugin implements Runnable, Listener {
             if (sender.hasPermission("ptt.view.others")) {
                 OfflinePlayer p = Bukkit.getOfflinePlayer(args[0]);
                 if (p instanceof Player) {
-                    recordMgr.updateSingle((Player) p);
+                    updater.updateSingle((Player) p);
                 }
                 printStatistic(sender, p);
             } else {
@@ -241,6 +263,72 @@ public class Main extends JavaPlugin implements Runnable, Listener {
             }
             return true;
         }
+    }
+
+    private void printStatistic(CommandSender s, OfflinePlayer p) {
+        s.sendMessage(Locale.get("statistic-for", p.getName()));
+        SessionedRecord rec = updater.getFullRecord(p.getUniqueId());
+        if (rec.dbRec == null) {
+            s.sendMessage(Locale.get("statistic-no-record"));
+        } else {
+            s.sendMessage(Locale.get("statistic-day", Locale.formatTime(rec.dbRec.dailyTime)));
+            s.sendMessage(Locale.get("statistic-week", Locale.formatTime(rec.dbRec.weeklyTime)));
+            s.sendMessage(Locale.get("statistic-month", Locale.formatTime(rec.dbRec.monthlyTime)));
+            s.sendMessage(Locale.get("statistic-total", Locale.formatTime(rec.dbRec.totalTime)));
+            if (p.isOnline() && rec.getSessionTime() > 0) {
+                s.sendMessage(Locale.get("statistic-session", Locale.formatTime(rec.getSessionTime())));
+            }
+        }
+    }
+
+    /**
+     * Only DAY, WEEK, MONTH, DISPOSABLE and SESSION type will be returned here
+     * LONGTIMENOSEE is checked in playerLoginEvent
+     *
+     * @param id uuid of the player
+     * @return set of rules, not null
+     */
+    @NotNull
+    public Set<Rule> getSatisfiedRules(UUID id) {
+        Set<Rule> ret = new HashSet<>();
+        SessionedRecord rec = updater.getFullRecord(id);
+        if (rec.getSessionTime() > 0) {
+            ret.addAll(
+                    rules.values().stream().filter(r -> r.period == Rule.PeriodType.SESSION)
+                            .filter(r -> rec.getSessionTime() > r.require * 60 * 1000)
+                            .filter(r -> rec.getSessionTime() < (r.require + r.timeout) * 60 * 1000 || r.timeout < 0)
+                            .filter(r -> !rec.getCompletedSessionMissions().contains(r.name))
+                            .filter(r -> inGroup(id, r.group))
+                            .collect(Collectors.toSet())
+            );
+        }
+        if (rec.dbRec != null) {
+            ret.addAll(rules.values().stream().filter(r -> r.period == Rule.PeriodType.DAY)
+                    .filter(r -> rec.dbRec.dailyTime > r.require * 60 * 1000)
+                    .filter(r -> rec.dbRec.dailyTime < (r.require + r.timeout) * 60 * 1000 || r.timeout < 0)
+                    .filter(r -> !rec.dbRec.completedDailyMissions.contains(r.name))
+                    .filter(r -> inGroup(id, r.group))
+                    .collect(Collectors.toSet()));
+            ret.addAll(rules.values().stream().filter(r -> r.period == Rule.PeriodType.WEEK)
+                    .filter(r -> rec.dbRec.weeklyTime > r.require * 60 * 1000)
+                    .filter(r -> rec.dbRec.weeklyTime < (r.require + r.timeout) * 60 * 1000 || r.timeout < 0)
+                    .filter(r -> !rec.dbRec.completedWeeklyMissions.contains(r.name))
+                    .filter(r -> inGroup(id, r.group))
+                    .collect(Collectors.toSet()));
+            ret.addAll(rules.values().stream().filter(r -> r.period == Rule.PeriodType.MONTH)
+                    .filter(r -> rec.dbRec.monthlyTime > r.require * 60 * 1000)
+                    .filter(r -> rec.dbRec.monthlyTime < (r.require + r.timeout) * 60 * 1000 || r.timeout < 0)
+                    .filter(r -> !rec.dbRec.completedMonthlyMissions.contains(r.name))
+                    .filter(r -> inGroup(id, r.group))
+                    .collect(Collectors.toSet()));
+            ret.addAll(rules.values().stream().filter(r -> r.period == Rule.PeriodType.DISPOSABLE)
+                    .filter(r -> rec.dbRec.totalTime > r.require * 60 * 1000)
+                    .filter(r -> rec.dbRec.totalTime < (r.require + r.timeout) * 60 * 1000 || r.timeout < 0)
+                    .filter(r -> !rec.dbRec.completedLifetimeMissions.contains(r.name))
+                    .filter(r -> inGroup(id, r.group))
+                    .collect(Collectors.toSet()));
+        }
+        return ret;
     }
 }
 

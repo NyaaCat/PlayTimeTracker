@@ -1,7 +1,8 @@
 apply plugin: 'java'
+apply plugin: 'idea'
 
 repositories {
-    jcenter()
+    mavenCentral()
     maven {
         name 'Sonatype'
         url 'https://oss.sonatype.org/content/groups/public'
@@ -9,6 +10,13 @@ repositories {
     maven {
         name 'Spigot'
         url 'https://hub.spigotmc.org/nexus/content/groups/public/'
+    }
+}
+
+idea {
+    module {
+        downloadJavadoc = true
+        downloadSources = true
     }
 }
 

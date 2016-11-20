@@ -16,7 +16,7 @@ public class Locale {
         prefix = getConfigStringWithColor(lang, "prefix");
     }
 
-    public static String get(String name, String... args) {
+    public static String get(String name, Object... args) {
         return prefix + String.format(getConfigStringWithColor(lang, name), args);
     }
 
@@ -24,22 +24,22 @@ public class Locale {
         ConfigurationSection s = lang.getConfigurationSection("statistic-time-format");
         String str = "";
         if (ms == 0)
-            return getConfigStringWithColor(s,"zero");
+            return getConfigStringWithColor(s, "zero");
 
         if (ms > 0) {
-            str = String.format(getConfigStringWithColor(s,"ms"), ms % 1000) + str;
+            str = String.format(getConfigStringWithColor(s, "ms"), ms % 1000) + str;
             ms = Math.floorDiv(ms, 1000);
         }
         if (ms > 0) {
-            str = String.format(getConfigStringWithColor(s,"s"), ms % 60) + str;
+            str = String.format(getConfigStringWithColor(s, "s"), ms % 60) + str;
             ms = Math.floorDiv(ms, 60);
         }
         if (ms > 0) {
-            str = String.format(getConfigStringWithColor(s,"m"), ms % 60) + str;
+            str = String.format(getConfigStringWithColor(s, "m"), ms % 60) + str;
             ms = Math.floorDiv(ms, 60);
         }
         if (ms > 0) {
-            str = String.format(getConfigStringWithColor(s,"h"), ms) + str;
+            str = String.format(getConfigStringWithColor(s, "h"), ms) + str;
         }
 
         return str;
