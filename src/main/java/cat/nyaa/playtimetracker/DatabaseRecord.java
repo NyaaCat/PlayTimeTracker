@@ -71,7 +71,7 @@ public class DatabaseRecord {
     }
 
     public void serialize(ConfigurationSection sec) {
-        sec.set("last_seen", lastSeen);
+        sec.set("last_seen", lastSeen.toString());
         sec.set("daily_play_time", dailyTime);
         sec.set("weekly_play_time", weeklyTime);
         sec.set("monthly_play_time", monthlyTime);

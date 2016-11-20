@@ -88,7 +88,7 @@ public class RecordManager {
      */
     private UUID updateAccumulative(UUID id) {
         if (id == null) return null;
-        if (Main.isAFK(id)) updateNonAccumulative(id);
+        if (Main.isAFK(id)) return updateNonAccumulative(id);
         DatabaseRecord rec = db.getRecord(id);
         if (rec == null) {
             db.createRecord(id, ZonedDateTime.now());
@@ -218,5 +218,6 @@ public class RecordManager {
                 break;
             }
         }
+        db.save();
     }
 }

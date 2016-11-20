@@ -70,6 +70,7 @@ public class Main extends JavaPlugin implements Runnable, Listener {
             database = new DatabaseManager(newDataFile);
         } else {
             if (legacyDataFile.isFile()) { // migrate old db
+                getLogger().info("Updating old database... data.txt");
                 database = new DatabaseManager(newDataFile, legacyDataFile);
             } else { // no database
                 getLogger().info("Creating database... database.yml");
@@ -149,7 +150,7 @@ public class Main extends JavaPlugin implements Runnable, Listener {
 
     @Override
     public void run() { // Auto-save timer
-        Set<UUID> affectedPlayers = updater.updateAllOnlinePlayers();
+        updater.updateAllOnlinePlayers();
         for (Player p : Bukkit.getOnlinePlayers()) {
             notifyAcquire(p);
         }
@@ -255,7 +256,7 @@ public class Main extends JavaPlugin implements Runnable, Listener {
             if (sender.hasPermission("ptt.view.others")) {
                 OfflinePlayer p = Bukkit.getOfflinePlayer(args[0]);
                 if (p instanceof Player) {
-                    updater.updateSingle((Player) p);
+                    updater.updateSingle(p);
                 }
                 printStatistic(sender, p);
             } else {
@@ -289,7 +290,7 @@ public class Main extends JavaPlugin implements Runnable, Listener {
      * @return set of rules, not null
      */
     @NotNull
-    public Set<Rule> getSatisfiedRules(UUID id) {
+    private Set<Rule> getSatisfiedRules(UUID id) {
         Set<Rule> ret = new HashSet<>();
         SessionedRecord rec = updater.getFullRecord(id);
         if (rec.getSessionTime() > 0) {
