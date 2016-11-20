@@ -93,4 +93,14 @@ public class DatabaseRecord {
         completedWeeklyMissions = new HashSet<>();
         completedMonthlyMissions = new HashSet<>();
     }
+
+    @Override
+    public String toString() {
+        return super.toString() + String.format(
+                "{\"last_seen\": \"%s\", \"daily_play_time\": %d, \"weekly_play_time\": %d, \"monthly_play_time\": %d, " +
+                        "\"total_play_time\": %d, \"daily_completed\": \"%s\", \"weekly_completed\": \"%s\", " +
+                        "\"monthly_completed\": \"%s\", \"lifetime_completed\": \"%s\"}",
+                lastSeen.toString(), dailyTime, weeklyTime, monthlyTime, totalTime,
+                completedDailyMissions, completedWeeklyMissions, completedMonthlyMissions, completedLifetimeMissions);
+    }
 }

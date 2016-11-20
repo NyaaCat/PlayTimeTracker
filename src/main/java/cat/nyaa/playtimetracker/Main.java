@@ -21,6 +21,7 @@ import java.io.File;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import static java.time.temporal.ChronoUnit.DAYS;
@@ -33,6 +34,20 @@ public class Main extends JavaPlugin implements Runnable, Listener {
 
     private Map<String, Rule> rules;
     private Map<String, Reward> rewardMap;
+
+    public static void log(String msg) {
+        if (instance == null) {
+            System.out.println("[PlayTimeTracker] " + msg);
+        } else {
+            instance.getLogger().info(msg);
+        }
+    }
+
+    public static void debug(String msg) {
+        if (instance != null) {
+            instance.getLogger().log(Level.FINE, msg);
+        }
+    }
 
     @Override
     public void onDisable() {
@@ -127,6 +142,7 @@ public class Main extends JavaPlugin implements Runnable, Listener {
         if (reward.getDescription() != null && reward.getDescription().length() > 0) {
             p.sendMessage(rewardMap.get(rule.reward).getDescription());
         }
+        log(String.format("Reward rule %s applied to player %s", rule.name, p.getName()));
     }
 
     private void notifyAcquire(Player p) {
@@ -150,6 +166,7 @@ public class Main extends JavaPlugin implements Runnable, Listener {
 
     @Override
     public void run() { // Auto-save timer
+        log("Auto-save timer executing...");
         updater.updateAllOnlinePlayers();
         for (Player p : Bukkit.getOnlinePlayers()) {
             notifyAcquire(p);

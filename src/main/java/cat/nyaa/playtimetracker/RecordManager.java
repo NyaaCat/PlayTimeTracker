@@ -88,7 +88,11 @@ public class RecordManager {
      */
     private UUID updateAccumulative(UUID id) {
         if (id == null) return null;
-        if (Main.isAFK(id)) return updateNonAccumulative(id);
+        if (Main.isAFK(id)) {
+            Main.debug("updateNonAccumulative due player AFK: " + id.toString());
+            return updateNonAccumulative(id);
+        }
+        Main.debug("updateAccumulative: " + id.toString());
         DatabaseRecord rec = db.getRecord(id);
         if (rec == null) {
             db.createRecord(id, ZonedDateTime.now());
@@ -98,24 +102,28 @@ public class RecordManager {
             rec.lastSeen = currentTime;
             long duration = Duration.between(lastSeen, currentTime).toMillis();
             if (duration <= 0) return null;
+            Main.debug(String.format("Time duration: %d (%s ~ %s)", duration, lastSeen.toString(), currentTime.toString()));
 
             ZonedDateTime startOfToday = currentTime.truncatedTo(ChronoUnit.DAYS);
             ZonedDateTime startOfWeek = currentTime.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).truncatedTo(ChronoUnit.DAYS);
             ZonedDateTime startOfMonth = currentTime.with(TemporalAdjusters.firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS);
 
             if (startOfToday.isAfter(lastSeen)) {
+                Main.debug("Daily time reset: " + id.toString());
                 rec.completedDailyMissions = new HashSet<>();
                 rec.dailyTime = Duration.between(startOfToday, currentTime).toMillis();
             } else {
                 rec.dailyTime += duration;
             }
             if (startOfWeek.isAfter(lastSeen)) {
+                Main.debug("Weekly time reset: " + id.toString());
                 rec.completedWeeklyMissions = new HashSet<>();
                 rec.weeklyTime = 0;
             } else {
                 rec.weeklyTime += duration;
             }
             if (startOfMonth.isAfter(lastSeen)) {
+                Main.debug("Daily time reset: " + id.toString());
                 rec.completedMonthlyMissions = new HashSet<>();
                 rec.monthlyTime = 0;
             } else {
@@ -128,6 +136,7 @@ public class RecordManager {
 
     private UUID updateNonAccumulative(UUID id) {
         if (id == null) return null;
+        Main.debug("updateNonAccumulative: " + id.toString());
         DatabaseRecord rec = db.getRecord(id);
         if (rec == null) {
             db.createRecord(id, ZonedDateTime.now());
@@ -143,14 +152,17 @@ public class RecordManager {
             ZonedDateTime startOfMonth = currentTime.with(TemporalAdjusters.firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS);
 
             if (startOfToday.isAfter(lastSeen)) {
+                Main.debug("Daily time reset: " + id.toString());
                 rec.completedDailyMissions = new HashSet<>();
                 rec.dailyTime = 0;
             }
             if (startOfWeek.isAfter(lastSeen)) {
+                Main.debug("Weekly time reset: " + id.toString());
                 rec.completedWeeklyMissions = new HashSet<>();
                 rec.weeklyTime = 0;
             }
             if (startOfMonth.isAfter(lastSeen)) {
+                Main.debug("Monthly time reset: " + id.toString());
                 rec.completedMonthlyMissions = new HashSet<>();
                 rec.monthlyTime = 0;
             }
@@ -173,6 +185,8 @@ public class RecordManager {
     }
 
     public void resetSingleStatistic(UUID id) {
+        if (id == null) return;
+        Main.log(String.format("Statistic reset for %s, old record: %s", id.toString(), db.getRecord(id)));
         db.createRecord(id, ZonedDateTime.now());
         db.save();
         sessionRewardMap.remove(id);

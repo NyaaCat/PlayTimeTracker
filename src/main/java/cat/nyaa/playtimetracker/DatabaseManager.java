@@ -46,17 +46,19 @@ public class DatabaseManager {
                     try {
                         a = UUID.fromString(tmp[0]);
                     } catch (IllegalArgumentException ex) {
-                        System.err.print("[PlayTimeTracker-LEGACY-DB]Illegal data line: " + line);
+                        Main.log("Illegal data line: " + line);
                         continue;
                     }
                     recordMap.put(a, DatabaseRecord.deserialize_legacy(a, tmp[1]));
                 }
             } catch (IOException ex) {
+                Main.log("Failed to parse legacy database");
                 ex.printStackTrace();
             } finally {
                 try {
                     if (fr != null) fr.close();
                 } catch (IOException ex) {
+                    Main.log("Failed to parse legacy database");
                     ex.printStackTrace();
                 }
             }
