@@ -66,9 +66,27 @@ public class DatabaseManager {
     }
 
     public void save() {
+        final Map<UUID, DatabaseRecord> clonedMap = new HashMap<>();
+        final File clonedFile = new File(dbFile.toURI());
+        for (Map.Entry<UUID, DatabaseRecord> entry : recordMap.entrySet()) {
+            clonedMap.put(entry.getKey(), entry.getValue().clone());
+        }
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                synchronizeSave(clonedFile, clonedMap);
+            }
+        }).start();
+    }
+
+    public void synchronizeSave() {
+        synchronizeSave(dbFile, recordMap);
+    }
+
+    private static synchronized void synchronizeSave(final File dbFile, final Map<UUID, DatabaseRecord> records) {
         YamlConfiguration cfg = new YamlConfiguration();
-        for (UUID id : recordMap.keySet()) {
-            recordMap.get(id).serialize(cfg.createSection(id.toString()));
+        for (UUID id : records.keySet()) {
+            records.get(id).serialize(cfg.createSection(id.toString()));
         }
         try {
             cfg.save(dbFile);

@@ -53,6 +53,7 @@ public class Main extends JavaPlugin implements Runnable, Listener {
     public void onDisable() {
         Bukkit.getScheduler().cancelTasks(this);
         updater.updateAllOnlinePlayers();
+        database.synchronizeSave();
     }
 
     @Override
@@ -166,7 +167,7 @@ public class Main extends JavaPlugin implements Runnable, Listener {
 
     @Override
     public void run() { // Auto-save timer
-        log("Auto-save timer executing...");
+        debug("Auto-save timer executing...");
         updater.updateAllOnlinePlayers();
         for (Player p : Bukkit.getOnlinePlayers()) {
             notifyAcquire(p);

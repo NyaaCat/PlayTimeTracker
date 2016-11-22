@@ -10,7 +10,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-public class DatabaseRecord {
+public class DatabaseRecord implements Cloneable {
     public UUID uuid;
     public ZonedDateTime lastSeen; // timestamp millisecond
     public long dailyTime; // millisecond
@@ -102,5 +102,22 @@ public class DatabaseRecord {
                         "\"monthly_completed\": \"%s\", \"lifetime_completed\": \"%s\"}",
                 lastSeen.toString(), dailyTime, weeklyTime, monthlyTime, totalTime,
                 completedDailyMissions, completedWeeklyMissions, completedMonthlyMissions, completedLifetimeMissions);
+    }
+
+    @Override
+    public DatabaseRecord clone() {
+        try {
+            DatabaseRecord r = (DatabaseRecord) super.clone();
+            r.completedLifetimeMissions = new HashSet<>(completedLifetimeMissions);
+            r.completedDailyMissions = new HashSet<>(completedDailyMissions);
+            r.completedMonthlyMissions = new HashSet<>(completedMonthlyMissions);
+            r.completedWeeklyMissions = new HashSet<>(completedWeeklyMissions);
+            r.lastSeen = ZonedDateTime.from(lastSeen);
+            return r;
+        } catch (CloneNotSupportedException ex) {
+            ex.printStackTrace();
+            Main.log("Failed to clone: " + toString());
+        }
+        return new DatabaseRecord();
     }
 }
