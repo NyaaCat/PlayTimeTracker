@@ -78,19 +78,20 @@ public class Main extends JavaPlugin implements Runnable, Listener {
         // Database
         File legacyDataFile = new File(getDataFolder(), "data.txt");
         File newDataFile = new File(getDataFolder(), "database.yml");
+        File recurrenceFile = new File(getDataFolder(), "recurrenceRules.yml");
         if (newDataFile.isFile()) {
             getLogger().info("Loading database... database.yml");
             if (legacyDataFile.isFile()) {
                 getLogger().info("You can manually remove the old database: data.txt");
             }
-            database = new DatabaseManager(newDataFile);
+            database = new DatabaseManager(newDataFile, recurrenceFile);
         } else {
             if (legacyDataFile.isFile()) { // migrate old db
                 getLogger().info("Updating old database... data.txt");
-                database = new DatabaseManager(newDataFile, legacyDataFile);
+                database = new DatabaseManager(newDataFile, legacyDataFile, recurrenceFile);
             } else { // no database
                 getLogger().info("Creating database... database.yml");
-                database = new DatabaseManager(newDataFile);
+                database = new DatabaseManager(newDataFile, recurrenceFile);
             }
         }
 
@@ -268,6 +269,27 @@ public class Main extends JavaPlugin implements Runnable, Listener {
                 sender.sendMessage(Locale.get("no-permission"));
             }
             return true;
+        } else if ("recur".equalsIgnoreCase(args[0])) {
+            if (sender.hasPermission("ptt.recurrence")) {
+                if (args.length < 3) return false;
+                String playerName = args[1];
+                String ruleName = args[2];
+                UUID id = getServer().getOfflinePlayer(playerName).getUniqueId();
+                Rule rule = rules.get(ruleName);
+                if (id != null) {
+                    if (rule != null && rule.period == Rule.PeriodType.DISPOSABLE) {
+                        database.setRecurrenceRule(ruleName, id);
+                        database.save();
+                    } else {
+                        sender.sendMessage(Locale.get("invalid-rule"));
+                    }
+                } else {
+                    sender.sendMessage(Locale.get("no-player"));
+                }
+            } else {
+                sender.sendMessage(Locale.get("no-permission"));
+            }
+            return true;
         } else if ("help".equalsIgnoreCase(args[0])) {
             return false;
         } else {
@@ -346,6 +368,17 @@ public class Main extends JavaPlugin implements Runnable, Listener {
                     .filter(r -> !rec.dbRec.completedLifetimeMissions.contains(r.name))
                     .filter(r -> inGroup(id, r.group))
                     .collect(Collectors.toSet()));
+        }
+        // check all recurrence rule
+        if (database.recurrenceMap.containsKey(id)) {
+            for (Map.Entry<String, Long> e : database.recurrenceMap.get(id).entrySet()) {
+                Rule r = rules.get(e.getKey());
+                if (r == null || r.period != Rule.PeriodType.DISPOSABLE) continue;
+                if (e.getValue() < r.require * 60 * 1000) continue;
+                if (r.timeout > 0 && e.getValue() > (r.require + r.timeout) * 60 * 1000) continue;
+                if (!inGroup(id, r.group)) continue;
+                ret.add(r);
+            }
         }
         return ret;
     }

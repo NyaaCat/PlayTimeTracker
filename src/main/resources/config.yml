@@ -27,6 +27,9 @@ message:
     zero: "No Record"
   statistic-no-record: "No record for that player."
 
+  no-player: "Player not found."
+  invalid-rule: "Not a valid disposable reward rule"
+
 ignore-afk: true
 save-interval: 60 #seconds
 display-on-login: false

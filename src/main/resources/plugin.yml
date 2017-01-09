@@ -9,7 +9,7 @@ commands:
     aliases: ptt
     permission: ptt.view
     permission-message: You do not have permission node <permission>
-    usage: "/<command> [{PlayerName}|reset <{PlayerName}|all>|reload|<acquire|ac> [{RuleName}]|help]"
+    usage: "/<command> [{PlayerName}|reset <{PlayerName}|all>|reload|acquire|ac|recur <PlayerName> <RuleName>|help]"
 
 permissions:
   ptt.view:
@@ -26,4 +26,7 @@ permissions:
     default: op
   ptt.reload:
     description: Reload configure
+    default: op
+  ptt.recurrence:
+    description: Set recurrence rule
     default: op

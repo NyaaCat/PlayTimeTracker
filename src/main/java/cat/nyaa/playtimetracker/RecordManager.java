@@ -130,6 +130,14 @@ public class RecordManager {
                 rec.monthlyTime += duration;
             }
             rec.totalTime += duration;
+
+            // update recurrence records
+            if (db.recurrenceMap.containsKey(id)) {
+                Map<String, Long> tmp = db.recurrenceMap.get(id);
+                for (String n : tmp.keySet()) {
+                    tmp.put(n, tmp.get(n) + duration);
+                }
+            }
         }
         return id;
     }
@@ -179,6 +187,7 @@ public class RecordManager {
         for (UUID id : ids) {
             db.createRecord(id, ZonedDateTime.now());
         }
+        db.recurrenceMap.clear();
         db.save();
         sessionRewardMap.clear();
         sessionTimeMap.clear();
@@ -188,6 +197,7 @@ public class RecordManager {
         if (id == null) return;
         Main.log(String.format("Statistic reset for %s, old record: %s", id.toString(), db.getRecord(id)));
         db.createRecord(id, ZonedDateTime.now());
+        db.recurrenceMap.remove(id);
         db.save();
         sessionRewardMap.remove(id);
         sessionTimeMap.remove(id);
@@ -229,6 +239,9 @@ public class RecordManager {
             }
             case DISPOSABLE: {
                 rec.completedLifetimeMissions.add(rule.name);
+                if (db.recurrenceMap.containsKey(id)) {
+                    db.recurrenceMap.get(id).remove(rule.name);
+                }
                 break;
             }
         }
