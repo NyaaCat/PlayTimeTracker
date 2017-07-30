@@ -140,9 +140,9 @@ public class Main extends JavaPlugin implements Runnable, Listener {
     private void applyReward(Rule rule, Player p) {
         Reward reward = rewardMap.get(rule.reward);
         reward.applyTo(p);
-        p.sendMessage(Locale.get("rule-applied", rule.name));
+        //p.sendMessage(Locale.get("rule-applied", rule.name));
         if (reward.getDescription() != null && reward.getDescription().length() > 0) {
-            p.sendMessage(rewardMap.get(rule.reward).getDescription());
+            p.sendMessage(Locale.get("rule-applied",rewardMap.get(rule.reward).getDescription()));
         }
         log(String.format("Reward rule %s applied to player %s", rule.name, p.getName()));
     }
@@ -159,8 +159,12 @@ public class Main extends JavaPlugin implements Runnable, Listener {
                     }
                 }).collect(Collectors.toSet());
         if (unacquired.size() > 0) {
-            p.sendMessage(Locale.get("have-reward-redeem"));
+            if (unacquired.size() != 1) p.sendMessage(Locale.get("have-reward-redeem", Locale.getNofix("notify-reward-name")));
             for (Rule s : unacquired) {
+                if (unacquired.size() == 1){
+                    p.sendMessage(Locale.get("have-reward-redeem", s.name));
+                    break;
+                }
                 p.sendMessage(Locale.get("have-reward-redeem-format", s.name));
             }
         }

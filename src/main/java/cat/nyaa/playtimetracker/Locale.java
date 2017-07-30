@@ -16,8 +16,12 @@ public class Locale {
         prefix = getConfigStringWithColor(lang, "prefix");
     }
 
+    public static String getNofix(String name, Object... args) {
+        return String.format(getConfigStringWithColor(lang, name), args);
+    }
+
     public static String get(String name, Object... args) {
-        return prefix + String.format(getConfigStringWithColor(lang, name), args);
+        return prefix + getNofix(name, args);
     }
 
     public static String formatTime(long ms) {
