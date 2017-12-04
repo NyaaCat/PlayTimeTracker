@@ -213,6 +213,7 @@ public class Main extends JavaPlugin implements Runnable, Listener {
         UUID id = event.getPlayer().getUniqueId();
         updater.sessionEnd(id);
     }
+    
     @Override
     public List<String> onTabComplete(CommandSender sender,Command command,String alias,String[] args){
         String[] SubCommand = {"reload","reset","acquire","ac","recur","help"};
@@ -248,8 +249,7 @@ public class Main extends JavaPlugin implements Runnable, Listener {
                 sender.sendMessage(Locale.get("no-permission"));
             }
             return true;
-        }
-        if ("reload".equalsIgnoreCase(args[0])) {
+        } else if ("reload".equalsIgnoreCase(args[0])) {
             if (sender.hasPermission("ptt.reload")) {
                 onDisable();
                 onEnable();
