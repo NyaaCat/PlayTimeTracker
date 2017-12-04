@@ -233,6 +233,7 @@ public class Main extends JavaPlugin implements Runnable, Listener {
                 }
             }
         }
+        if(ret.isEmpty())return null;
         return ret;
     }
     @Override
