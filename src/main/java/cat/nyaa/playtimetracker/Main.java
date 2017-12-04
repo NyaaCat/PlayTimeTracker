@@ -16,6 +16,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.command.TabCompleter;
 
 import java.io.File;
 import java.time.Duration;
@@ -112,6 +113,7 @@ public class Main extends JavaPlugin implements Runnable, Listener {
 
         // Schedule event
         getCommand("playtimetracker").setExecutor(this);
+        getCommand("playtimetracker").setTabCompleter(this);
         getServer().getPluginManager().registerEvents(this, this);
         Bukkit.getScheduler().runTaskTimer(this, this, cfg.getLong("save-interval") * 20L, cfg.getLong("save-interval") * 20L);
     }
@@ -211,7 +213,28 @@ public class Main extends JavaPlugin implements Runnable, Listener {
         UUID id = event.getPlayer().getUniqueId();
         updater.sessionEnd(id);
     }
-
+    @Override
+    public List<String> onTabComplete(CommandSender sender,Command command,String alias,String[] args){
+        String[] SubCommand = {"reload","reset","acquire","ac","recur","help"};
+        String[] resetSubCommand = {"all"};
+        List<String> ret= new ArrayList<String>();
+        if(args.length == 1){
+            for(int i = 0;i < SubCommand.length;i++){
+                if(args[0].equalsIgnoreCase(SubCommand[i])) return null;
+                if(args[0].length() < SubCommand[i].length()){
+                    if(SubCommand[i].substring(0,args[0].length()).equalsIgnoreCase(args[0])) ret.add(SubCommand[i]);
+                }
+            }
+        }else if(args.length == 2 && args[1].equalsIgnoreCase("reset")){
+            for(int i = 0;i < resetSubCommand.length;i++){
+                if(args[1].equalsIgnoreCase(resetSubCommand[i])) return null;
+                if(args[1].length() < resetSubCommand[i].length()){
+                    if(resetSubCommand[i].substring(0,args[1].length()).equalsIgnoreCase(args[1])) ret.add(resetSubCommand[i]);
+                }
+            }
+        }
+        return ret;
+    }
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (args.length == 0) {
@@ -224,7 +247,8 @@ public class Main extends JavaPlugin implements Runnable, Listener {
                 sender.sendMessage(Locale.get("no-permission"));
             }
             return true;
-        } else if ("reload".equalsIgnoreCase(args[0])) {
+        }
+        if ("reload".equalsIgnoreCase(args[0])) {
             if (sender.hasPermission("ptt.reload")) {
                 onDisable();
                 onEnable();
