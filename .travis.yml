@@ -15,8 +15,7 @@ deploy:
   skip_cleanup: true
   provider: releases
   prerelease: true
-  api_key:
-    secure: "gfdq9ihU/FgqNEwFuuzG1Aclpah+EAgOhXYF5cnjh/dNT2zextNUTf3eWwtdJHRC6Rf8LbeQozwIhzWs8EgCtyH/1oSQ6KZD1I+PLV20DaUPy9jWUQ+V6EqFn6b2nl4xT2+jh4yJwMe1nF+V/BOmn9QLE2B+y+md6Yo80IoPEDCb9mK2HkxoXzo2fe9XOcmMSFdnh+Bh85PSWYZVCo1xx0ArQmgs/aO6U8k3145pfz7lAzvWzFmwE/6KSNEDAbseQrq9e1kwPacHqQUVbTLqGwZzS6BjS8K0s4Epn5VU2ckWThc4ho3lXVMQntSH+gTWGBxbcYybl04Gjte7fCuTqFZ/MK7C8QvYUTPZyJL+xlHKrvWHWuCFscNjJIK8Na7TVVpKwaWM9XL4OnZTeDiQ+6vm3fJpdWo2guoqiPgrwbAY+hYJ9TAdmtEYDdtBF4UaXtIXwvP8rN8mxk554CDr1tAsQNAIdxtThzDDIhuiFoCRpTknoo0Oc4tnQogTuynrCwKo1jECBaKfKkvOFD7KuDJRFZmOPDsR/Hm+KPF4vO1P2oYy6oBFa5bOgLuaZmm0MKBHSvJkYdbYCK8QbIdAium8XX3RbbZgeMFhOKv8IizPdG/jGPFbAQEFs6mRy6dAHzRw16gXghOkmMJvvA59RPnVbktGeA/UEfUqEzmAJnE="
+  api_key: "${GITHUB_KEY}"
   file: build/libs/PlayTimeTracker.jar
   on:
     tags: false
