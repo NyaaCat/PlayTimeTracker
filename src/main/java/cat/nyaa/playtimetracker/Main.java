@@ -1,7 +1,6 @@
 package cat.nyaa.playtimetracker;
 
 import cat.nyaa.playtimetracker.RecordManager.SessionedRecord;
-import com.avaje.ebean.validation.NotNull;
 import net.ess3.api.IEssentials;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -28,7 +27,7 @@ import static java.time.temporal.ChronoUnit.DAYS;
 
 public class Main extends JavaPlugin implements Runnable, Listener {
     private static Main instance;
-    private FileConfiguration cfg; // main config file
+    public FileConfiguration cfg; // main config file
     private DatabaseManager database;
     private RecordManager updater;
 
@@ -114,18 +113,22 @@ public class Main extends JavaPlugin implements Runnable, Listener {
         getCommand("playtimetracker").setExecutor(this);
         getServer().getPluginManager().registerEvents(this, this);
         Bukkit.getScheduler().runTaskTimer(this, this, cfg.getLong("save-interval") * 20L, cfg.getLong("save-interval") * 20L);
+        new AfkListener(this);
     }
 
     // Essential Hooks
-    private IEssentials ess = null;
+    public IEssentials ess = null;
 
     public static boolean isAFK(UUID id) {
-        return instance != null && instance._isAFK(id);
+        return instance != null && instance.cfg.getBoolean("check-afk") && instance._isAFK(id);
     }
 
     private boolean _isAFK(UUID id) {
-        if (!cfg.getBoolean("ignore-afk") || ess == null || id == null) return false;
-        else return ess.getUser(id).isAfk();
+        if (id == null) return false;
+        if (cfg.getBoolean("use-ess-afk-status") && ess != null) {
+            return ess.getUser(id).isAfk();
+        }
+        return AfkListener.checkAfk && AfkListener.isAfk(id);
     }
 
     private boolean inGroup(UUID id, Set<String> group) {
@@ -329,7 +332,6 @@ public class Main extends JavaPlugin implements Runnable, Listener {
      * @param id uuid of the player
      * @return set of rules, not null
      */
-    @NotNull
     private Set<Rule> getSatisfiedRules(UUID id) {
         Set<Rule> ret = new HashSet<>();
         SessionedRecord rec = updater.getFullRecord(id);

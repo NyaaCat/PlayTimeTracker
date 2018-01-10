@@ -30,7 +30,14 @@ message:
   no-player: "Player not found."
   invalid-rule: "Not a valid disposable reward rule"
 
-ignore-afk: true
+check-afk: true
+use-ess-afk-status: false
+afk-time: 180 #seconds
+afk-check-interval: 30 #seconds
+cancel-afk-on:
+  chat: true
+  command: true
+  move: true
 save-interval: 60 #seconds
 display-on-login: false
 

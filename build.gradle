@@ -11,6 +11,11 @@ repositories {
         name 'Spigot'
         url 'https://hub.spigotmc.org/nexus/content/groups/public/'
     }
+
+    maven {
+        name 'EssentialsX'
+        url 'https://ci.ender.zone/plugin/repository/everything/'
+    }
 }
 
 idea {
@@ -21,6 +26,9 @@ idea {
 }
 
 dependencies {
-    compile 'org.spigotmc:spigot-api:1.11.2-R0.1-SNAPSHOT'
-    compile files('libs/Essentials-2.x-SNAPSHOT.jar')
+    compile 'org.spigotmc:spigot-api:1.12-R0.1-SNAPSHOT'
+    compile 'net.ess3:EssentialsX:2.0.1'
+}
+compileJava {
+    options.compilerArgs += ["-Xlint:deprecation", "-Xlint:unchecked"]
 }
