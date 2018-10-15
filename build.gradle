@@ -26,7 +26,7 @@ idea {
 }
 
 dependencies {
-    compile 'org.spigotmc:spigot-api:1.12-R0.1-SNAPSHOT'
+    compile 'org.spigotmc:spigot-api:1.13.1-R0.1-SNAPSHOT'
     compile 'net.ess3:EssentialsX:2.0.1'
 }
 compileJava {

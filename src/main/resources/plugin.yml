@@ -2,6 +2,7 @@ name: PlayTimeTracker
 main: cat.nyaa.playtimetracker.Main
 version: 0.1
 softdepend: [Essentials]
+api-version: 1.13
 
 commands:
   playtimetracker:
