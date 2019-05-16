@@ -1,34 +1,59 @@
-apply plugin: 'java'
-apply plugin: 'idea'
+apply plugin: "java-library"
+apply plugin: "maven-publish"
+
+ext.majorVersion = 0
+ext.minorVersion = 1
+ext.minecraftVersion = "1.14.1"
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+// Suppiled by Jenkins
+ext.buildNumber = System.env.BUILD_NUMBER == null ? "x"                : "$System.env.BUILD_NUMBER"
+ext.mavenDirectory = System.env.MAVEN_DIR == null ? "$projectDir/repo" : "$System.env.MAVEN_DIR"
+
+// Version used for distribution. Different from maven repo
+group = "cat.nyaa"
+archivesBaseName = "PlayTimeTracker-mc$minecraftVersion"
+version = "$majorVersion.$minorVersion.$buildNumber"
 
 repositories {
-    mavenCentral()
-    maven {
-        name 'Sonatype'
-        url 'https://oss.sonatype.org/content/groups/public'
-    }
-    maven {
-        name 'Spigot'
-        url 'https://hub.spigotmc.org/nexus/content/groups/public/'
-    }
-
-    maven {
-        name 'EssentialsX'
-        url 'https://ci.ender.zone/plugin/repository/everything/'
-    }
-}
-
-idea {
-    module {
-        downloadJavadoc = true
-        downloadSources = true
-    }
+    jcenter()
+    maven { name 'Spigot';      url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
+    maven { name 'Sonatype';    url 'https://oss.sonatype.org/content/groups/public' }
+    maven { name 'EssentialsX'; url 'https://ci.ender.zone/plugin/repository/everything' }
 }
 
 dependencies {
-    compile 'org.spigotmc:spigot-api:1.13.1-R0.1-SNAPSHOT'
-    compile 'net.ess3:EssentialsX:2.0.1'
+    compileOnly "org.spigotmc:spigot-api:$minecraftVersion-R0.1-SNAPSHOT"
+    compileOnly 'net.ess3:EssentialsX:2.0.1'
 }
+
 compileJava {
     options.compilerArgs += ["-Xlint:deprecation", "-Xlint:unchecked"]
+}
+
+task sourcesJar(type: Jar) {
+    from sourceSets.main.allJava
+    archiveClassifier = 'sources'
+}
+processResources { // modify version string
+    filesMatching("**/plugin.yml") {
+        expand 'version': project.version
+    }
+}
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifact sourcesJar
+            groupId "cat.nyaa"
+            artifactId "playtimetracker"
+            version "$majorVersion.$minorVersion-SNAPSHOT"
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            url "${mavenDirectory}"
+        }
+    }
 }
