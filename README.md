@@ -1,6 +1,6 @@
 # PlayTimeTracker
 
-[![Build Status](https://travis-ci.org/NyaaCat/PlayTimeTracker.svg)](https://travis-ci.org/NyaaCat/PlayTimeTracker)
+[![Build Status](https://ci.nyaacat.com/job/PlayTimeTracker/badge/icon)](https://ci.nyaacat.com/job/PlayTimeTracker/)
 
 Playtime tracking plugin for Bukkit/Spigot
 
@@ -30,7 +30,11 @@ Playtime tracking plugin for Bukkit/Spigot
 ### Configuration
 
 (Pending update)
- 
+
+### Version History
+- 0.2.x : Minecraft 1.14.4, since build 30
+- 0.1.x
+
 ### License
 
 MIT.

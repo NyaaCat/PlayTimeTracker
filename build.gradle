@@ -1,19 +1,23 @@
 apply plugin: "java-library"
 apply plugin: "maven-publish"
 
+// Plugin config
+ext.pluginName = "PlayTimeTracker"
+ext.pluginname = ext.pluginName.toLowerCase()
 ext.majorVersion = 0
-ext.minorVersion = 1
-ext.minecraftVersion = "1.14.1"
+ext.minorVersion = 2
+ext.minecraftVersion = "1.14.4"
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 // Suppiled by Jenkins
 ext.buildNumber = System.env.BUILD_NUMBER == null ? "x"                : "$System.env.BUILD_NUMBER"
 ext.mavenDirectory = System.env.MAVEN_DIR == null ? "$projectDir/repo" : "$System.env.MAVEN_DIR"
+ext.jdDirectory = System.env.JAVADOCS_DIR == null ? null               : "$System.env.JAVADOCS_DIR"
 
 // Version used for distribution. Different from maven repo
 group = "cat.nyaa"
-archivesBaseName = "PlayTimeTracker-mc$minecraftVersion"
+archivesBaseName = "${pluginName}-mc$minecraftVersion"
 version = "$majorVersion.$minorVersion.$buildNumber"
 
 repositories {
@@ -25,16 +29,23 @@ repositories {
 
 dependencies {
     compileOnly "org.spigotmc:spigot-api:$minecraftVersion-R0.1-SNAPSHOT"
-    compileOnly 'net.ess3:EssentialsX:2.0.1'
+    compileOnly('net.ess3:EssentialsX:2.17.0') { transitive = false }
 }
 
 compileJava {
-    options.compilerArgs += ["-Xlint:deprecation", "-Xlint:unchecked"]
+    options.compilerArgs += ["-Xlint:deprecation"]
 }
 
 task sourcesJar(type: Jar) {
     from sourceSets.main.allJava
-    archiveClassifier = 'sources'
+    archiveClassifier = "sources"
+}
+if (ext.jdDirectory != null) {
+    javadoc.destinationDir = file("${jdDirectory}/${pluginname}-${version}")
+}
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    archiveClassifier = 'javadoc'
+    from javadoc.destinationDir
 }
 processResources { // modify version string
     filesMatching("**/plugin.yml") {
@@ -45,8 +56,8 @@ publishing {
     publications {
         mavenJava(MavenPublication) {
             artifact sourcesJar
-            groupId "cat.nyaa"
-            artifactId "playtimetracker"
+            artifact javadocJar
+            artifactId "${pluginname}"
             version "$majorVersion.$minorVersion-SNAPSHOT"
             from components.java
         }
@@ -55,5 +66,28 @@ publishing {
         maven {
             url "${mavenDirectory}"
         }
+    }
+}
+
+
+javadoc {
+    (options as StandardJavadocDocletOptions).with {
+        links 'https://docs.oracle.com/javase/8/docs/api/'
+        links 'https://hub.spigotmc.org/javadocs/spigot/'
+        links 'https://google.github.io/guava/releases/21.0/api/docs/'
+        links 'https://ci.md-5.net/job/BungeeCord/ws/chat/target/apidocs/'
+
+        locale 'en_US'
+        encoding 'UTF-8'
+        docEncoding 'UTF-8'
+        addBooleanOption('keywords', true)
+        addStringOption('Xdoclint:none', '-quiet')
+
+        if (JavaVersion.current() > JavaVersion.VERSION_1_9) {
+            options.addBooleanOption('html5', true)
+        }
+
+        windowTitle = "${pluginName} Javadoc"
+        docTitle = "${pluginName} (mc$minecraftVersion-${project.version})"
     }
 }
