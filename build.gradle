@@ -5,8 +5,8 @@ apply plugin: "maven-publish"
 ext.pluginName = "PlayTimeTracker"
 ext.pluginname = ext.pluginName.toLowerCase()
 ext.majorVersion = 0
-ext.minorVersion = 2
-ext.minecraftVersion = "1.14.4"
+ext.minorVersion = 3
+ext.minecraftVersion = "1.15.1"
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
@@ -29,7 +29,7 @@ repositories {
 
 dependencies {
     compileOnly "org.spigotmc:spigot-api:$minecraftVersion-R0.1-SNAPSHOT"
-    compileOnly('net.ess3:EssentialsX:2.17.0') { transitive = false }
+    compileOnly('net.ess3:EssentialsX:2.17.1') { transitive = false }
 }
 
 compileJava {

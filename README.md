@@ -32,6 +32,7 @@ Playtime tracking plugin for Bukkit/Spigot
 (Pending update)
 
 ### Version History
+- 0.3.x : Minecraft 1.15.1, since build 31
 - 0.2.x : Minecraft 1.14.4, since build 30
 - 0.1.x
 
