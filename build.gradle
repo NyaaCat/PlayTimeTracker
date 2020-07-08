@@ -6,7 +6,7 @@ ext.pluginName = "PlayTimeTracker"
 ext.pluginname = ext.pluginName.toLowerCase()
 ext.majorVersion = 0
 ext.minorVersion = 3
-ext.minecraftVersion = "1.15.1"
+ext.minecraftVersion = "1.16.1"
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
