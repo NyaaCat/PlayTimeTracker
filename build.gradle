@@ -5,7 +5,7 @@ apply plugin: "maven-publish"
 ext.pluginName = "PlayTimeTracker"
 ext.pluginname = ext.pluginName.toLowerCase()
 ext.majorVersion = 0
-ext.minorVersion = 3
+ext.minorVersion = 4
 ext.minecraftVersion = "1.16.1"
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -29,7 +29,7 @@ repositories {
 
 dependencies {
     compileOnly "org.spigotmc:spigot-api:$minecraftVersion-R0.1-SNAPSHOT"
-    compileOnly('net.ess3:EssentialsX:2.17.1') { transitive = false }
+    compileOnly('net.ess3:EssentialsX:2.18.0') { transitive = false }
 }
 
 compileJava {
@@ -72,7 +72,7 @@ publishing {
 
 javadoc {
     (options as StandardJavadocDocletOptions).with {
-        links 'https://docs.oracle.com/javase/8/docs/api/'
+        links 'https://docs.oracle.com/en/java/javase/14/docs/api/'
         links 'https://hub.spigotmc.org/javadocs/spigot/'
         links 'https://google.github.io/guava/releases/21.0/api/docs/'
         links 'https://ci.md-5.net/job/BungeeCord/ws/chat/target/apidocs/'
