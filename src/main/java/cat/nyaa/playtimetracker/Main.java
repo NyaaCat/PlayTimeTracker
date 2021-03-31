@@ -325,6 +325,8 @@ public class Main extends JavaPlugin implements Runnable, Listener {
                 OfflinePlayer p = Bukkit.getOfflinePlayer(args[0]);
                 if (p instanceof Player) {
                     updater.updateSingle(p);
+                } else {
+                    //TODO: offline player update data
                 }
                 printStatistic(sender, p);
             } else {
@@ -340,9 +342,23 @@ public class Main extends JavaPlugin implements Runnable, Listener {
         if (rec.dbRec == null) {
             s.sendMessage(Locale.get("statistic-no-record"));
         } else {
-            s.sendMessage(Locale.get("statistic-day", Locale.formatTime(rec.dbRec.dailyTime)));
-            s.sendMessage(Locale.get("statistic-week", Locale.formatTime(rec.dbRec.weeklyTime)));
-            s.sendMessage(Locale.get("statistic-month", Locale.formatTime(rec.dbRec.monthlyTime)));
+            boolean differentYear = false;
+            boolean differentMonth = false;
+            boolean differentWeek = false;
+            boolean differentDay = false;
+            if(!p.isOnline()) {
+                ZonedDateTime now = ZonedDateTime.now();
+                ZonedDateTime last = rec.dbRec.lastSeen;
+                int diffDayOfMonth = now.getDayOfMonth() - last.getDayOfMonth();
+                differentYear = last.getYear() != now.getYear();
+                differentMonth = differentYear || (last.getMonth() != now.getMonth());
+                differentWeek = differentMonth || Math.abs(diffDayOfMonth) >= 7 ||
+                        (diffDayOfMonth * (now.getDayOfWeek().getValue() - last.getDayOfWeek().getValue())) < 0;
+                differentDay = differentMonth || (diffDayOfMonth != 0);
+            }
+            s.sendMessage(Locale.get("statistic-day", Locale.formatTime(differentDay ? 0 : rec.dbRec.dailyTime)));
+            s.sendMessage(Locale.get("statistic-week", Locale.formatTime(differentWeek ? 0 : rec.dbRec.weeklyTime)));
+            s.sendMessage(Locale.get("statistic-month", Locale.formatTime(differentMonth ? 0 : rec.dbRec.monthlyTime)));
             s.sendMessage(Locale.get("statistic-total", Locale.formatTime(rec.dbRec.totalTime)));
             if (p.isOnline() && rec.getSessionTime() > 0) {
                 s.sendMessage(Locale.get("statistic-session", Locale.formatTime(rec.getSessionTime())));

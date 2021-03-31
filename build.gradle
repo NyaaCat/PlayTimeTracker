@@ -91,3 +91,9 @@ javadoc {
         docTitle = "${pluginName} (mc$minecraftVersion-${project.version})"
     }
 }
+
+task copyToDebug(type: Copy) {
+    from "build/libs"
+    into project.getProperties().get("target")
+    exclude("*-javadoc.jar", "*-sources.jar")
+}
