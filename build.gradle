@@ -5,10 +5,10 @@ apply plugin: "maven-publish"
 ext.pluginName = "PlayTimeTracker"
 ext.pluginname = ext.pluginName.toLowerCase()
 ext.majorVersion = 0
-ext.minorVersion = 4
-ext.minecraftVersion = "1.16.1"
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+ext.minorVersion = 5
+ext.minecraftVersion = "1.17"
+sourceCompatibility = 16
+targetCompatibility = 16
 
 // Suppiled by Jenkins
 ext.buildNumber = System.env.BUILD_NUMBER == null ? "x"                : "$System.env.BUILD_NUMBER"
@@ -21,7 +21,7 @@ archivesBaseName = "${pluginName}-mc$minecraftVersion"
 version = "$majorVersion.$minorVersion.$buildNumber"
 
 repositories {
-    jcenter()
+    mavenCentral()
     maven { name 'Spigot';      url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
     maven { name 'Sonatype';    url 'https://oss.sonatype.org/content/groups/public' }
     maven { name 'EssentialsX'; url 'https://ci.ender.zone/plugin/repository/everything' }
