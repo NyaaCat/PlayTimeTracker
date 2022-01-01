@@ -1,16 +1,18 @@
-apply plugin: "java-library"
-apply plugin: "maven-publish"
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
 
 // Plugin config
 ext.pluginName = "PlayTimeTracker"
 ext.pluginname = ext.pluginName.toLowerCase()
 ext.majorVersion = 0
-ext.minorVersion = 5
-ext.minecraftVersion = "1.17"
-sourceCompatibility = 16
-targetCompatibility = 16
+ext.minorVersion = 6
+ext.minecraftVersion = "1.18"
+sourceCompatibility = 17
+targetCompatibility = 17
 
-// Suppiled by Jenkins
+// Supplied by Jenkins
 ext.buildNumber = System.env.BUILD_NUMBER == null ? "x"                : "$System.env.BUILD_NUMBER"
 ext.mavenDirectory = System.env.MAVEN_DIR == null ? "$projectDir/repo" : "$System.env.MAVEN_DIR"
 ext.jdDirectory = System.env.JAVADOCS_DIR == null ? null               : "$System.env.JAVADOCS_DIR"
@@ -18,34 +20,42 @@ ext.jdDirectory = System.env.JAVADOCS_DIR == null ? null               : "$Syste
 // Version used for distribution. Different from maven repo
 group = "cat.nyaa"
 archivesBaseName = "${pluginName}-mc$minecraftVersion"
-version = "$majorVersion.$minorVersion.$buildNumber"
+version = "$majorVersion.$minorVersion.$buildNumber".toString()
 
 repositories {
     mavenCentral()
-    maven { name 'Spigot';      url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
-    maven { name 'Sonatype';    url 'https://oss.sonatype.org/content/groups/public' }
-    maven { name 'EssentialsX'; url 'https://ci.ender.zone/plugin/repository/everything' }
+    //'Spigot';
+    maven { url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
+    maven { url = 'https://oss.sonatype.org/content/repositories/snapshots' }
+    maven { url = 'https://oss.sonatype.org/content/repositories/central' }
+
+    maven { name 'Sonatype';            url 'https://oss.sonatype.org/content/groups/public' }
+    maven {name "essentialsx-releases"; url "https://repo.essentialsx.net/releases/"}
+    maven {name "papermc";              url "https://papermc.io/repo/repository/maven-public/"}
+
 }
 
 dependencies {
     compileOnly "org.spigotmc:spigot-api:$minecraftVersion-R0.1-SNAPSHOT"
-    compileOnly('net.ess3:EssentialsX:2.18.0') { transitive = false }
+    compileOnly 'net.essentialsx:EssentialsX:2.19.0'
+    compileOnly 'org.jetbrains:annotations:22.0.0'
 }
 
 compileJava {
     options.compilerArgs += ["-Xlint:deprecation"]
+    options.encoding = 'UTF-8'
 }
 
 task sourcesJar(type: Jar) {
-    from sourceSets.main.allJava
-    archiveClassifier = "sources"
+    archiveClassifier.set('sources')
+    from sourceSets.main.java.srcDirs
+}
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    archiveClassifier.set('javadoc')
+    from javadoc.destinationDir
 }
 if (ext.jdDirectory != null) {
     javadoc.destinationDir = file("${jdDirectory}/${pluginname}-${version}")
-}
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    archiveClassifier = 'javadoc'
-    from javadoc.destinationDir
 }
 processResources { // modify version string
     filesMatching("**/plugin.yml") {
@@ -55,16 +65,18 @@ processResources { // modify version string
 publishing {
     publications {
         mavenJava(MavenPublication) {
+            group      project.group
+            artifactId pluginname
+            version "$majorVersion.$minorVersion-SNAPSHOT"
+
+            from components.java
             artifact sourcesJar
             artifact javadocJar
-            artifactId "${pluginname}"
-            version "$majorVersion.$minorVersion-SNAPSHOT"
-            from components.java
         }
     }
     repositories {
         maven {
-            url "${mavenDirectory}"
+            url mavenDirectory
         }
     }
 }
@@ -74,7 +86,7 @@ javadoc {
     (options as StandardJavadocDocletOptions).with {
         links 'https://docs.oracle.com/en/java/javase/14/docs/api/'
         links 'https://hub.spigotmc.org/javadocs/spigot/'
-        links 'https://google.github.io/guava/releases/21.0/api/docs/'
+        links 'https://guava.dev/releases/21.0/api/docs/'
         links 'https://ci.md-5.net/job/BungeeCord/ws/chat/target/apidocs/'
 
         locale 'en_US'
@@ -90,10 +102,4 @@ javadoc {
         windowTitle = "${pluginName} Javadoc"
         docTitle = "${pluginName} (mc$minecraftVersion-${project.version})"
     }
-}
-
-task copyToDebug(type: Copy) {
-    from "build/libs"
-    into project.getProperties().get("target")
-    exclude("*-javadoc.jar", "*-sources.jar")
 }

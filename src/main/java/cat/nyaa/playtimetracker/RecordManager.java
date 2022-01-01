@@ -18,46 +18,9 @@ import java.util.stream.Collectors;
  */
 public class RecordManager {
 
-    public class SessionedRecord {
-        private SessionedRecord(UUID id) {
-            this.id = id;
-            this.dbRec = db.getRecord(id);
-        }
-
-        private final UUID id;
-        public final DatabaseRecord dbRec;
-
-        public long getSessionTime() {
-            if (sessionTimeMap.containsKey(id)) {
-                return sessionTimeMap.get(id);
-            } else {
-                return -1;
-            }
-        }
-
-        public void setSessionTime(long time) {
-            if (sessionTimeMap.containsKey(id)) {
-                sessionTimeMap.put(id, time);
-            }
-        }
-
-        public Set<String> getCompletedSessionMissions() {
-            if (sessionRewardMap.containsKey(id)) {
-                return sessionRewardMap.get(id);
-            } else {
-                return sessionRewardMap.put(id, new HashSet<>());
-            }
-        }
-
-        public void setCompletedSessionMissions(Set<String> set) {
-            sessionRewardMap.put(id, set);
-        }
-    }
-
     private final DatabaseManager db;
     private final Map<UUID, Long> sessionTimeMap = new HashMap<>();
     private final Map<UUID, Set<String>> sessionRewardMap = new HashMap<>();
-
     public RecordManager(DatabaseManager db) {
         this.db = db;
     }
@@ -66,7 +29,7 @@ public class RecordManager {
         Set<UUID> tmp = Bukkit.getServer().getOnlinePlayers().stream()
                 .map(Player::getUniqueId)
                 .map(this::updateAccumulative)
-                .filter(u -> u != null)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
         db.save();
         return tmp;
@@ -88,11 +51,11 @@ public class RecordManager {
      */
     private UUID updateAccumulative(UUID id) {
         if (id == null) return null;
-        if (Main.isAFK(id)) {
-            Main.debug("updateNonAccumulative due player AFK: " + id.toString());
+        if (PTT.isAFK(id)) {
+            PTT.debug("updateNonAccumulative due player AFK: " + id);
             return updateNonAccumulative(id);
         }
-        Main.debug("updateAccumulative: " + id.toString());
+        PTT.debug("updateAccumulative: " + id);
         DatabaseRecord rec = db.getRecord(id);
         if (rec == null) {
             db.createRecord(id, ZonedDateTime.now());
@@ -102,28 +65,28 @@ public class RecordManager {
             rec.lastSeen = currentTime;
             long duration = Duration.between(lastSeen, currentTime).toMillis();
             if (duration <= 0) return null;
-            Main.debug(String.format("Time duration: %d (%s ~ %s)", duration, lastSeen.toString(), currentTime.toString()));
+            PTT.debug(String.format("Time duration: %d (%s ~ %s)", duration, lastSeen, currentTime));
 
             ZonedDateTime startOfToday = currentTime.truncatedTo(ChronoUnit.DAYS);
             ZonedDateTime startOfWeek = currentTime.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).truncatedTo(ChronoUnit.DAYS);
             ZonedDateTime startOfMonth = currentTime.with(TemporalAdjusters.firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS);
 
             if (startOfToday.isAfter(lastSeen)) {
-                Main.debug("Daily time reset: " + id.toString());
+                PTT.debug("Daily time reset: " + id);
                 rec.completedDailyMissions = new HashSet<>();
                 rec.dailyTime = Duration.between(startOfToday, currentTime).toMillis();
             } else {
                 rec.dailyTime += duration;
             }
             if (startOfWeek.isAfter(lastSeen)) {
-                Main.debug("Weekly time reset: " + id.toString());
+                PTT.debug("Weekly time reset: " + id);
                 rec.completedWeeklyMissions = new HashSet<>();
                 rec.weeklyTime = 0;
             } else {
                 rec.weeklyTime += duration;
             }
             if (startOfMonth.isAfter(lastSeen)) {
-                Main.debug("Daily time reset: " + id.toString());
+                PTT.debug("Daily time reset: " + id);
                 rec.completedMonthlyMissions = new HashSet<>();
                 rec.monthlyTime = 0;
             } else {
@@ -134,9 +97,7 @@ public class RecordManager {
             // update recurrence records
             if (db.recurrenceMap.containsKey(id)) {
                 Map<String, Long> tmp = db.recurrenceMap.get(id);
-                for (String n : tmp.keySet()) {
-                    tmp.put(n, tmp.get(n) + duration);
-                }
+                tmp.replaceAll((n, v) -> v + duration);
             }
         }
         return id;
@@ -144,7 +105,7 @@ public class RecordManager {
 
     private UUID updateNonAccumulative(UUID id) {
         if (id == null) return null;
-        Main.debug("updateNonAccumulative: " + id.toString());
+        PTT.debug("updateNonAccumulative: " + id);
         DatabaseRecord rec = db.getRecord(id);
         if (rec == null) {
             db.createRecord(id, ZonedDateTime.now());
@@ -160,17 +121,17 @@ public class RecordManager {
             ZonedDateTime startOfMonth = currentTime.with(TemporalAdjusters.firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS);
 
             if (startOfToday.isAfter(lastSeen)) {
-                Main.debug("Daily time reset: " + id.toString());
+                PTT.debug("Daily time reset: " + id);
                 rec.completedDailyMissions = new HashSet<>();
                 rec.dailyTime = 0;
             }
             if (startOfWeek.isAfter(lastSeen)) {
-                Main.debug("Weekly time reset: " + id.toString());
+                PTT.debug("Weekly time reset: " + id);
                 rec.completedWeeklyMissions = new HashSet<>();
                 rec.weeklyTime = 0;
             }
             if (startOfMonth.isAfter(lastSeen)) {
-                Main.debug("Monthly time reset: " + id.toString());
+                PTT.debug("Monthly time reset: " + id);
                 rec.completedMonthlyMissions = new HashSet<>();
                 rec.monthlyTime = 0;
             }
@@ -195,7 +156,7 @@ public class RecordManager {
 
     public void resetSingleStatistic(UUID id) {
         if (id == null) return;
-        Main.log(String.format("Statistic reset for %s, old record: %s", id.toString(), db.getRecord(id)));
+        PTT.log(String.format("Statistic reset for %s, old record: %s", id, db.getRecord(id)));
         db.createRecord(id, ZonedDateTime.now());
         db.recurrenceMap.remove(id);
         db.save();
@@ -225,26 +186,51 @@ public class RecordManager {
         DatabaseRecord rec = db.getRecord(id);
         if (rec == null) return;
         switch (rule.period) {
-            case DAY: {
-                rec.completedDailyMissions.add(rule.name);
-                break;
-            }
-            case WEEK: {
-                rec.completedWeeklyMissions.add(rule.name);
-                break;
-            }
-            case MONTH: {
-                rec.completedMonthlyMissions.add(rule.name);
-                break;
-            }
-            case DISPOSABLE: {
+            case DAY -> rec.completedDailyMissions.add(rule.name);
+            case WEEK -> rec.completedWeeklyMissions.add(rule.name);
+            case MONTH -> rec.completedMonthlyMissions.add(rule.name);
+            case DISPOSABLE -> {
                 rec.completedLifetimeMissions.add(rule.name);
                 if (db.recurrenceMap.containsKey(id)) {
                     db.recurrenceMap.get(id).remove(rule.name);
                 }
-                break;
             }
         }
         db.save();
+    }
+
+    public class SessionedRecord {
+        public final DatabaseRecord dbRec;
+        private final UUID id;
+        private SessionedRecord(UUID id) {
+            this.id = id;
+            this.dbRec = db.getRecord(id);
+        }
+
+        public long getSessionTime() {
+            if (sessionTimeMap.containsKey(id)) {
+                return sessionTimeMap.get(id);
+            } else {
+                return -1;
+            }
+        }
+
+        public void setSessionTime(long time) {
+            if (sessionTimeMap.containsKey(id)) {
+                sessionTimeMap.put(id, time);
+            }
+        }
+
+        public Set<String> getCompletedSessionMissions() {
+            if (sessionRewardMap.containsKey(id)) {
+                return sessionRewardMap.get(id);
+            } else {
+                return sessionRewardMap.put(id, new HashSet<>());
+            }
+        }
+
+        public void setCompletedSessionMissions(Set<String> set) {
+            sessionRewardMap.put(id, set);
+        }
     }
 }

@@ -6,16 +6,16 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 
 public class Reward {
-    private String description;
-    private String command;
-
-    public String getDescription() {
-        return description;
-    }
+    private final String description;
+    private final String command;
 
     public Reward(ConfigurationSection s) {
         description = ChatColor.translateAlternateColorCodes('&', s.getString("description"));
         command = s.getString("command");
+    }
+
+    public String getDescription() {
+        return description;
     }
 
     public void applyTo(Player p) {

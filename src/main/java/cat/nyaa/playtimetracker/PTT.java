@@ -15,7 +15,8 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.command.TabCompleter;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.time.Duration;
@@ -26,12 +27,13 @@ import java.util.stream.Collectors;
 
 import static java.time.temporal.ChronoUnit.DAYS;
 
-public class Main extends JavaPlugin implements Runnable, Listener {
-    private static Main instance;
+public class PTT extends JavaPlugin implements Runnable, Listener {
+    private static PTT instance;
     public FileConfiguration cfg; // main config file
+    // Essential Hooks
+    public IEssentials ess = null;
     private DatabaseManager database;
     private RecordManager updater;
-
     private Map<String, Rule> rules;
     private Map<String, Reward> rewardMap;
 
@@ -47,6 +49,10 @@ public class Main extends JavaPlugin implements Runnable, Listener {
         if (instance != null) {
             instance.getLogger().log(Level.FINE, msg);
         }
+    }
+
+    public static boolean isAFK(UUID id) {
+        return instance != null && instance.cfg.getBoolean("check-afk") && instance._isAFK(id);
     }
 
     @Override
@@ -116,13 +122,6 @@ public class Main extends JavaPlugin implements Runnable, Listener {
         getServer().getPluginManager().registerEvents(this, this);
         Bukkit.getScheduler().runTaskTimer(this, this, cfg.getLong("save-interval") * 20L, cfg.getLong("save-interval") * 20L);
         new AfkListener(this);
-    }
-
-    // Essential Hooks
-    public IEssentials ess = null;
-
-    public static boolean isAFK(UUID id) {
-        return instance != null && instance.cfg.getBoolean("check-afk") && instance._isAFK(id);
     }
 
     private boolean _isAFK(UUID id) {
@@ -216,32 +215,34 @@ public class Main extends JavaPlugin implements Runnable, Listener {
         UUID id = event.getPlayer().getUniqueId();
         updater.sessionEnd(id);
     }
-    
+
     @Override
-    public List<String> onTabComplete(CommandSender sender,Command command,String alias,String[] args){
-        String[] SubCommand = {"reload","reset","acquire","ac","recur","help"};
+    @Nullable
+    public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, @NotNull String[] args) {
+        String[] SubCommand = {"reload", "reset", "acquire", "ac", "recur", "help"};
         String[] resetSubCommand = {"all"};
-        List<String> ret= new ArrayList<String>();
-        if(args.length == 1){
-            for(int i = 0;i < SubCommand.length;i++){
-                if(args[0].equalsIgnoreCase(SubCommand[i])) return null;
-                if(args[0].length() < SubCommand[i].length()){
-                    if(SubCommand[i].substring(0,args[0].length()).equalsIgnoreCase(args[0])) ret.add(SubCommand[i]);
+        List<String> ret = new ArrayList<String>();
+        if (args.length == 1) {
+            for (String s : SubCommand) {
+                if (args[0].equalsIgnoreCase(s)) return null;
+                if (args[0].length() < s.length()) {
+                    if (s.substring(0, args[0].length()).equalsIgnoreCase(args[0])) ret.add(s);
                 }
             }
-        }else if(args.length == 2 && args[1].equalsIgnoreCase("reset")){
-            for(int i = 0;i < resetSubCommand.length;i++){
-                if(args[1].equalsIgnoreCase(resetSubCommand[i])) return null;
-                if(args[1].length() < resetSubCommand[i].length()){
-                    if(resetSubCommand[i].substring(0,args[1].length()).equalsIgnoreCase(args[1])) ret.add(resetSubCommand[i]);
+        } else if (args.length == 2 && args[1].equalsIgnoreCase("reset")) {
+            for (String s : resetSubCommand) {
+                if (args[1].equalsIgnoreCase(s)) return null;
+                if (args[1].length() < s.length()) {
+                    if (s.substring(0, args[1].length()).equalsIgnoreCase(args[1])) ret.add(s);
                 }
             }
         }
-        if(ret.isEmpty())return null;
+        if (ret.isEmpty()) return null;
         return ret;
     }
+
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (args.length == 0) {
             if (!(sender instanceof Player)) {
                 sender.sendMessage(Locale.get("only-player-can-do"));
@@ -277,11 +278,10 @@ public class Main extends JavaPlugin implements Runnable, Listener {
             return true;
         } else if ("acquire".equalsIgnoreCase(args[0]) || "ac".equalsIgnoreCase(args[0])) {
             if (sender.hasPermission("ptt.acquire")) {
-                if (!(sender instanceof Player)) {
+                if (!(sender instanceof Player p)) {
                     sender.sendMessage(Locale.get("only-player-can-do"));
                     return true;
                 }
-                Player p = (Player) sender;
 
                 Set<Rule> satisfiedRules = getSatisfiedRules(p.getUniqueId());
                 if (satisfiedRules.size() == 0) {
@@ -304,15 +304,11 @@ public class Main extends JavaPlugin implements Runnable, Listener {
                 String ruleName = args[2];
                 UUID id = getServer().getOfflinePlayer(playerName).getUniqueId();
                 Rule rule = rules.get(ruleName);
-                if (id != null) {
-                    if (rule != null && rule.period == Rule.PeriodType.DISPOSABLE) {
-                        database.setRecurrenceRule(ruleName, id);
-                        database.save();
-                    } else {
-                        sender.sendMessage(Locale.get("invalid-rule"));
-                    }
+                if (rule != null && rule.period == Rule.PeriodType.DISPOSABLE) {
+                    database.setRecurrenceRule(ruleName, id);
+                    database.save();
                 } else {
-                    sender.sendMessage(Locale.get("no-player"));
+                    sender.sendMessage(Locale.get("invalid-rule"));
                 }
             } else {
                 sender.sendMessage(Locale.get("no-permission"));
@@ -342,11 +338,11 @@ public class Main extends JavaPlugin implements Runnable, Listener {
         if (rec.dbRec == null) {
             s.sendMessage(Locale.get("statistic-no-record"));
         } else {
-            boolean differentYear = false;
+            boolean differentYear;
             boolean differentMonth = false;
             boolean differentWeek = false;
             boolean differentDay = false;
-            if(!p.isOnline()) {
+            if (!p.isOnline()) {
                 ZonedDateTime now = ZonedDateTime.now();
                 ZonedDateTime last = rec.dbRec.lastSeen;
                 int diffDayOfMonth = now.getDayOfMonth() - last.getDayOfMonth();

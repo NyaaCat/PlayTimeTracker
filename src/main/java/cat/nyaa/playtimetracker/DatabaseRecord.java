@@ -49,8 +49,7 @@ public class DatabaseRecord implements Cloneable {
 
     private static HashSet<String> _legacy_deserializeSet(String str) {
         if ("{}".equals(str)) return new HashSet<>();
-        HashSet<String> r = new HashSet<>();
-        r.addAll(Arrays.asList(str.substring(1, str.length() - 1).split(",")));
+        HashSet<String> r = new HashSet<>(Arrays.asList(str.substring(1, str.length() - 1).split(",")));
         return r;
     }
 
@@ -116,7 +115,7 @@ public class DatabaseRecord implements Cloneable {
             return r;
         } catch (CloneNotSupportedException ex) {
             ex.printStackTrace();
-            Main.log("Failed to clone: " + toString());
+            PTT.log("Failed to clone: " + this);
         }
         return new DatabaseRecord();
     }

@@ -15,27 +15,26 @@ import java.util.*;
 import static cat.nyaa.playtimetracker.AfkListener.setAfk;
 
 public class AfkListener extends BukkitRunnable implements Listener {
+    private static final Map<UUID, Vector> lastDirection = new HashMap<>();
+    private static final Map<UUID, Long> lastActivity = new HashMap<>();
+    private static final Set<UUID> afkPlayers = new HashSet<>();
     public static boolean checkAfk;
     public static int afkTime;
-    private static Map<UUID, Vector> lastDirection = new HashMap<>();
-    private static Map<UUID, Long> lastActivity = new HashMap<>();
-    private static Set<UUID> afkPlayers = new HashSet<>();
-    private final Main plugin;
-    private boolean cancelAfkOnChat;
-    private boolean cancelAfkOnCommand;
-    private boolean cancelAfkOnMove;
+    //private final PTT plugin;
+    private final boolean cancelAfkOnChat;
+    private final boolean cancelAfkOnCommand;
+    private final boolean cancelAfkOnMove;
 
-    public AfkListener(Main pl) {
-        plugin = pl;
+    public AfkListener(PTT plugin) {
         checkAfk = plugin.cfg.getBoolean("check-afk", true);
         afkTime = plugin.cfg.getInt("afk-time", 180);
         cancelAfkOnChat = plugin.cfg.getBoolean("cancel-afk-on.chat", true);
         cancelAfkOnCommand = plugin.cfg.getBoolean("cancel-afk-on.command", true);
         cancelAfkOnMove = plugin.cfg.getBoolean("cancel-afk-on.move", true);
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
-        this.runTaskTimer(plugin, 20, 20 * plugin.cfg.getInt("afk-check-interval", 30));
+        this.runTaskTimer(plugin, 20, 20L * plugin.cfg.getInt("afk-check-interval", 30));
         if (plugin.ess != null) {
-            new EssentialsAfkListener(pl);
+            new EssentialsAfkListener(plugin);
         }
     }
 
@@ -103,7 +102,7 @@ public class AfkListener extends BukkitRunnable implements Listener {
                 UUID id = p.getUniqueId();
                 if (!isAfk(id)) {
                     Long last = lastActivity.get(id);
-                    if (last != null && now - last >= afkTime * 1000) {
+                    if (last != null && now - last >= afkTime * 1000L) {
                         setAfk(id, true);
                     }
                 }
@@ -113,7 +112,7 @@ public class AfkListener extends BukkitRunnable implements Listener {
 }
 
 class EssentialsAfkListener implements Listener {
-    public EssentialsAfkListener(Main pl) {
+    public EssentialsAfkListener(PTT pl) {
         pl.getServer().getPluginManager().registerEvents(this, pl);
     }
 

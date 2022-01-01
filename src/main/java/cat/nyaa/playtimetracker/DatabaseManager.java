@@ -14,7 +14,7 @@ import java.util.UUID;
 
 public class DatabaseManager {
     private final File dbFile;
-    private Map<UUID, DatabaseRecord> recordMap;
+    private final Map<UUID, DatabaseRecord> recordMap;
     private final File recurrenceFile;
     public Map<UUID, Map<String, Long>> recurrenceMap; //Map<playerId, Map<ruleName, accumulatedTime-ms>>
 
@@ -27,7 +27,9 @@ public class DatabaseManager {
             for (String uuid_str : cfg.getKeys(false)) {
                 ConfigurationSection sec = cfg.getConfigurationSection(uuid_str);
                 UUID id = UUID.fromString(uuid_str);
-                recordMap.put(id, DatabaseRecord.deserialize(id, sec));
+                if (sec != null) {
+                    recordMap.put(id, DatabaseRecord.deserialize(id, sec));
+                }
             }
         }
         setupRecurrenceMap();
@@ -47,28 +49,60 @@ public class DatabaseManager {
                 while ((line = lr.readLine()) != null) {
                     String[] tmp = line.split(" ", 2);
                     if (tmp.length != 2) continue;
-                    UUID a = null;
+                    UUID a;
                     try {
                         a = UUID.fromString(tmp[0]);
                     } catch (IllegalArgumentException ex) {
-                        Main.log("Illegal data line: " + line);
+                        PTT.log("Illegal data line: " + line);
                         continue;
                     }
                     recordMap.put(a, DatabaseRecord.deserialize_legacy(a, tmp[1]));
                 }
             } catch (IOException ex) {
-                Main.log("Failed to parse legacy database");
+                PTT.log("Failed to parse legacy database");
                 ex.printStackTrace();
             } finally {
                 try {
                     if (fr != null) fr.close();
                 } catch (IOException ex) {
-                    Main.log("Failed to parse legacy database");
+                    PTT.log("Failed to parse legacy database");
                     ex.printStackTrace();
                 }
             }
         }
         setupRecurrenceMap();
+    }
+
+    private static synchronized void synchronizeSave(final File dbFile, final Map<UUID, DatabaseRecord> records,
+                                                     final File recFile, final Map<UUID, Map<String, Long>> recurrenceMap) {
+        YamlConfiguration cfg = new YamlConfiguration();
+        for (UUID id : records.keySet()) {
+            records.get(id).serialize(cfg.createSection(id.toString()));
+        }
+        try {
+            cfg.save(dbFile);
+        } catch (IOException ex) {
+            System.out.print(">>>>>> PlayTimeTracker Database Emergency Dump <<<<<<\n" +
+                    cfg.saveToString() +
+                    "\n>>>>>> Emergency dump ends <<<<<<"
+            );
+            ex.printStackTrace();
+        }
+
+        cfg = new YamlConfiguration();
+        for (UUID id : recurrenceMap.keySet()) {
+            if (recurrenceMap.get(id).size() <= 0) continue;
+            cfg.createSection(id.toString(), recurrenceMap.get(id));
+        }
+        try {
+            cfg.save(recFile);
+        } catch (IOException ex) {
+            System.out.print(">>>>>> PlayTimeTracker Database Emergency Dump <<<<<<\n" +
+                    cfg.saveToString() +
+                    "\n>>>>>> Emergency dump ends <<<<<<"
+            );
+            ex.printStackTrace();
+        }
     }
 
     private void setupRecurrenceMap() {
@@ -96,52 +130,14 @@ public class DatabaseManager {
         final File clonedRecFile = new File(recurrenceFile.toURI());
         final Map<UUID, Map<String, Long>> clonedRecurrence = new HashMap<>();
         for (UUID id : recurrenceMap.keySet()) {
-            Map<String, Long> tmp = new HashMap<>();
-            tmp.putAll(recurrenceMap.get(id));
+            Map<String, Long> tmp = new HashMap<>(recurrenceMap.get(id));
             clonedRecurrence.put(id, tmp);
         }
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                synchronizeSave(clonedFile, clonedMap, clonedRecFile, clonedRecurrence);
-            }
-        }).start();
+        new Thread(() -> synchronizeSave(clonedFile, clonedMap, clonedRecFile, clonedRecurrence)).start();
     }
 
     public void synchronizeSave() {
         synchronizeSave(dbFile, recordMap, recurrenceFile, recurrenceMap);
-    }
-
-    private static synchronized void synchronizeSave(final File dbFile, final Map<UUID, DatabaseRecord> records,
-                                                     final File recFile, final Map<UUID, Map<String, Long>> recurrenceMap) {
-        YamlConfiguration cfg = new YamlConfiguration();
-        for (UUID id : records.keySet()) {
-            records.get(id).serialize(cfg.createSection(id.toString()));
-        }
-        try {
-            cfg.save(dbFile);
-        } catch (IOException ex) {
-            System.out.print(">>>>>> PlayTimeTracker Database Emergency Dump <<<<<<\n" +
-                    cfg.saveToString() +
-                    "\n>>>>>> Emergency dump ends <<<<<<"
-            );
-            ex.printStackTrace();
-        }
-
-        cfg = new YamlConfiguration();
-        for(UUID id : recurrenceMap.keySet()) {
-            if (recurrenceMap.get(id).size() <= 0) continue;
-            cfg.createSection(id.toString(), recurrenceMap.get(id));
-        }
-        try {
-            cfg.save(recFile);
-        } catch (IOException ex) {
-            System.out.print(">>>>>> PlayTimeTracker Database Emergency Dump <<<<<<\n" +
-                    cfg.saveToString() +
-                    "\n>>>>>> Emergency dump ends <<<<<<"
-            );
-            ex.printStackTrace();
-        }
     }
 
     public DatabaseRecord getRecord(UUID id) {
@@ -157,11 +153,7 @@ public class DatabaseManager {
     }
 
     public void setRecurrenceRule(String ruleName, UUID playerId) {
-        Map<String, Long> tmp = recurrenceMap.get(playerId);
-        if (tmp == null) {
-            tmp = new HashMap<>();
-            recurrenceMap.put(playerId, tmp);
-        }
+        Map<String, Long> tmp = recurrenceMap.computeIfAbsent(playerId, k -> new HashMap<>());
         tmp.put(ruleName, 0L);
     }
 }
