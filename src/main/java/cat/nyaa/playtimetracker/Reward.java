@@ -1,5 +1,6 @@
 package cat.nyaa.playtimetracker;
 
+import cat.nyaa.playtimetracker.config.data.RewardData;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.ConfigurationSection;
@@ -9,9 +10,9 @@ public class Reward {
     private final String description;
     private final String command;
 
-    public Reward(ConfigurationSection s) {
-        description = ChatColor.translateAlternateColorCodes('&', s.getString("description"));
-        command = s.getString("command");
+    public Reward(RewardData rewardData) {
+        description = ChatColor.translateAlternateColorCodes('&', rewardData.description);
+        command = rewardData.command;
     }
 
     public String getDescription() {

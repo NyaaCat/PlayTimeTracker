@@ -29,15 +29,23 @@ repositories {
     maven { url = 'https://oss.sonatype.org/content/repositories/snapshots' }
     maven { url = 'https://oss.sonatype.org/content/repositories/central' }
 
-    maven { name 'Sonatype';            url 'https://oss.sonatype.org/content/groups/public' }
-    maven {name "essentialsx-releases"; url "https://repo.essentialsx.net/releases/"}
-    maven {name "papermc";              url "https://papermc.io/repo/repository/maven-public/"}
-
+    maven { name 'Sonatype';             url 'https://oss.sonatype.org/content/groups/public' }
+    maven { name "essentialsx-releases"; url "https://repo.essentialsx.net/releases/"}
+    maven { name "papermc";              url "https://papermc.io/repo/repository/maven-public/"}
+    maven { name 'NyaaCat';              url 'https://ci.nyaacat.com/maven/' }
 }
 
 dependencies {
     compileOnly "org.spigotmc:spigot-api:$minecraftVersion-R0.1-SNAPSHOT"
     compileOnly 'net.essentialsx:EssentialsX:2.19.0'
+
+    // other nyaa plugins
+    if (gradle.hasProperty("useLocalDependencies") && gradle.useLocalDependencies) {
+        compileOnly project(":NyaaCore")
+    } else {
+        compileOnly('cat.nyaa:nyaacore:9.0-SNAPSHOT') { transitive = true }
+    }
+
     compileOnly 'org.jetbrains:annotations:22.0.0'
 }
 

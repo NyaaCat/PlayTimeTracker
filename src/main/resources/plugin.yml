@@ -1,6 +1,7 @@
 name: PlayTimeTracker
-main: cat.nyaa.playtimetracker.Main
+main: cat.nyaa.playtimetracker.PTT
 version: ${version}
+depend: [NyaaCore]
 softdepend: [Essentials]
 api-version: 1.13
 

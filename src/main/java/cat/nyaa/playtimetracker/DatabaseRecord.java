@@ -35,7 +35,7 @@ public class DatabaseRecord implements Cloneable {
     public static DatabaseRecord deserialize(UUID id, ConfigurationSection sec) {
         DatabaseRecord rec = new DatabaseRecord();
         rec.uuid = id;
-        rec.lastSeen = ZonedDateTime.parse(sec.getString("last_seen"));
+        rec.lastSeen = ZonedDateTime.parse(sec.getString("last_seen",""));
         rec.dailyTime = sec.getLong("daily_play_time");
         rec.weeklyTime = sec.getLong("weekly_play_time");
         rec.monthlyTime = sec.getLong("monthly_play_time");
@@ -49,8 +49,7 @@ public class DatabaseRecord implements Cloneable {
 
     private static HashSet<String> _legacy_deserializeSet(String str) {
         if ("{}".equals(str)) return new HashSet<>();
-        HashSet<String> r = new HashSet<>(Arrays.asList(str.substring(1, str.length() - 1).split(",")));
-        return r;
+        return new HashSet<>(Arrays.asList(str.substring(1, str.length() - 1).split(",")));
     }
 
     public static DatabaseRecord deserialize_legacy(UUID id, String old_format_string) {

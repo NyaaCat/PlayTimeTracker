@@ -26,13 +26,13 @@ public class AfkListener extends BukkitRunnable implements Listener {
     private final boolean cancelAfkOnMove;
 
     public AfkListener(PTT plugin) {
-        checkAfk = plugin.cfg.getBoolean("check-afk", true);
-        afkTime = plugin.cfg.getInt("afk-time", 180);
-        cancelAfkOnChat = plugin.cfg.getBoolean("cancel-afk-on.chat", true);
-        cancelAfkOnCommand = plugin.cfg.getBoolean("cancel-afk-on.command", true);
-        cancelAfkOnMove = plugin.cfg.getBoolean("cancel-afk-on.move", true);
+        checkAfk = plugin.pttConfiguration.checkAfk;
+        afkTime = plugin.pttConfiguration.afkTime;
+        cancelAfkOnChat = plugin.pttConfiguration.cancelAfkOnChat;
+        cancelAfkOnCommand = plugin.pttConfiguration.cancelAfkOnCommand;
+        cancelAfkOnMove = plugin.pttConfiguration.cancelAfkOnMove;
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
-        this.runTaskTimer(plugin, 20, 20L * plugin.cfg.getInt("afk-check-interval", 30));
+        this.runTaskTimer(plugin, 20, 20L * plugin.pttConfiguration.afkCheckInterval);
         if (plugin.ess != null) {
             new EssentialsAfkListener(plugin);
         }

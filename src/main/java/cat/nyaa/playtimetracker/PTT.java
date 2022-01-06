@@ -1,12 +1,14 @@
 package cat.nyaa.playtimetracker;
 
 import cat.nyaa.playtimetracker.RecordManager.SessionedRecord;
+import cat.nyaa.playtimetracker.command.CommandHandler;
+import cat.nyaa.playtimetracker.config.PTTConfiguration;
 import net.ess3.api.IEssentials;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -29,13 +31,15 @@ import static java.time.temporal.ChronoUnit.DAYS;
 
 public class PTT extends JavaPlugin implements Runnable, Listener {
     private static PTT instance;
-    public FileConfiguration cfg; // main config file
     // Essential Hooks
     public IEssentials ess = null;
     private DatabaseManager database;
     private RecordManager updater;
     private Map<String, Rule> rules;
     private Map<String, Reward> rewardMap;
+    public I18n i18n;
+    public PTTConfiguration pttConfiguration;
+    private CommandHandler commandHandler;
 
     public static void log(String msg) {
         if (instance == null) {
@@ -52,7 +56,7 @@ public class PTT extends JavaPlugin implements Runnable, Listener {
     }
 
     public static boolean isAFK(UUID id) {
-        return instance != null && instance.cfg.getBoolean("check-afk") && instance._isAFK(id);
+        return instance != null && instance.pttConfiguration.checkAfk && instance._isAFK(id);
     }
 
     @Override
@@ -66,20 +70,25 @@ public class PTT extends JavaPlugin implements Runnable, Listener {
     public void onEnable() {
         // Basic config & events
         instance = this;
-        saveDefaultConfig();
-        reloadConfig();
-        cfg = getConfig();
-        Locale.init(cfg.getConfigurationSection("message"));
+        this.pttConfiguration = new PTTConfiguration(this);
+        pttConfiguration.load();
+        this.i18n = new I18n(this, pttConfiguration.language);
+        i18n.load();
+        //Locale.init(cfg.getConfigurationSection("message"));
 
         // Load Reward config
         rewardMap = new HashMap<>();
-        for (String i : cfg.getConfigurationSection("rewards").getValues(false).keySet()) {
-            rewardMap.put(i, new Reward(cfg.getConfigurationSection("rewards." + i)));
-        }
+        pttConfiguration.rewards.forEach((k, v) -> rewardMap.put(k, new Reward(v)));
         rules = new HashMap<>();
-        for (String n : cfg.getConfigurationSection("rules").getValues(false).keySet()) {
-            rules.put(n, new Rule(n, cfg.getConfigurationSection("rules." + n)));
-        }
+        pttConfiguration.rules.forEach((k, v) -> rules.put(k, new Rule(k, v)));
+
+        //command
+        this.commandHandler = new CommandHandler(this, i18n);
+        PluginCommand mainCommand = getCommand("playtimetracker");
+        if (mainCommand != null) {
+            mainCommand.setExecutor(commandHandler);
+            mainCommand.setTabCompleter(commandHandler);
+        } else throw new RuntimeException("Command registration failed");
 
         // Database
         File legacyDataFile = new File(getDataFolder(), "data.txt");
@@ -117,16 +126,19 @@ public class PTT extends JavaPlugin implements Runnable, Listener {
         }
 
         // Schedule event
-        getCommand("playtimetracker").setExecutor(this);
-        getCommand("playtimetracker").setTabCompleter(this);
         getServer().getPluginManager().registerEvents(this, this);
-        Bukkit.getScheduler().runTaskTimer(this, this, cfg.getLong("save-interval") * 20L, cfg.getLong("save-interval") * 20L);
+        Bukkit.getScheduler().runTaskTimer(this, this, pttConfiguration.saveInterval * 20L, pttConfiguration.saveInterval * 20L);
         new AfkListener(this);
+    }
+
+    public void onReload() {
+        onDisable();
+        onEnable();
     }
 
     private boolean _isAFK(UUID id) {
         if (id == null) return false;
-        if (cfg.getBoolean("use-ess-afk-status") && ess != null) {
+        if (pttConfiguration.useEssAfkStatus && ess != null) {
             return ess.getUser(id).isAfk();
         }
         return AfkListener.checkAfk && AfkListener.isAfk(id);
@@ -141,10 +153,10 @@ public class PTT extends JavaPlugin implements Runnable, Listener {
      * naively apply the rule to the player
      * database untouched
      */
-    private void applyReward(Rule rule, Player p) {
+    public void applyReward(Rule rule, Player p) {
         Reward reward = rewardMap.get(rule.reward);
         reward.applyTo(p);
-        p.sendMessage(Locale.get("rule-applied", rule.name));
+        I18n.send(p, "info.rule-applied", rule.name);
         if (reward.getDescription() != null && reward.getDescription().length() > 0) {
             p.sendMessage(rewardMap.get(rule.reward).getDescription());
         }
@@ -163,9 +175,9 @@ public class PTT extends JavaPlugin implements Runnable, Listener {
                     }
                 }).collect(Collectors.toSet());
         if (unacquired.size() > 0) {
-            p.sendMessage(Locale.get("have-reward-redeem"));
+            I18n.send(p, "info.have-reward-redeem");
             for (Rule s : unacquired) {
-                p.sendMessage(Locale.get("have-reward-redeem-format", s.name));
+                I18n.send(p, "info.have-reward-redeem-format", s.name);
             }
         }
     }
@@ -199,7 +211,7 @@ public class PTT extends JavaPlugin implements Runnable, Listener {
         }
 
         updater.sessionStart(id);
-        if (cfg.getBoolean("display-on-login")) {
+        if (pttConfiguration.DisplayOnLogin) {
             new BukkitRunnable() {
                 @Override
                 public void run() {
@@ -241,102 +253,11 @@ public class PTT extends JavaPlugin implements Runnable, Listener {
         return ret;
     }
 
-    @Override
-    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        if (args.length == 0) {
-            if (!(sender instanceof Player)) {
-                sender.sendMessage(Locale.get("only-player-can-do"));
-            } else if (sender.hasPermission("ptt.view")) {
-                updater.updateSingle((Player) sender);
-                printStatistic(sender, (Player) sender);
-            } else {
-                sender.sendMessage(Locale.get("no-permission"));
-            }
-            return true;
-        } else if ("reload".equalsIgnoreCase(args[0])) {
-            if (sender.hasPermission("ptt.reload")) {
-                onDisable();
-                onEnable();
-                sender.sendMessage(Locale.get("reload-finished"));
-            } else {
-                sender.sendMessage(Locale.get("no-permission"));
-            }
-            return true;
-        } else if ("reset".equalsIgnoreCase(args[0])) {
-            if (sender.hasPermission("ptt.reset")) {
-                if (args.length <= 1) return false;
-                String name = args[1];
-                if ("all".equalsIgnoreCase(name)) {
-                    updater.resetAllStatistic();
-                } else {
-                    updater.resetSingleStatistic(Bukkit.getOfflinePlayer(name).getUniqueId());
-                }
-                sender.sendMessage(Locale.get("command-done"));
-            } else {
-                sender.sendMessage(Locale.get("no-permission"));
-            }
-            return true;
-        } else if ("acquire".equalsIgnoreCase(args[0]) || "ac".equalsIgnoreCase(args[0])) {
-            if (sender.hasPermission("ptt.acquire")) {
-                if (!(sender instanceof Player p)) {
-                    sender.sendMessage(Locale.get("only-player-can-do"));
-                    return true;
-                }
-
-                Set<Rule> satisfiedRules = getSatisfiedRules(p.getUniqueId());
-                if (satisfiedRules.size() == 0) {
-                    sender.sendMessage(Locale.get("nothing-to-acquire"));
-                    return true;
-                }
-                // feature removed: acquire particular reward
-                for (Rule r : satisfiedRules) {
-                    applyReward(r, p);
-                    updater.markRuleAsApplied(p.getUniqueId(), r);
-                }
-            } else {
-                sender.sendMessage(Locale.get("no-permission"));
-            }
-            return true;
-        } else if ("recur".equalsIgnoreCase(args[0])) {
-            if (sender.hasPermission("ptt.recurrence")) {
-                if (args.length < 3) return false;
-                String playerName = args[1];
-                String ruleName = args[2];
-                UUID id = getServer().getOfflinePlayer(playerName).getUniqueId();
-                Rule rule = rules.get(ruleName);
-                if (rule != null && rule.period == Rule.PeriodType.DISPOSABLE) {
-                    database.setRecurrenceRule(ruleName, id);
-                    database.save();
-                } else {
-                    sender.sendMessage(Locale.get("invalid-rule"));
-                }
-            } else {
-                sender.sendMessage(Locale.get("no-permission"));
-            }
-            return true;
-        } else if ("help".equalsIgnoreCase(args[0])) {
-            return false;
-        } else {
-            if (sender.hasPermission("ptt.view.others")) {
-                OfflinePlayer p = Bukkit.getOfflinePlayer(args[0]);
-                if (p instanceof Player) {
-                    updater.updateSingle(p);
-                } else {
-                    //TODO: offline player update data
-                }
-                printStatistic(sender, p);
-            } else {
-                sender.sendMessage(Locale.get("no-permission"));
-            }
-            return true;
-        }
-    }
-
-    private void printStatistic(CommandSender s, OfflinePlayer p) {
-        s.sendMessage(Locale.get("statistic-for", p.getName()));
+    public void printStatistic(CommandSender s, OfflinePlayer p) {
+        I18n.send(s, "info/statistic.for", p.getName());
         SessionedRecord rec = updater.getFullRecord(p.getUniqueId());
         if (rec.dbRec == null) {
-            s.sendMessage(Locale.get("statistic-no-record"));
+            I18n.send(s, "info.statistic.no-record");
         } else {
             boolean differentYear;
             boolean differentMonth = false;
@@ -352,12 +273,12 @@ public class PTT extends JavaPlugin implements Runnable, Listener {
                         (diffDayOfMonth * (now.getDayOfWeek().getValue() - last.getDayOfWeek().getValue())) < 0;
                 differentDay = differentMonth || (diffDayOfMonth != 0);
             }
-            s.sendMessage(Locale.get("statistic-day", Locale.formatTime(differentDay ? 0 : rec.dbRec.dailyTime)));
-            s.sendMessage(Locale.get("statistic-week", Locale.formatTime(differentWeek ? 0 : rec.dbRec.weeklyTime)));
-            s.sendMessage(Locale.get("statistic-month", Locale.formatTime(differentMonth ? 0 : rec.dbRec.monthlyTime)));
-            s.sendMessage(Locale.get("statistic-total", Locale.formatTime(rec.dbRec.totalTime)));
+            I18n.send(s, "info.statistic.day", I18n.formatTime(differentDay ? 0 : rec.dbRec.dailyTime));
+            I18n.send(s, "info.statistic.week", I18n.formatTime(differentWeek ? 0 : rec.dbRec.weeklyTime));
+            I18n.send(s, "info.statistic.month", I18n.formatTime(differentMonth ? 0 : rec.dbRec.monthlyTime));
+            I18n.send(s, "info.statistic.total", I18n.formatTime(rec.dbRec.totalTime));
             if (p.isOnline() && rec.getSessionTime() > 0) {
-                s.sendMessage(Locale.get("statistic-session", Locale.formatTime(rec.getSessionTime())));
+                I18n.send(s, "info.statistic.session", I18n.formatTime(rec.getSessionTime()));
             }
         }
     }
@@ -369,7 +290,7 @@ public class PTT extends JavaPlugin implements Runnable, Listener {
      * @param id uuid of the player
      * @return set of rules, not null
      */
-    private Set<Rule> getSatisfiedRules(UUID id) {
+    public Set<Rule> getSatisfiedRules(UUID id) {
         Set<Rule> ret = new HashSet<>();
         SessionedRecord rec = updater.getFullRecord(id);
         if (rec.getSessionTime() > 0) {
@@ -420,6 +341,18 @@ public class PTT extends JavaPlugin implements Runnable, Listener {
             }
         }
         return ret;
+    }
+
+    public RecordManager getUpdater() {
+        return updater;
+    }
+
+    public DatabaseManager getDatabase() {
+        return database;
+    }
+
+    public Map<String, Rule> getRules() {
+        return rules;
     }
 }
 

@@ -1,0 +1,25 @@
+command:
+  only-player-can-do: "Only players can do this"
+  reload-finished: "Reload finished"
+  done: "Command executed successfully"
+  nothing-to-acquire: "You have nothing to acquire"
+info:
+  rule-applied: "Congratulations! The following rule has applied to you: %s"
+  invalid-rule: "Not a valid disposable reward rule"
+  have-reward-redeem: "You have the following unacquired rewards, use `/ptt acquire [name]` to acquire"
+  have-reward-redeem-format: "- %s"
+  statistic:
+    for: "Statistic for player: %s"
+    day: "Online time today: %s"
+    week: "Online time this week: %s"
+    month: "Online time this month: %s"
+    session: "Online time this session: %s"
+    total: "Online time total: %s"
+    time:
+      format:
+        ms: "%dms"
+        s: "%dseconds "
+        m: "%dminutes "
+        h: "%dhours "
+        zero: "No Record"
+    no-record: "No record for that player."

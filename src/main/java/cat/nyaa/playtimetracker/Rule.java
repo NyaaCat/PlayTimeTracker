@@ -1,5 +1,6 @@
 package cat.nyaa.playtimetracker;
 
+import cat.nyaa.playtimetracker.config.data.RuleData;
 import org.bukkit.configuration.ConfigurationSection;
 
 import java.util.HashSet;
@@ -13,9 +14,10 @@ public class Rule {
     public long timeout;
     public String reward;
     public Set<String> group;
-    public Rule(String name, ConfigurationSection s) {
+
+    public Rule(String name,RuleData ruleData) {
         this.name = name;
-        switch (s.getString("period")) {
+        switch (ruleData.period) {
             case "day" -> period = PeriodType.DAY;
             case "week" -> period = PeriodType.WEEK;
             case "month" -> period = PeriodType.MONTH;
@@ -23,11 +25,11 @@ public class Rule {
             case "session" -> period = PeriodType.SESSION;
             case "longtimenosee" -> period = PeriodType.LONGTIMENOSEE;
         }
-        require = s.getLong("require");
-        autoGive = s.getBoolean("auto-give");
-        timeout = s.contains("timeout") ? s.getLong("timeout") : -1;
-        group = s.contains("eligible-group") ? new HashSet<>(s.getStringList("eligible-group")) : null;
-        reward = s.getString("reward");
+        require = ruleData.require;
+        autoGive = ruleData.autoGive;
+        timeout = ruleData.timeout;
+        group = new HashSet<>(ruleData.group);
+        reward = ruleData.reward;
     }
 
     public enum PeriodType {
