@@ -1,6 +1,6 @@
-package cat.nyaa.playtimetracker;
+package cat.nyaa.playtimetracker.listener;
 
-import net.ess3.api.events.AfkStatusChangeEvent;
+import cat.nyaa.playtimetracker.PTT;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -11,8 +11,6 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
 import java.util.*;
-
-import static cat.nyaa.playtimetracker.AfkListener.setAfk;
 
 public class AfkListener extends BukkitRunnable implements Listener {
     private static final Map<UUID, Vector> lastDirection = new HashMap<>();
@@ -95,7 +93,7 @@ public class AfkListener extends BukkitRunnable implements Listener {
     }
 
     @Override
-    public void run() {
+    public void run() {//todo
         if (checkAfk) {
             long now = System.currentTimeMillis();
             for (Player p : Bukkit.getOnlinePlayers()) {
@@ -111,16 +109,4 @@ public class AfkListener extends BukkitRunnable implements Listener {
     }
 }
 
-class EssentialsAfkListener implements Listener {
-    public EssentialsAfkListener(PTT pl) {
-        pl.getServer().getPluginManager().registerEvents(this, pl);
-    }
 
-    @EventHandler
-    public void onAfkStatusChange(AfkStatusChangeEvent event) {
-        boolean isAfk = event.getValue();
-        if (isAfk) {
-            setAfk(event.getAffected().getBase().getUniqueId(), true);
-        }
-    }
-}

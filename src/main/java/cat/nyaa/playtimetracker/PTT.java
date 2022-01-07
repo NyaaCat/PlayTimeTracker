@@ -3,10 +3,12 @@ package cat.nyaa.playtimetracker;
 import cat.nyaa.playtimetracker.RecordManager.SessionedRecord;
 import cat.nyaa.playtimetracker.command.CommandHandler;
 import cat.nyaa.playtimetracker.config.PTTConfiguration;
+import cat.nyaa.playtimetracker.listener.AfkListener;
+import cat.nyaa.playtimetracker.listener.PTTListener;
+import cat.nyaa.playtimetracker.task.NotifyAcquireTask;
 import net.ess3.api.IEssentials;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
@@ -17,8 +19,6 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.time.Duration;
@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 
 import static java.time.temporal.ChronoUnit.DAYS;
 
-public class PTT extends JavaPlugin implements Runnable, Listener {
+public class PTT extends JavaPlugin implements Runnable {
     private static PTT instance;
     // Essential Hooks
     public IEssentials ess = null;
@@ -126,9 +126,10 @@ public class PTT extends JavaPlugin implements Runnable, Listener {
         }
 
         // Schedule event
-        getServer().getPluginManager().registerEvents(this, this);
-        Bukkit.getScheduler().runTaskTimer(this, this, pttConfiguration.saveInterval * 20L, pttConfiguration.saveInterval * 20L);
+        new PTTListener(this);
         new AfkListener(this);
+        Bukkit.getScheduler().runTaskTimer(this, this, pttConfiguration.saveInterval * 20L, pttConfiguration.saveInterval * 20L);//todo remove
+
     }
 
     public void onReload() {
@@ -144,7 +145,7 @@ public class PTT extends JavaPlugin implements Runnable, Listener {
         return AfkListener.checkAfk && AfkListener.isAfk(id);
     }
 
-    private boolean inGroup(UUID id, Set<String> group) {
+    public boolean inGroup(UUID id, Set<String> group) {
         if (ess == null || group == null || id == null) return true;
         return group.contains(ess.getUser(id).getGroup());
     }
@@ -163,7 +164,7 @@ public class PTT extends JavaPlugin implements Runnable, Listener {
         log(String.format("Reward rule %s applied to player %s", rule.name, p.getName()));
     }
 
-    private void notifyAcquire(Player p) {
+    public void notifyAcquire(Player p) {
         Set<Rule> unacquired = getSatisfiedRules(p.getUniqueId()).stream()
                 .filter(r -> { // apply all auto apply rule, leave unapplied
                     if (r.autoGive) {
@@ -184,74 +185,14 @@ public class PTT extends JavaPlugin implements Runnable, Listener {
 
     @Override
     public void run() { // Auto-save timer
+        //todo remove auto-save
         debug("Auto-save timer executing...");
         updater.updateAllOnlinePlayers();
-        for (Player p : Bukkit.getOnlinePlayers()) {
-            notifyAcquire(p);
-        }
+        //todo notifyAcquireTask
+        new NotifyAcquireTask(this).run();
     }
 
-    @EventHandler
-    public void onPlayerJoin(PlayerJoinEvent event) {
-        UUID id = event.getPlayer().getUniqueId();
 
-        // afkRevive reward automatically applied
-        SessionedRecord rec = updater.getFullRecord(id);
-        if (rec != null && rec.dbRec != null && rec.dbRec.lastSeen != null) {
-            ZonedDateTime lastSeen = rec.dbRec.lastSeen;
-            ZonedDateTime now = ZonedDateTime.now();
-            Duration gap = Duration.between(lastSeen, now);
-            for (Rule rule : rules.values()) {
-                if (rule.period == Rule.PeriodType.LONGTIMENOSEE &&
-                        Duration.of(rule.require, DAYS).minus(gap).isNegative() &&
-                        inGroup(id, rule.group)) {
-                    applyReward(rule, event.getPlayer());
-                }
-            }
-        }
-
-        updater.sessionStart(id);
-        if (pttConfiguration.DisplayOnLogin) {
-            new BukkitRunnable() {
-                @Override
-                public void run() {
-                    printStatistic(event.getPlayer(), event.getPlayer());
-                    notifyAcquire(event.getPlayer());
-                }
-            }.runTaskLater(this, 20L);
-        }
-    }
-
-    @EventHandler
-    public void onPlayerExit(PlayerQuitEvent event) {
-        UUID id = event.getPlayer().getUniqueId();
-        updater.sessionEnd(id);
-    }
-
-    @Override
-    @Nullable
-    public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, @NotNull String[] args) {
-        String[] SubCommand = {"reload", "reset", "acquire", "ac", "recur", "help"};
-        String[] resetSubCommand = {"all"};
-        List<String> ret = new ArrayList<String>();
-        if (args.length == 1) {
-            for (String s : SubCommand) {
-                if (args[0].equalsIgnoreCase(s)) return null;
-                if (args[0].length() < s.length()) {
-                    if (s.substring(0, args[0].length()).equalsIgnoreCase(args[0])) ret.add(s);
-                }
-            }
-        } else if (args.length == 2 && args[1].equalsIgnoreCase("reset")) {
-            for (String s : resetSubCommand) {
-                if (args[1].equalsIgnoreCase(s)) return null;
-                if (args[1].length() < s.length()) {
-                    if (s.substring(0, args[1].length()).equalsIgnoreCase(args[1])) ret.add(s);
-                }
-            }
-        }
-        if (ret.isEmpty()) return null;
-        return ret;
-    }
 
     public void printStatistic(CommandSender s, OfflinePlayer p) {
         I18n.send(s, "info/statistic.for", p.getName());
