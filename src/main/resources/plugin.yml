@@ -1,0 +1,21 @@
+name: PlayTimeTracker
+version: '${version}'
+main: cat.nyaa.playtimetracker.PlayTimeTracker
+api-version: 1.18
+prefix: PlayTimeTracker
+depend: [NyaaCore]
+softdepend: [Essentials]
+
+permissions:
+  ptt.command.view:
+    description: player's statistic
+    default: true
+  ptt.command.acquire:
+    description: Redeem the reward related to the rule
+    default: true
+  ptt.reset:
+    description: Reset statistic for some players
+    default: op
+  ptt.reload:
+    description: Reload plugin
+    default: op
