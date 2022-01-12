@@ -43,6 +43,7 @@ public class DatabaseManager {
         this.completedMissionTable = db.getTable(CompletedMissionDbModel.class);
 
     }
+
     public void close() {
         try {
             db.close();
@@ -51,11 +52,12 @@ public class DatabaseManager {
         }
     }
 
-    public TimeTrackerConnection getTimeTrackerConnection(){
-        return new TimeTrackerConnection(this.timeTrackerTable,db);
+    public TimeTrackerConnection getTimeTrackerConnection() {
+        return new TimeTrackerConnection(this.timeTrackerTable, db);
     }
-    public CompletedMissionConnection getCompletedMissionConnection(){
-        return new CompletedMissionConnection(this.completedMissionTable,db);
+
+    public CompletedMissionConnection getCompletedMissionConnection() {
+        return new CompletedMissionConnection(this.completedMissionTable, db);
     }
 
 }

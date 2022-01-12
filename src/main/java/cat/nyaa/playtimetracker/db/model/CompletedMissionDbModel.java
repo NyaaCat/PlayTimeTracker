@@ -16,28 +16,28 @@ public class CompletedMissionDbModel {
     @Column(name = "lastCompleted")
     long lastCompletedTime;
 
-    public void setPlayerUniqueId(UUID playerUniqueId) {
-        this.playerUniqueId = playerUniqueId;
-    }
-
-    public void setLastCompletedTime(long lastCompletedTime) {
-        this.lastCompletedTime = lastCompletedTime;
-    }
-
-    public void setMissionName(String missionName) {
-        this.missionName = missionName;
-    }
-
     public UUID getPlayerUniqueId() {
         return playerUniqueId;
+    }
+
+    public void setPlayerUniqueId(UUID playerUniqueId) {
+        this.playerUniqueId = playerUniqueId;
     }
 
     public long getLastCompletedTime() {
         return lastCompletedTime;
     }
 
+    public void setLastCompletedTime(long lastCompletedTime) {
+        this.lastCompletedTime = lastCompletedTime;
+    }
+
     public String getMissionName() {
         return missionName;
+    }
+
+    public void setMissionName(String missionName) {
+        this.missionName = missionName;
     }
 
     public int getId() {

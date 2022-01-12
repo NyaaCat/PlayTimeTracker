@@ -18,6 +18,20 @@ public class I18n extends LanguageRepository {
         load();
     }
 
+    public static String format(String key, Object... args) {
+        if (instance == null) return "<Not initialized>";
+        return instance.getFormatted(key, args);
+    }
+
+    public static String substitute(String key, Object... args) {
+        if (instance == null) return "<Not initialized>";
+        return instance.getSubstituted(key, args);
+    }
+
+    public static void send(CommandSender recipient, String key, Object... args) {
+        recipient.sendMessage(format(key, args));
+    }
+
     @Override
     protected Plugin getPlugin() {
         return plugin;
@@ -26,17 +40,5 @@ public class I18n extends LanguageRepository {
     @Override
     protected String getLanguage() {
         return lang;
-    }
-
-    public static String format(String key, Object... args) {
-        if (instance == null) return "<Not initialized>";
-        return instance.getFormatted(key, args);
-    }
-    public static String substitute(String key, Object... args) {
-        if (instance == null) return "<Not initialized>";
-        return instance.getSubstituted(key, args);
-    }
-    public static void send(CommandSender recipient, String key, Object... args) {
-        recipient.sendMessage(format(key, args));
     }
 }

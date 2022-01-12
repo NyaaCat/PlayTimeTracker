@@ -5,6 +5,11 @@ api-version: 1.18
 prefix: PlayTimeTracker
 depend: [NyaaCore]
 softdepend: [Essentials]
+commands:
+  playtimetracker:
+    aliases: [ptt]
+    permission: ptt.command
+    permission-message: You do not have permission node <permission>
 
 permissions:
   ptt.command.view:
@@ -18,4 +23,7 @@ permissions:
     default: op
   ptt.reload:
     description: Reload plugin
+    default: op
+  ptt.debug:
+    description: debug command
     default: op
