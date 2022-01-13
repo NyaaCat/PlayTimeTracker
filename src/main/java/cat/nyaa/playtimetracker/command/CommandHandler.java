@@ -40,7 +40,22 @@ public class CommandHandler extends CommandReceiver {
         long lastActivity = PlayTimeTracker.getInstance().getAfkManager().getlastActivity(player.getUniqueId());
         I18n.format("command.afkstst.info", player.getName(), TimeUtils.dateFormat(lastActivity),TimeUtils.timeFormat(afkTime));
     }
-
+    @SubCommand(value = "reload", permission = "ptt.command.reload")
+    public void reload(CommandSender sender, Arguments args) {
+        I18n.format("command.reload.start");
+        if (PlayTimeTracker.getInstance() != null) {
+            try {
+                PlayTimeTracker.getInstance().onReload();
+            }catch (Exception e){
+                e.printStackTrace();
+                PlayTimeTracker.getInstance().getPluginLoader().disablePlugin(PlayTimeTracker.getInstance());
+                I18n.format("command.reload.err");
+            }
+        }else{
+            I18n.format("command.reload.err");
+        }
+        I18n.format("command.reload.finish");
+    }
     public I18n getI18n() {
         return i18n;
     }
