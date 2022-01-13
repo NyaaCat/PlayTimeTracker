@@ -12,18 +12,22 @@ commands:
     permission-message: You do not have permission node <permission>
 
 permissions:
+
   ptt.command.view:
     description: player's statistic
     default: true
   ptt.command.acquire:
     description: Redeem the reward related to the rule
     default: true
-  ptt.reset:
+  ptt.command.afkstat:
+    description: player's afk statistic
+    default: op
+  ptt.command.reset:
     description: Reset statistic for some players
     default: op
-  ptt.reload:
+  ptt.command.reload:
     description: Reload plugin
     default: op
-  ptt.debug:
+  ptt.command.debug:
     description: debug command
-    default: op
+    default: op #TODO false

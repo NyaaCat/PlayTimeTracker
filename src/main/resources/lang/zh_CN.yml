@@ -1,0 +1,5 @@
+command:
+  afkstst:
+    not_found: 暂未查询到 %s 的AFK状态
+    no_afk: 玩家 %s 没有AFK状态
+    info: "玩家 %s AFK,开始时间:%s,持续时间:%s"

@@ -6,6 +6,7 @@ import cat.nyaa.playtimetracker.db.connection.TimeTrackerConnection;
 import cat.nyaa.playtimetracker.db.model.TimeTrackerDbModel;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
 import java.time.DayOfWeek;
 import java.time.ZonedDateTime;
@@ -41,14 +42,18 @@ public class TimeRecordManager {
         insertOrResetPlayer(playerId, TimeUtils.getUnixTimeStampNow());
     }
 
-    public void addPlayer(Player player) {
+    public void addPlayer(@NotNull Player player) {
         addPlayer(player.getUniqueId());
     }
 
     public void removePlayer(UUID playerId) {
         if (!holdPlayers.contains(playerId)) return;
-        insertOrResetPlayer(playerId, TimeUtils.getUnixTimeStampNow());
+        updatePlayerTime(playerId);
         holdPlayers.remove(playerId);
+    }
+
+    public void removePlayer(@NotNull Player player) {
+        removePlayer(player.getUniqueId());
     }
 
     public void insertOrResetPlayer(UUID playerId, long timestamp) {
@@ -78,10 +83,15 @@ public class TimeRecordManager {
         this.updatePlayerTime(playerId, model, TimeUtils.getUnixTimeStampNow(), true);
     }
 
-    private void updatePlayerTime(UUID playerId, TimeTrackerDbModel model, long nowTimestamp, boolean accumulative) {
+    private void updatePlayerTime(UUID playerId, @NotNull TimeTrackerDbModel model, long nowTimestamp, boolean accumulative) {
         long lastSeenTimestamp = model.getLastSeen();
         long duration = nowTimestamp - lastSeenTimestamp;
         if (duration <= 0) return;
+
+        if(PlayerAFKManager.isAFK(playerId)){
+            accumulative = false; //todo AFK calculation can be more precise
+        }
+
         ZonedDateTime now = TimeUtils.timeStamp2ZonedDateTime(nowTimestamp);
         ZonedDateTime lastSeen = TimeUtils.timeStamp2ZonedDateTime(lastSeenTimestamp);
 
@@ -122,4 +132,6 @@ public class TimeRecordManager {
         onlineSet_.forEach(this::addPlayer);
 //        onlineSet_ = holdSet_ = andSet = null;
     }
+
+
 }

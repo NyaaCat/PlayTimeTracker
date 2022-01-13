@@ -14,6 +14,13 @@ public class PTTConfiguration extends PluginConfigure {
     public String language = "en_US";
     @Serializable
     public String timezone = ZoneId.systemDefault().getId();
+    @Serializable(name = "check-afk")
+    public boolean checkAfk;
+    @Serializable(name = "use-ess-afk-status")
+    public boolean useEssAfkStatus;
+    @Serializable(name = "afk-time-ms")
+    public long afkTimeMS;
+
     public PTTConfiguration(PlayTimeTracker plugin) {
         this.plugin = plugin;
         this.databaseConfig = new DatabaseConfig(plugin);
