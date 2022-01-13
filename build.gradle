@@ -1,117 +1,83 @@
 plugins {
     id 'java-library'
-    id "maven-publish"
+    id 'maven-publish'
     id("xyz.jpenilla.run-paper") version "1.0.6"
 }
 
-
 // Plugin config
-ext.pluginNameUpper = "HamsterEcoHelper"
-ext.pluginNameLower = ext.pluginNameUpper.toLowerCase()
-ext.majorVersion = 9
-ext.minorVersion = 0
+ext.pluginName = "PlayTimeTracker"
+ext.pluginname = ext.pluginName.toLowerCase()
+ext.majorVersion = 0
+ext.minorVersion = 7
 ext.minecraftVersion = "1.18.1"
 sourceCompatibility = 17
 targetCompatibility = 17
 
-// Suppiled by Jenkins
+// Supplied by Jenkins
 ext.buildNumber = System.env.BUILD_NUMBER == null ? "x"                : "$System.env.BUILD_NUMBER"
 ext.mavenDirectory = System.env.MAVEN_DIR == null ? "$projectDir/repo" : "$System.env.MAVEN_DIR"
 ext.jdDirectory = System.env.JAVADOCS_DIR == null ? null               : "$System.env.JAVADOCS_DIR"
 
 // Version used for distribution. Different from maven repo
 group = "cat.nyaa"
-archivesBaseName = "${pluginNameUpper}-mc$minecraftVersion"
+archivesBaseName = "${pluginName}-mc$minecraftVersion"
 version = "$majorVersion.$minorVersion.$buildNumber".toString()
-
 runServer {
     minecraftVersion("1.18.1")
 }
-
-// Repositories and dependencies
 repositories {
     mavenCentral()
-    maven { url "https://repo.dmulloy2.net/repository/public/" }
-    maven { name 'Spigot';      url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
-    maven { name 'Sonatype';    url 'https://oss.sonatype.org/content/groups/public' }
-    maven { name 'NyaaCat';     url 'https://ci.nyaacat.com/maven/' }
-    maven { name 'EssentialsX'; url 'https://repo.essentialsx.net/releases/'}
-    maven { name "papermc";     url 'https://papermc.io/repo/repository/maven-public/'}
-    maven { name 'aikar';       url 'https://repo.aikar.co/content/groups/aikar/' }
-    maven { name 'jitpack';     url 'https://jitpack.io' }
+    //'Spigot';
+    maven { url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
+    maven { url = 'https://oss.sonatype.org/content/repositories/snapshots' }
+    maven { url = 'https://oss.sonatype.org/content/repositories/central' }
+
+    maven { name 'Sonatype';             url 'https://oss.sonatype.org/content/groups/public' }
+    maven { name "essentialsx-releases"; url "https://repo.essentialsx.net/releases/"}
+    maven { name "papermc";              url "https://papermc.io/repo/repository/maven-public/"}
+    maven { name 'NyaaCat';              url 'https://ci.nyaacat.com/maven/' }
 }
 
 dependencies {
-    implementation 'org.jetbrains:annotations:22.0.0'
     compileOnly "org.spigotmc:spigot-api:$minecraftVersion-R0.1-SNAPSHOT"
+    compileOnly 'net.essentialsx:EssentialsX:2.19.0'
 
     // other nyaa plugins
     if (gradle.hasProperty("useLocalDependencies") && gradle.useLocalDependencies) {
         compileOnly project(":NyaaCore")
-        compileOnly project(":LockettePro")
     } else {
         compileOnly('cat.nyaa:nyaacore:9.0-SNAPSHOT') { transitive = true }
-        compileOnly('me.crafter.mc:lockettepro:2.10-SNAPSHOT') { transitive = false }
     }
 
-    // 3rd party plugins
-    compileOnly ('com.github.MilkBowl:VaultAPI:1.7')
-    compileOnly ('net.essentialsx:EssentialsX:2.19.0')
+    compileOnly 'org.jetbrains:annotations:22.0.0'
 }
 
-// source file modification (modify version string)
-processResources {
+compileJava {
+    options.compilerArgs += ["-Xlint:deprecation"]
+    options.encoding = 'UTF-8'
+}
+
+task sourcesJar(type: Jar) {
+    archiveClassifier.set('sources')
+    from sourceSets.main.java.srcDirs
+}
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    archiveClassifier.set('javadoc')
+    from javadoc.destinationDir
+}
+if (ext.jdDirectory != null) {
+    javadoc.destinationDir = file("${jdDirectory}/${pluginname}-${version}")
+}
+processResources { // modify version string
     filesMatching("**/plugin.yml") {
         expand 'version': project.version
     }
 }
-
-// source file jar
-task sourcesJar(type: Jar) {
-    archiveClassifier.set("sources")
-    from sourceSets.main.allSource
-}
-
-// javadoc generation options
-javadoc {
-    // javadoc output folder
-    if (project.jdDirectory != null) destinationDir = file("${jdDirectory}/${pluginNameLower}-${version}")
-    (options as StandardJavadocDocletOptions).with {
-        links 'https://docs.oracle.com/en/java/javase/16/docs/api/'
-        links 'https://hub.spigotmc.org/javadocs/spigot/'
-        links 'https://google.github.io/guava/releases/21.0/api/docs/'
-        links 'https://ci.md-5.net/job/BungeeCord/ws/chat/target/apidocs/'
-
-        locale 'en_US'
-        encoding 'UTF-8'
-        docEncoding 'UTF-8'
-        addBooleanOption('keywords', true)
-        addStringOption('Xdoclint:none', '-quiet')
-
-        addBooleanOption('html5', true)
-
-        windowTitle = "${pluginNameUpper} Javadoc"
-        docTitle = "${pluginNameUpper} (mc$minecraftVersion-${project.version})"
-    }
-}
-
-// javadoc jar
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    archiveClassifier.set("javadoc")
-    from javadoc.destinationDir
-}
-
-// compile options
-compileJava {
-    options.compilerArgs += ["-Xlint:deprecation"]
-}
-
-// maven publish
 publishing {
     publications {
         mavenJava(MavenPublication) {
             group      project.group
-            artifactId pluginNameLower
+            artifactId pluginname
             version    "$majorVersion.$minorVersion-SNAPSHOT"
 
             from components.java
@@ -126,3 +92,25 @@ publishing {
     }
 }
 
+
+javadoc {
+    (options as StandardJavadocDocletOptions).with {
+        links 'https://docs.oracle.com/en/java/javase/14/docs/api/'
+        links 'https://hub.spigotmc.org/javadocs/spigot/'
+        links 'https://guava.dev/releases/21.0/api/docs/'
+        links 'https://ci.md-5.net/job/BungeeCord/ws/chat/target/apidocs/'
+
+        locale 'en_US'
+        encoding 'UTF-8'
+        docEncoding 'UTF-8'
+        addBooleanOption('keywords', true)
+        addStringOption('Xdoclint:none', '-quiet')
+
+        if (JavaVersion.current() > JavaVersion.VERSION_1_9) {
+            options.addBooleanOption('html5', true)
+        }
+
+        windowTitle = "${pluginName} Javadoc"
+        docTitle = "${pluginName} (mc$minecraftVersion-${project.version})"
+    }
+}
