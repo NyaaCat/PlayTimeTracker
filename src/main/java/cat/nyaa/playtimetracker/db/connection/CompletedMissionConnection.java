@@ -4,6 +4,7 @@ import cat.nyaa.nyaacore.orm.WhereClause;
 import cat.nyaa.nyaacore.orm.backends.IConnectedDatabase;
 import cat.nyaa.nyaacore.orm.backends.ITypedTable;
 import cat.nyaa.playtimetracker.db.model.CompletedMissionDbModel;
+import cat.nyaa.playtimetracker.db.model.TimeTrackerDbModel;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -14,6 +15,10 @@ import java.util.UUID;
 
 public record CompletedMissionConnection(ITypedTable<CompletedMissionDbModel> completedMissionTable,
                                          IConnectedDatabase db) {
+
+    public void deletePlayerData(UUID playerId) {
+        completedMissionTable.delete(WhereClause.EQ("player", playerId));
+    }
 
     public void WriteMissionCompleted(UUID playerUniqueId, String missionName, long lastCompletedTime) {
         synchronized (CompletedMissionConnection.class) {

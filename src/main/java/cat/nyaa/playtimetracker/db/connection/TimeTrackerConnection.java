@@ -3,6 +3,7 @@ package cat.nyaa.playtimetracker.db.connection;
 import cat.nyaa.nyaacore.orm.WhereClause;
 import cat.nyaa.nyaacore.orm.backends.IConnectedDatabase;
 import cat.nyaa.nyaacore.orm.backends.ITypedTable;
+import cat.nyaa.playtimetracker.Utils.TimeUtils;
 import cat.nyaa.playtimetracker.db.model.TimeTrackerDbModel;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,7 +11,13 @@ import java.util.UUID;
 
 public record TimeTrackerConnection(
         ITypedTable<TimeTrackerDbModel> timeTrackerTable, IConnectedDatabase db) {
-
+    public void deletePlayerData(UUID playerId) {
+        synchronized (TimeTrackerConnection.class) {
+            TimeTrackerDbModel trackerDbModel = getPlayerTimeTracker(playerId);
+            if (trackerDbModel == null) return;
+            timeTrackerTable.delete(WhereClause.EQ("player", playerId));
+        }
+    }
     public void insertPlayer(UUID playerId, long time) {
         synchronized (TimeTrackerConnection.class) {
             TimeTrackerDbModel trackerDbModel = getPlayerTimeTracker(playerId);
