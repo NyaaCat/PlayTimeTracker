@@ -33,8 +33,11 @@ public final class PlayTimeTracker extends JavaPlugin {
     @Nullable
     private TimeRecordManager timeRecordManager;
     @Nullable
+    private PlayerMissionManager missionManager;
+    @Nullable
     private Plugin essentialsPlugin;
     private ZoneId timezone;
+
 
     @Nullable
     public static PlayTimeTracker getInstance() {
@@ -73,12 +76,13 @@ public final class PlayTimeTracker extends JavaPlugin {
         //listener
         this.listenerManager = new ListenerManager(this);
         //task
-        this.taskManager = new PTTTaskManager(this);
+        this.taskManager = new PTTTaskManager(this, pttConfiguration);
         //afk
         this.afkManager = new PlayerAFKManager(this);
         //record
         this.timeRecordManager = new TimeRecordManager(this, databaseManager.getTimeTrackerConnection());
-
+        //Mission
+        this.missionManager = new PlayerMissionManager(this, pttConfiguration, timeRecordManager, databaseManager.getCompletedMissionConnection());
     }
 
     @Nullable
@@ -104,6 +108,11 @@ public final class PlayTimeTracker extends JavaPlugin {
     @Nullable
     public TimeRecordManager getTimeRecordManager() {
         return timeRecordManager;
+    }
+
+    @Nullable
+    public PlayerMissionManager getMissionManager() {
+        return missionManager;
     }
 
     @Nullable

@@ -29,33 +29,38 @@ public class CommandHandler extends CommandReceiver {
         Player player = args.nextPlayer();
 
         if (!PlayerAFKManager.isAFK(player.getUniqueId())) {
-            I18n.send(sender,"command.afkstst.no_afk", player.getName());
+            I18n.send(sender, "command.afkstst.no_afk", player.getName());
             return;
         }
         if (PlayTimeTracker.getInstance() == null || PlayTimeTracker.getInstance().getAfkManager() == null) {
-            I18n.send(sender,"command.afkstst.not_found", player.getName());
+            I18n.send(sender, "command.afkstst.not_found", player.getName());
             return;
+        }
+        if (PlayerAFKManager.isEssAfk(player.getUniqueId())) {
+            I18n.send(sender, "command.afkstst.ess_afk", player.getName());
         }
         long afkTime = PlayTimeTracker.getInstance().getAfkManager().getAfkTime(player.getUniqueId());
         long lastActivity = PlayTimeTracker.getInstance().getAfkManager().getlastActivity(player.getUniqueId());
-        I18n.send(sender,"command.afkstst.info", player.getName(), TimeUtils.dateFormat(lastActivity),TimeUtils.timeFormat(afkTime));
+        I18n.send(sender, "command.afkstst.info", player.getName(), TimeUtils.dateFormat(lastActivity), TimeUtils.timeFormat(afkTime));
     }
+
     @SubCommand(value = "reload", permission = "ptt.command.reload")
     public void reload(CommandSender sender, Arguments args) {
-        I18n.send(sender,"command.reload.start");
+        I18n.send(sender, "command.reload.start");
         if (PlayTimeTracker.getInstance() != null) {
             try {
                 PlayTimeTracker.getInstance().onReload();
-            }catch (Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
                 PlayTimeTracker.getInstance().getPluginLoader().disablePlugin(PlayTimeTracker.getInstance());
-                I18n.send(sender,"command.reload.err");
+                I18n.send(sender, "command.reload.err");
             }
-        }else{
-            I18n.send(sender,"command.reload.err");
+        } else {
+            I18n.send(sender, "command.reload.err");
         }
-        I18n.send(sender,"command.reload.finish");
+        I18n.send(sender, "command.reload.finish");
     }
+
     public I18n getI18n() {
         return i18n;
     }

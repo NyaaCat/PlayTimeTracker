@@ -3,8 +3,10 @@ version: '${version}'
 main: cat.nyaa.playtimetracker.PlayTimeTracker
 api-version: 1.18
 prefix: PlayTimeTracker
-depend: [NyaaCore]
+depend: [NyaaCore,PlaceholderAPI]
 softdepend: [Essentials]
+libraries:
+  - com.udojava:EvalEx:2.7
 commands:
   playtimetracker:
     aliases: [ptt]

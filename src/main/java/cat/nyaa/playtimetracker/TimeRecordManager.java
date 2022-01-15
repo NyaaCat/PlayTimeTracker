@@ -4,6 +4,9 @@ import cat.nyaa.playtimetracker.Utils.TaskUtils;
 import cat.nyaa.playtimetracker.Utils.TimeUtils;
 import cat.nyaa.playtimetracker.db.connection.TimeTrackerConnection;
 import cat.nyaa.playtimetracker.db.model.TimeTrackerDbModel;
+import cat.nyaa.playtimetracker.event.player.time.DailyResetEvent;
+import cat.nyaa.playtimetracker.event.player.time.MonthlyResetEvent;
+import cat.nyaa.playtimetracker.event.player.time.WeeklyResetEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
@@ -75,6 +78,10 @@ public class TimeRecordManager {
         holdPlayers.forEach((uuid) -> TaskUtils.mod64TickToRun(tickNum, uuid, () -> updatePlayerTime(uuid)));
     }
 
+    public TimeTrackerDbModel getPlayerTimeTrackerDbModel(Player player) {
+        return timeTrackerConnection.getPlayerTimeTracker(player.getUniqueId());
+    }
+
     private void updatePlayerTime(UUID playerId) {
         TimeTrackerDbModel model = timeTrackerConnection.getPlayerTimeTracker(playerId);
         if (model == null) {
@@ -88,7 +95,7 @@ public class TimeRecordManager {
         long duration = nowTimestamp - lastSeenTimestamp;
         if (duration <= 0) return;
 
-        if(PlayerAFKManager.isAFK(playerId)){
+        if (PlayerAFKManager.isAFK(playerId)) {
             accumulative = false; //todo AFK calculation can be more precise
         }
 
@@ -98,21 +105,28 @@ public class TimeRecordManager {
         ZonedDateTime startOfToday = now.truncatedTo(ChronoUnit.DAYS);
         ZonedDateTime startOfWeek = now.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).truncatedTo(ChronoUnit.DAYS);
         ZonedDateTime startOfMonth = now.with(TemporalAdjusters.firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS);
+
         if (startOfToday.isAfter(lastSeen)) {
+            Bukkit.getPluginManager().callEvent(new DailyResetEvent(playerId, model.getDailyTime()));
             model.setDailyTime(0);
         } else if (accumulative) {
             model.setDailyTime(model.getDailyTime() + duration);
         }
+
         if (startOfWeek.isAfter(lastSeen)) {
+            Bukkit.getPluginManager().callEvent(new WeeklyResetEvent(playerId, model.getWeeklyTime()));
             model.setWeeklyTime(0);
         } else if (accumulative) {
             model.setWeeklyTime(model.getWeeklyTime() + duration);
         }
+
         if (startOfMonth.isAfter(lastSeen)) {
+            Bukkit.getPluginManager().callEvent(new MonthlyResetEvent(playerId, model.getMonthlyTime()));
             model.setMonthlyTime(0);
         } else if (accumulative) {
             model.setMonthlyTime(model.getMonthlyTime() + duration);
         }
+
         if (accumulative)
             model.setTotalTime(model.getMonthlyTime() + duration);
         model.setLastSeen(nowTimestamp);

@@ -1,8 +1,14 @@
+message:
+  mission:
+    notify:
+      msg: "您的在线时长已经达成 %s 的任务要求"
+      command: "ptt acquire %s"
 command:
   afkstst:
+    ess_afk: ESS AFK中
     not_found: 暂未查询到 %s 的AFK状态
     no_afk: 玩家 %s 没有AFK状态
-    info: "玩家 %s AFK,开始时间:%s,持续时间:%s"
+    info: "玩家 %s PTT AFK,开始时间:%s,持续时间:%s"
   reload:
     err: 未能成功重载
     start: 开始重载

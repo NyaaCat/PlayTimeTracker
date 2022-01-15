@@ -1,8 +1,11 @@
 package cat.nyaa.playtimetracker;
 
 import cat.nyaa.nyaacore.LanguageRepository;
+import me.clip.placeholderapi.PlaceholderAPI;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
 public class I18n extends LanguageRepository {
@@ -18,6 +21,7 @@ public class I18n extends LanguageRepository {
         load();
     }
 
+    @Contract(pure = true)
     public static String format(String key, Object... args) {
         if (instance == null) return "<Not initialized>";
         return instance.getFormatted(key, args);
@@ -29,6 +33,9 @@ public class I18n extends LanguageRepository {
     }
 
     public static void send(CommandSender recipient, String key, Object... args) {
+        if (recipient instanceof Player) {
+            recipient.sendMessage(PlaceholderAPI.setPlaceholders((Player) recipient, format(key, args)));
+        }
         recipient.sendMessage(format(key, args));
     }
 
