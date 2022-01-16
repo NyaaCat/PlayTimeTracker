@@ -14,7 +14,9 @@ commands:
     permission-message: You do not have permission node <permission>
 
 permissions:
-
+  ptt.command:
+    description: ptt command
+    default: true
   ptt.command.view:
     description: player's statistic
     default: true
