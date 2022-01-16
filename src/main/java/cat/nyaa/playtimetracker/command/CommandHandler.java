@@ -6,9 +6,13 @@ import cat.nyaa.nyaacore.cmdreceiver.SubCommand;
 import cat.nyaa.playtimetracker.I18n;
 import cat.nyaa.playtimetracker.PlayTimeTracker;
 import cat.nyaa.playtimetracker.PlayerAFKManager;
+import cat.nyaa.playtimetracker.Utils.CommandUtils;
 import cat.nyaa.playtimetracker.Utils.TimeUtils;
+import cat.nyaa.playtimetracker.db.model.TimeTrackerDbModel;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+
+import java.util.UUID;
 
 public class CommandHandler extends CommandReceiver {
     private final I18n i18n;
@@ -22,6 +26,44 @@ public class CommandHandler extends CommandReceiver {
         super(plugin, _i18n);
         this.i18n = _i18n;
         this.plugin = plugin;
+    }
+
+    @SubCommand(value = "view", permission = "ptt.command.view", isDefaultCommand = true)
+    public void view(CommandSender sender, Arguments args) {
+        if (PlayTimeTracker.getInstance() == null || PlayTimeTracker.getInstance().getTimeRecordManager() != null) {
+            I18n.send(sender, "command.view.err");
+            return;
+        }
+        String next = args.next();
+        UUID targetUUID = null;
+        if (next != null) {
+            String otherPermission = "ptt.command.view.other";
+            if (!sender.hasPermission(otherPermission)) {
+                I18n.send(sender, "command.view.no_view_other_permission", otherPermission);
+                return;
+            }
+            targetUUID = CommandUtils.getPlayerUUIDByStr(next, sender);
+        } else {
+            if (sender instanceof Player) {
+                targetUUID = ((Player) sender).getUniqueId();
+            }
+        }
+        if (targetUUID == null) {
+            I18n.send(sender, "command.view.invalid_target", next);
+            return;
+        }
+
+        TimeTrackerDbModel timeTrackerDbModel = PlayTimeTracker.getInstance().getTimeRecordManager().getPlayerTimeTrackerDbModel(targetUUID);
+        if (timeTrackerDbModel == null) {
+            I18n.send(sender, "command.view.no_record", next);
+            return;
+        }
+        I18n.send(sender, "command.view.query_title", next, targetUUID.toString());
+        I18n.send(sender, "command.view.last_seen", timeTrackerDbModel.getLastSeen());
+        I18n.send(sender, "command.view.daily_time", timeTrackerDbModel.getDailyTime());
+        I18n.send(sender, "command.view.weekly_time", timeTrackerDbModel.getWeeklyTime());
+        I18n.send(sender, "command.view.monthly_time", timeTrackerDbModel.getMonthlyTime());
+        I18n.send(sender, "command.view.total_time", timeTrackerDbModel.getTotalTime());
     }
 
     @SubCommand(value = "afkstat", permission = "ptt.command.afkstat")
