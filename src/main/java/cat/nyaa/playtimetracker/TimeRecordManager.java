@@ -10,6 +10,7 @@ import cat.nyaa.playtimetracker.event.player.time.WeeklyResetEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.time.DayOfWeek;
 import java.time.ZonedDateTime;
@@ -77,9 +78,13 @@ public class TimeRecordManager {
 
         holdPlayers.forEach((uuid) -> TaskUtils.mod64TickToRun(tickNum, uuid, () -> updatePlayerTime(uuid)));
     }
-
-    public TimeTrackerDbModel getPlayerTimeTrackerDbModel(Player player) {
-        return timeTrackerConnection.getPlayerTimeTracker(player.getUniqueId());
+    @Nullable
+    public TimeTrackerDbModel getPlayerTimeTrackerDbModel(@NotNull Player player) {
+        return getPlayerTimeTrackerDbModel(player.getUniqueId());
+    }
+    @Nullable
+    public TimeTrackerDbModel getPlayerTimeTrackerDbModel(@NotNull UUID playerId) {
+        return timeTrackerConnection.getPlayerTimeTracker(playerId);
     }
 
     private void updatePlayerTime(UUID playerId) {

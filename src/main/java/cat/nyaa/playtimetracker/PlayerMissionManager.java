@@ -19,20 +19,25 @@ import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class PlayerMissionManager {
     private final PlayTimeTracker plugin;
-    private final PlayerMissionManager instance;
+    @Nullable
+    private static PlayerMissionManager instance;
     private final List<AwaitingReward> awaitingRewardList = new ArrayList<>();
     private final CompletedMissionConnection completedMissionConnection;
     private final PTTConfiguration pttConfiguration;
     private final TimeRecordManager timeRecordManager;
-    private int ticknum;
+    private int tickNum;
 
     public PlayerMissionManager(PlayTimeTracker playTimeTracker, PTTConfiguration pttConfiguration, TimeRecordManager timeRecordManager, CompletedMissionConnection completedMissionConnection) {
         instance = this;
@@ -46,7 +51,8 @@ public class PlayerMissionManager {
         return plugin;
     }
 
-    public PlayerMissionManager getInstance() {
+    @Nullable
+    public static PlayerMissionManager getInstance() {
         return instance;
     }
 
@@ -75,7 +81,7 @@ public class PlayerMissionManager {
             }
     }
 
-    public void completeMission(Player player, String mission) {
+    public void completeMission(@NotNull Player player, String mission) {
         if (completeMissionNoReward(player.getUniqueId(), mission)) {
             getMissionReward(player, mission);
         }
@@ -90,11 +96,11 @@ public class PlayerMissionManager {
         return write2db;
     }
 
-    public Map<String, MissionData> getMissionDataMap() {
-        Map<String, MissionData> missionDataMap = new HashMap<>();
-        getMissionDataList().forEach(missionData -> missionDataMap.put(missionData.missionName, missionData));
-        return missionDataMap;
-    }
+//    public Map<String, MissionData> getMissionDataMap() {
+//        Map<String, MissionData> missionDataMap = new HashMap<>();
+//        getMissionDataList().forEach(missionData -> missionDataMap.put(missionData.missionName, missionData));
+//        return missionDataMap;
+//    }
 
     public void checkAwaitingRewardList() {
         Map<String, MissionData> missionDataMap = getMissionDataMap();
@@ -110,20 +116,19 @@ public class PlayerMissionManager {
     }
 
 
-    public void checkPlayerMission(Player player) {
+    public void checkPlayerMission(@NotNull Player player) {
         if (!player.isOnline()) return;
         TimeTrackerDbModel trackerDbModel = timeRecordManager.getPlayerTimeTrackerDbModel(player);
         if (trackerDbModel == null) return;
         //this.checkAndResetPlayerCompletedMission(player);
-        getMissionDataList().forEach(
-                missionData -> {
-
-                    CompletedMissionDbModel completedMissionDbModel = completedMissionConnection.getPlayerCompletedMission(player.getUniqueId(), missionData.missionName);
+        getMissionDataMap().forEach(
+                (missionName, missionData) -> {
+                    CompletedMissionDbModel completedMissionDbModel = completedMissionConnection.getPlayerCompletedMission(player.getUniqueId(), missionName);
                     if (completedMissionDbModel != null) {
                         return;
                     }
                     //awaitingReward
-                    AwaitingReward awaitingReward = getAwaitingReward(player, missionData.missionName);
+                    AwaitingReward awaitingReward = getAwaitingReward(player, missionName);
                     if (awaitingReward != null) {
                         return; // after checkAwaitingRewardList
                     }
@@ -163,9 +168,9 @@ public class PlayerMissionManager {
                         return;
                     }
 
-                    this.putAwaitingReward(player, missionData.missionName, missionData.notify);
+                    this.putAwaitingReward(player, missionName, missionData.notify);
                     if (missionData.autoGive) {
-                        completeMission(player, missionData.missionName);
+                        completeMission(player, missionName);
                     }
                 }
         );
@@ -196,20 +201,20 @@ public class PlayerMissionManager {
         return result.get();
     }
 
-    private void putAwaitingReward(Player player, String missionName, boolean notify) {
+    private void putAwaitingReward(@NotNull Player player, String missionName, boolean notify) {
         removeAwaitingReward(player.getUniqueId(), missionName);
         awaitingRewardList.add(new AwaitingReward(player.getUniqueId(), missionName, TimeUtils.getUnixTimeStampNow(), notify));
     }
 
-    private List<MissionData> getMissionDataList() {
-        return pttConfiguration.missionConfig.missionList;
+    private Map<String, MissionData> getMissionDataMap() {
+        return pttConfiguration.missionConfig.missions;
     }
 
     public void missionCheckTick() {
-        this.ticknum++;
+        this.tickNum++;
         checkAwaitingRewardList();
         Bukkit.getOnlinePlayers().forEach(player ->
-                TaskUtils.mod64TickToRun(this.ticknum, player.getUniqueId(), () -> checkPlayerMission(player))
+                TaskUtils.mod64TickToRun(this.tickNum, player.getUniqueId(), () -> checkPlayerMission(player))
         );
     }
 
@@ -245,10 +250,10 @@ public class PlayerMissionManager {
 
     private void resetMission(boolean daily, boolean weekly, boolean monthly, UUID playerId) {
         if (!daily && !weekly && !monthly) return;
-        getMissionDataList().forEach(
-                missionData -> {
+        getMissionDataMap().forEach(
+                (missionName, missionData) -> {
                     if ((missionData.resetDaily && daily) || (missionData.resetWeekly && weekly) || (missionData.resetMonthly && monthly)) {
-                        this.completedMissionConnection.resetAllMissionData(missionData.missionName, playerId);
+                        this.completedMissionConnection.resetAllMissionData(missionName, playerId);
                     }
                 }
         );

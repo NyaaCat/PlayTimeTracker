@@ -2,6 +2,7 @@ package cat.nyaa.playtimetracker.config;
 
 import cat.nyaa.nyaacore.configuration.PluginConfigure;
 import cat.nyaa.playtimetracker.PlayTimeTracker;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.time.ZoneId;
@@ -12,7 +13,9 @@ public class PTTConfiguration extends PluginConfigure {
     public final DatabaseConfig databaseConfig;
     @StandaloneConfig
     public final MissionConfig missionConfig;
+
     private final PlayTimeTracker plugin;
+
     @Serializable
     public String language = "en_US";
     @Serializable

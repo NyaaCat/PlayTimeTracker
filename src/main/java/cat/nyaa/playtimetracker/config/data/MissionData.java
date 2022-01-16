@@ -4,11 +4,11 @@ import cat.nyaa.nyaacore.configuration.ISerializable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 public class MissionData implements ISerializable {
-    @Serializable
-    public String missionName = UUID.randomUUID().toString();
+    public MissionData() {
+    }
+
     @Serializable
     public List<String> group = new ArrayList<>();
     @Serializable
