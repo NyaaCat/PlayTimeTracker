@@ -1,56 +1,44 @@
-time:
-  format:
-    h: " 小时 "
-    m: " 分 "
-    s: " 秒 "
-    ms: " 毫秒 "
-message:
-  mission:
-    get_reward: "获得 %s 的任务奖励"
-    notify:
-      msg: "您的在线时长已经达成 %s 的任务要求"
-      command: "ptt acquire %s"
 command:
-  only-player-can-do: "只有玩家可以执行这个命令"
   acquire:
-    empty: "现在没有可以领取的任务奖励呢"
-    not_found: "待领取的奖励里面并没有 %s"
-    failed: "领取 %s 的奖励失败"
-    success: "成功领取 %s 的奖励"
-    err: "领取失败"
-  reset:
-    mission:
-      err: "执行失败"
-      not_found: "未找到玩家 %s 的任务数据"
-      mission_not_found: "玩家 %s 没有名称为 %s 的任务数据"
-      success: "成功删除了 %s 的 %s 任务数据"
-      success_all: "成功重置了 %s 的所有任务数据"
-      target_not_found: "目标:%s 不存在"
-    time:
-      err: "执行失败"
-      target_not_found: "目标:%s 不存在"
-      not_found: "未找到 %s 的时间记录"
-      success: "成功删除了 %s 的时间记录"
+    empty: 现在没有可以领取的任务奖励呢
+    err: 领取失败
+    failed: 领取 %s 的奖励失败
+    not_found: 待领取的奖励里面并没有 %s
+    success: 成功领取 %s 的奖励
   afkstst:
     ess_afk: ESS AFK中
-    not_found: 暂未查询到 %s 的AFK状态
+    info: 玩家 %s PTT AFK,开始时间:%s,持续时间:%s
     no_afk: 玩家 %s 没有AFK状态
-    info: "玩家 %s PTT AFK,开始时间:%s,持续时间:%s"
+    not_found: 暂未查询到 %s 的AFK状态
+  only-player-can-do: 只有玩家可以执行这个命令
   reload:
     err: 未能成功重载
-    start: 开始重载
     finish: 重载结束
+    start: 开始重载
+  reset:
+    mission:
+      err: 执行失败
+      mission_not_found: 玩家 %s 没有名称为 %s 的任务数据
+      not_found: 未找到玩家 %s 的任务数据
+      success: 成功删除了 %s 的 %s 任务数据
+      success_all: 成功重置了 %s 的所有任务数据
+      target_not_found: 目标:%s 不存在
+    time:
+      err: 执行失败
+      not_found: 未找到 %s 的时间记录
+      success: 成功删除了 %s 的时间记录
+      target_not_found: 目标:%s 不存在
   view:
-    no_view_other_permission: "查询其他人的数据需要权限: %s"
-    invalid_target: "查询目标: %s 无效"
-    no_record: "没有查询到 %s 的记录"
+    daily_time: '今日在线: %s'
     err: 查询失败
-    query_title: "玩家: %s (%s) 的在线数据"
-    last_seen: "上次更新: %s"
-    daily_time: "今日在线: %s"
-    weekly_time: "本周在线: %s"
-    monthly_time: "本月在线: %s"
-    total_time: "总在线时长: %s"
+    invalid_target: '查询目标: %s 无效'
+    last_seen: '上次更新: %s'
+    monthly_time: '本月在线: %s'
+    no_record: 没有查询到 %s 的记录
+    no_view_other_permission: '查询其他人的数据需要权限: %s'
+    query_title: '玩家: %s (%s) 的在线数据'
+    total_time: '总在线时长: %s'
+    weekly_time: '本周在线: %s'
 manual:
   acquire:
     description: 领取奖励
@@ -58,18 +46,30 @@ manual:
   afkstat:
     description: 查看玩家的afk状态
     usage: /ptt afkstat <player>
-  view:
-    description: 查看玩家在线时间数据
-    usage: /ptt view [player]
   reload:
     description: 重载插件
     usage: /ptt reload
   reset:
     description: 重置
-    usage: /ptt reset <subCommand>
     mission:
       description: 重置玩家任务记录
       usage: /ptt reset mission <player> <missionName|all>
     time:
       description: 重置时间记录
       usage: /ptt reset time <player>
+    usage: /ptt reset <subCommand>
+  view:
+    description: 查看玩家在线时间数据
+    usage: /ptt view [player]
+message:
+  mission:
+    get_reward: 获得 %s 的任务奖励
+    notify:
+      command: ptt acquire %s
+      msg: 您的在线时长已经达成 %s 的任务要求
+time:
+  format:
+    h: ' 小时 '
+    m: ' 分 '
+    ms: ' 毫秒 '
+    s: ' 秒 '
