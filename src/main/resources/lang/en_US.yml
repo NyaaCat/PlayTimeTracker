@@ -4,7 +4,6 @@ time:
     m: " 分 "
     s: " 秒 "
     ms: " 毫秒 "
-
 message:
   mission:
     get_reward: "获得 %s 的任务奖励"
@@ -52,3 +51,25 @@ command:
     weekly_time: "本周在线: %s"
     monthly_time: "本月在线: %s"
     total_time: "总在线时长: %s"
+manual:
+  acquire:
+    description: 领取奖励
+    usage: /ptt acquire <奖励名称|all>
+  afkstat:
+    description: 查看玩家的afk状态
+    usage: /ptt afkstat <player>
+  view:
+    description: 查看玩家在线时间数据
+    usage: /ptt view [player]
+  reload:
+    description: 重载插件
+    usage: /ptt reload
+  reset:
+    description: 重置
+    usage: /ptt reset <subCommand>
+    mission:
+      description: 重置玩家任务记录
+      usage: /ptt reset mission <player> <missionName|all>
+    time:
+      description: 重置时间记录
+      usage: /ptt reset time <player>

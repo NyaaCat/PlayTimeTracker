@@ -93,6 +93,7 @@ public class CommandHandler extends CommandReceiver {
 
     @SubCommand(value = "acquire", alias = {"ac"}, permission = "ptt.acquire")
     public void acquire(CommandSender sender, Arguments args) {
+        String missionName = args.nextString("all");
         if (!(sender instanceof Player player)) {
             I18n.send(sender, "command.only-player-can-do");
             return;
@@ -102,7 +103,6 @@ public class CommandHandler extends CommandReceiver {
             I18n.send(sender, "command.acquire.err");
             return;
         }
-        String missionName = args.nextString("all");
         Set<String> missionNameSet = missionManager.getAwaitingMissionNameSet(player);
         if (missionName.equals("all")) {
             if (missionNameSet.isEmpty()) {

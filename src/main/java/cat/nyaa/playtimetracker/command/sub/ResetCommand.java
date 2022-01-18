@@ -78,18 +78,18 @@ public class ResetCommand extends CommandReceiver {
             I18n.send(sender, "command.reset.time.err");
             return;
         }
-        String next = args.nextString();
+        String playerName = args.nextString();
         UUID playerId = CommandUtils.getPlayerUUIDByStr(args.nextString(), sender);
         if (playerId == null) {
-            I18n.send(sender, "command.reset.time.target_not_found", next);
+            I18n.send(sender, "command.reset.time.target_not_found", playerName);
             return;
         }
         if (PlayTimeTracker.getInstance().getTimeRecordManager().getPlayerTimeTrackerDbModel(playerId) == null) {
-            I18n.send(sender, "command.reset.time.not_found", next);
+            I18n.send(sender, "command.reset.time.not_found", playerName);
             return;
         }
         PlayTimeTracker.getInstance().getTimeRecordManager().resetPlayerRecordData(playerId);
-        I18n.send(sender, "command.reset.time.success", next);
+        I18n.send(sender, "command.reset.time.success", playerName);
     }
 
     @Override
