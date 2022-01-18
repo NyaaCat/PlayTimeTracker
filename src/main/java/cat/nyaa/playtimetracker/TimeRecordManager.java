@@ -41,6 +41,17 @@ public class TimeRecordManager {
         Bukkit.getOnlinePlayers().forEach(this::addPlayer);
     }
 
+    public void resetPlayerRecordData(UUID playerId) {
+        if (holdPlayers.contains(playerId)) {
+            removePlayer(playerId);
+        }
+        timeTrackerConnection.deletePlayerData(playerId);
+        Player onlinePlayer = Bukkit.getPlayer(playerId);
+        if (onlinePlayer != null && onlinePlayer.isOnline()) {
+            addPlayer(playerId);
+        }
+    }
+
     public void addPlayer(UUID playerId) {
         holdPlayers.add(playerId);
         insertOrResetPlayer(playerId, TimeUtils.getUnixTimeStampNow());

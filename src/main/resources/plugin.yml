@@ -3,13 +3,13 @@ version: '${version}'
 main: cat.nyaa.playtimetracker.PlayTimeTracker
 api-version: 1.18
 prefix: PlayTimeTracker
-depend: [NyaaCore,PlaceholderAPI]
-softdepend: [Essentials]
+depend: [ NyaaCore,PlaceholderAPI ]
+softdepend: [ Essentials ]
 libraries:
   - com.udojava:EvalEx:2.7
 commands:
   playtimetracker:
-    aliases: [ptt]
+    aliases: [ ptt ]
     permission: ptt.command
     permission-message: You do not have permission node <permission>
 
@@ -29,9 +29,15 @@ permissions:
   ptt.command.reset:
     description: Reset statistic for some players
     default: op
+  ptt.command.reset.mission:
+    description: Reset player's mission data
+    default: op
+  ptt.command.reset.time:
+    description: Reset player's time record
+    default: op
   ptt.command.reload:
     description: Reload plugin
     default: op
   ptt.command.debug:
     description: debug command
-    default: op #TODO false
+    default: false

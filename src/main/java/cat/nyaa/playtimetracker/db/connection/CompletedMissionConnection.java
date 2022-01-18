@@ -6,21 +6,17 @@ import cat.nyaa.nyaacore.orm.backends.ITypedTable;
 import cat.nyaa.playtimetracker.db.model.CompletedMissionDbModel;
 import org.jetbrains.annotations.Nullable;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
 public record CompletedMissionConnection(ITypedTable<CompletedMissionDbModel> completedMissionTable,
                                          IConnectedDatabase db) {
 
-    public void deletePlayerData(UUID playerId) {
+    public void resetPlayerCompletedMission(UUID playerId) {
         completedMissionTable.delete(WhereClause.EQ("player", playerId));
     }
 
-    public void resetAllMissionData(String missionName, UUID playerUniqueId) {
+    public void resetPlayerCompletedMission(String missionName, UUID playerUniqueId) {
         completedMissionTable.delete(WhereClause.EQ("player", playerUniqueId)
                 .whereEq("mission", missionName));
     }
@@ -48,5 +44,9 @@ public record CompletedMissionConnection(ITypedTable<CompletedMissionDbModel> co
     public CompletedMissionDbModel getPlayerCompletedMission(UUID playerUniqueId, String missionName) {
         return completedMissionTable.selectUniqueUnchecked(WhereClause.EQ("player", playerUniqueId)
                 .whereEq("mission", missionName));
+    }
+    @Nullable
+    public List<CompletedMissionDbModel> getPlayerCompletedMissionList(UUID playerUniqueId) {
+        return completedMissionTable.select(WhereClause.EQ("player", playerUniqueId));
     }
 }

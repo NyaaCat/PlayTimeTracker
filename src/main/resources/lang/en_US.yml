@@ -19,6 +19,19 @@ command:
     failed: "领取 %s 的奖励失败"
     success: "成功领取 %s 的奖励"
     err: "领取失败"
+  reset:
+    mission:
+      err: "执行失败"
+      not_found: "未找到玩家 %s 的任务数据"
+      mission_not_found: "玩家 %s 没有名称为 %s 的任务数据"
+      success: "成功删除了 %s 的 %s 任务数据"
+      success_all: "成功重置了 %s 的所有任务数据"
+      target_not_found: "目标:%s 不存在"
+    time:
+      err: "执行失败"
+      target_not_found: "目标:%s 不存在"
+      not_found: "未找到 %s 的时间记录"
+      success: "成功删除了 %s 的时间记录"
   afkstst:
     ess_afk: ESS AFK中
     not_found: 暂未查询到 %s 的AFK状态

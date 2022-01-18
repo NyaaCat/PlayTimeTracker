@@ -9,6 +9,7 @@ import cat.nyaa.playtimetracker.PlayerAFKManager;
 import cat.nyaa.playtimetracker.PlayerMissionManager;
 import cat.nyaa.playtimetracker.Utils.CommandUtils;
 import cat.nyaa.playtimetracker.Utils.TimeUtils;
+import cat.nyaa.playtimetracker.command.sub.ResetCommand;
 import cat.nyaa.playtimetracker.db.model.TimeTrackerDbModel;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -104,7 +105,7 @@ public class CommandHandler extends CommandReceiver {
         String missionName = args.nextString("all");
         Set<String> missionNameSet = missionManager.getAwaitingMissionNameSet(player);
         if (missionName.equals("all")) {
-            if(missionNameSet.isEmpty()){
+            if (missionNameSet.isEmpty()) {
                 I18n.send(sender, "command.acquire.empty");
                 return;
             }
@@ -148,6 +149,9 @@ public class CommandHandler extends CommandReceiver {
         }
         I18n.send(sender, "command.reload.finish");
     }
+
+    @SubCommand(value = "reset", permission = "ptt.reset")
+    public ResetCommand resetCommand;
 
     public I18n getI18n() {
         return i18n;

@@ -2,7 +2,6 @@ package cat.nyaa.playtimetracker.config;
 
 import cat.nyaa.nyaacore.configuration.PluginConfigure;
 import cat.nyaa.playtimetracker.PlayTimeTracker;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.time.ZoneId;
@@ -26,8 +25,8 @@ public class PTTConfiguration extends PluginConfigure {
     public boolean useEssAfkStatus = true;
     @Serializable(name = "afk-time-ms")
     public long afkTimeMS = 180 * 1000L;
-    @Serializable(name = "check-acquire-ms")
-    public long checkAcquireMs = 30 * 1000L;
+    @Serializable(name = "check-acquire-tick")
+    public long checkAcquireTick = 10 * 20L;
 
     public PTTConfiguration(PlayTimeTracker plugin) {
         this.plugin = plugin;

@@ -60,23 +60,34 @@ public class PlayerMissionManager {
         I18n.send(player, "message.mission.get_reward", mission);
         MissionData missionData = missionDataMap.get(mission);
         //item
-        try {
-            if (missionData.rewardItemSteakBase64 != null && !missionData.rewardItemSteakBase64.isEmpty()) {
-                ItemStack itemStack = ItemStackUtils.itemFromBase64(missionData.rewardItemSteakBase64);
-                if (InventoryUtils.hasEnoughSpace(player.getInventory(), itemStack)) {
-                    InventoryUtils.addItem(player, itemStack);
+
+        if (missionData.rewardItemsBase64 != null && !missionData.rewardItemsBase64.isEmpty()) {
+            List<ItemStack> items = new ArrayList<>();
+            try {
+                items = ItemStackUtils.itemsFromBase64(missionData.rewardItemsBase64);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            for (ItemStack item : items) {
+                if(item == null || item.getType().isAir())continue;
+                if (InventoryUtils.hasEnoughSpace(player.getInventory(), item)) {
+                    InventoryUtils.addItem(player, item);
                 } else {
-                    player.getWorld().dropItem(player.getLocation(), itemStack);
+                    player.getWorld().dropItem(player.getLocation(), item);
                 }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
+
         //command
         if (missionData.rewardCommandList != null)
             for (String command : missionData.rewardCommandList) {
-                if (command != null && !command.isEmpty())
-                    Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), PlaceholderAPI.setPlaceholders(player, command));
+                if (command != null && !command.isEmpty()) {
+                    try {
+                        Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), PlaceholderAPI.setPlaceholders(player, command));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
             }
     }
 
@@ -124,7 +135,7 @@ public class PlayerMissionManager {
         //this.checkAndResetPlayerCompletedMission(player);
         getMissionDataMap().forEach(
                 (missionName, missionData) -> {
-                    CompletedMissionDbModel completedMissionDbModel = completedMissionConnection.getPlayerCompletedMission(player.getUniqueId(), missionName);
+                    CompletedMissionDbModel completedMissionDbModel = this.getPlayerCompletedMission(player.getUniqueId(), missionName);
                     if (completedMissionDbModel != null) {
                         return;
                     }
@@ -212,7 +223,7 @@ public class PlayerMissionManager {
         awaitingRewardList.add(new AwaitingReward(player.getUniqueId(), missionName, TimeUtils.getUnixTimeStampNow(), notify));
     }
 
-    private Map<String, MissionData> getMissionDataMap() {
+    public Map<String, MissionData> getMissionDataMap() {
         return pttConfiguration.missionConfig.missions;
     }
 
@@ -259,10 +270,28 @@ public class PlayerMissionManager {
         getMissionDataMap().forEach(
                 (missionName, missionData) -> {
                     if ((missionData.resetDaily && daily) || (missionData.resetWeekly && weekly) || (missionData.resetMonthly && monthly)) {
-                        this.completedMissionConnection.resetAllMissionData(missionName, playerId);
+                        resetPlayerMissionData(playerId, missionName);
                     }
                 }
         );
+    }
+
+    public void resetPlayerMissionData(UUID playerId) {
+        this.awaitingRewardList.removeIf(awaitingReward -> awaitingReward.playerId == playerId);
+        this.completedMissionConnection.resetPlayerCompletedMission(playerId);
+    }
+
+    public void resetPlayerMissionData(UUID playerId, String missionName) {
+        this.awaitingRewardList.removeIf(awaitingReward -> (awaitingReward.playerId == playerId && missionName.equals(awaitingReward.mission)));
+        this.completedMissionConnection.resetPlayerCompletedMission(missionName, playerId);
+    }
+
+    public List<CompletedMissionDbModel> getPlayerCompletedMissionList(UUID playerId) {
+        return this.completedMissionConnection.getPlayerCompletedMissionList(playerId);
+    }
+
+    public CompletedMissionDbModel getPlayerCompletedMission(UUID playerId, String missionName) {
+        return this.completedMissionConnection.getPlayerCompletedMission(playerId, missionName);
     }
 
     public record AwaitingReward(UUID playerId, String mission, long time, boolean isNotify) {
