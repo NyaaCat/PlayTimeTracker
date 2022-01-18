@@ -14,6 +14,7 @@ message:
 command:
   only-player-can-do: "只有玩家可以执行这个命令"
   acquire:
+    empty: "现在没有可以领取的任务奖励呢"
     not_found: "待领取的奖励里面并没有 %s"
     failed: "领取 %s 的奖励失败"
     success: "成功领取 %s 的奖励"

@@ -104,6 +104,10 @@ public class CommandHandler extends CommandReceiver {
         String missionName = args.nextString("all");
         Set<String> missionNameSet = missionManager.getAwaitingMissionNameSet(player);
         if (missionName.equals("all")) {
+            if(missionNameSet.isEmpty()){
+                I18n.send(sender, "command.acquire.empty");
+                return;
+            }
             missionNameSet.forEach(
                     (mission) -> {
                         if (missionManager.completeMission(player, mission)) {
@@ -126,6 +130,7 @@ public class CommandHandler extends CommandReceiver {
             }
         }
     }
+
 
     @SubCommand(value = "reload", permission = "ptt.command.reload")
     public void reload(CommandSender sender, Arguments args) {
