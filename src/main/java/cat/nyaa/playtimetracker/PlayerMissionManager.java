@@ -23,11 +23,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 public class PlayerMissionManager {
     private final PlayTimeTracker plugin;
@@ -59,6 +57,7 @@ public class PlayerMissionManager {
     public void getMissionReward(Player player, String mission) {
         Map<String, MissionData> missionDataMap = getMissionDataMap();
         if (!missionDataMap.containsKey(mission)) return;
+        I18n.send(player, "message.mission.get_reward", mission);
         MissionData missionData = missionDataMap.get(mission);
         //item
         try {
@@ -81,10 +80,12 @@ public class PlayerMissionManager {
             }
     }
 
-    public void completeMission(@NotNull Player player, String mission) {
+    public boolean completeMission(@NotNull Player player, String mission) {
         if (completeMissionNoReward(player.getUniqueId(), mission)) {
             getMissionReward(player, mission);
+            return true;
         }
+        return false;
     }
 
     public boolean completeMissionNoReward(UUID playerId, String mission) {
@@ -176,6 +177,11 @@ public class PlayerMissionManager {
         );
     }
 
+    public Set<String> getAwaitingMissionNameSet(Player player) {
+        return awaitingRewardList.stream()
+                .filter(awaitingReward -> awaitingReward.playerId == player.getUniqueId())
+                .map(awaitingReward -> awaitingReward.mission).collect(Collectors.toSet());
+    }
 
     @Nullable
     private AwaitingReward getAwaitingReward(Player player, String missionName) {
