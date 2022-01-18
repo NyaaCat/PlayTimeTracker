@@ -35,6 +35,7 @@ public class I18n extends LanguageRepository {
     public static void send(CommandSender recipient, String key, Object... args) {
         if (recipient instanceof Player) {
             recipient.sendMessage(PlaceholderAPI.setPlaceholders((Player) recipient, format(key, args)));
+            return;
         }
         recipient.sendMessage(format(key, args));
     }

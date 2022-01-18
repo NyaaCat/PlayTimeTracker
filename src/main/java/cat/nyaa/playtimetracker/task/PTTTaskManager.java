@@ -10,6 +10,7 @@ public class PTTTaskManager {
     private int timeRecordTaskId;
     private int missionCheckTaskId;
     private int notifyAcquireTaskId;
+    private int saveDbTaskId;
 
     public PTTTaskManager(PlayTimeTracker plugin, PTTConfiguration configuration) {
         this.pluginConfiguration = configuration;
@@ -25,13 +26,14 @@ public class PTTTaskManager {
         this.timeRecordTaskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(getPlugin(), new TimeRecordTask(), 1, 1);
         this.missionCheckTaskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(getPlugin(), new MissionCheckTask(), 1, 1);
         this.notifyAcquireTaskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(getPlugin(), new MissionCheckTask(), pluginConfiguration.checkAcquireMs, pluginConfiguration.checkAcquireMs);
-
+        this.saveDbTaskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(getPlugin(), new SaveDbTask(), 20, 20 * 60 * 5);
     }
 
     public void destructor() {
         Bukkit.getScheduler().cancelTask(timeRecordTaskId);
         Bukkit.getScheduler().cancelTask(missionCheckTaskId);
         Bukkit.getScheduler().cancelTask(notifyAcquireTaskId);
+        Bukkit.getScheduler().cancelTask(saveDbTaskId);
         Bukkit.getScheduler().cancelTasks(getPlugin());
     }
 }

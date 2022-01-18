@@ -44,28 +44,6 @@ public record CompletedMissionConnection(ITypedTable<CompletedMissionDbModel> co
         }
     }
 
-    public List<CompletedMissionDbModel> getPlayerCompletedMissionBefore(UUID playerUniqueId, long timeStamp, String... missionNames) {
-        if (missionNames == null || missionNames.length == 0) {
-            return completedMissionTable.select(
-                    WhereClause.EQ("player", playerUniqueId)
-                            .where("lastCompleted", "<", timeStamp)
-            );
-        }
-        List<String> missionNameList = Arrays.stream(missionNames).map(s -> "mission=" + s).toList();
-        String sql = "SELECT * FROM " + completedMissionTable.getTableName() + " WHERE player=" + playerUniqueId + " AND lastCompleted<" + timeStamp + " AND (" + String.join(" OR ", missionNameList) + ")";
-        List<CompletedMissionDbModel> result = new ArrayList<>();
-        try (ResultSet rs = db.getConnection().createStatement().executeQuery(sql)) {
-            while (rs.next()) {
-                CompletedMissionDbModel obj = completedMissionTable.getJavaTypeModifier().getObjectFromResultSet(rs);
-                result.add(obj);
-            }
-        } catch (SQLException | ReflectiveOperationException e) {
-            e.printStackTrace();
-            return result;
-        }
-        return result;
-    }
-
     @Nullable
     public CompletedMissionDbModel getPlayerCompletedMission(UUID playerUniqueId, String missionName) {
         return completedMissionTable.selectUniqueUnchecked(WhereClause.EQ("player", playerUniqueId)

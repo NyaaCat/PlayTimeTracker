@@ -17,6 +17,7 @@ public class DatabaseManager {
     IConnectedDatabase db;
     private ITypedTable<CompletedMissionDbModel> completedMissionTable;
     private ITypedTable<TimeTrackerDbModel> timeTrackerTable;
+    private TimeTrackerConnection timeTrackerConnection;
 
     public DatabaseManager(DatabaseConfig databaseConfig) {
         this.databaseConfig = databaseConfig;
@@ -39,21 +40,32 @@ public class DatabaseManager {
     }
 
     private void loadTables() {
+       // this.setDbSynchronous(DbSynchronousType.OFF);
         this.timeTrackerTable = db.getTable(TimeTrackerDbModel.class);
+        this.timeTrackerConnection = new TimeTrackerConnection(this.timeTrackerTable, db, databaseConfig.getPlugin(), databaseConfig.backendConfig);
         this.completedMissionTable = db.getTable(CompletedMissionDbModel.class);
 
     }
 
     public void close() {
+        timeTrackerConnection.close();
         try {
+            //this.setDbSynchronous(DbSynchronousType.FULL);
             db.close();
         } catch (SQLException throwables) {
             throwables.printStackTrace();
         }
     }
+    public void setDbSynchronous(DbSynchronousType type) {
+        try {
+            db.getConnection().createStatement().execute("PRAGMA synchronous = " + type.name() + ";");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 
     public TimeTrackerConnection getTimeTrackerConnection() {
-        return new TimeTrackerConnection(this.timeTrackerTable, db);
+        return timeTrackerConnection;
     }
 
     public CompletedMissionConnection getCompletedMissionConnection() {

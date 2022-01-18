@@ -30,40 +30,41 @@ public class CommandHandler extends CommandReceiver {
 
     @SubCommand(value = "view", permission = "ptt.command.view", isDefaultCommand = true)
     public void view(CommandSender sender, Arguments args) {
-        if (PlayTimeTracker.getInstance() == null || PlayTimeTracker.getInstance().getTimeRecordManager() != null) {
+        if (PlayTimeTracker.getInstance() == null || PlayTimeTracker.getInstance().getTimeRecordManager() == null) {
             I18n.send(sender, "command.view.err");
             return;
         }
-        String next = args.next();
+        String targetName = args.next();
         UUID targetUUID = null;
-        if (next != null) {
+        if (targetName != null) {
             String otherPermission = "ptt.command.view.other";
             if (!sender.hasPermission(otherPermission)) {
                 I18n.send(sender, "command.view.no_view_other_permission", otherPermission);
                 return;
             }
-            targetUUID = CommandUtils.getPlayerUUIDByStr(next, sender);
+            targetUUID = CommandUtils.getPlayerUUIDByStr(targetName, sender);
         } else {
             if (sender instanceof Player) {
                 targetUUID = ((Player) sender).getUniqueId();
+                targetName = sender.getName();
             }
         }
         if (targetUUID == null) {
-            I18n.send(sender, "command.view.invalid_target", next);
+            I18n.send(sender, "command.view.invalid_target", targetName);
             return;
         }
 
         TimeTrackerDbModel timeTrackerDbModel = PlayTimeTracker.getInstance().getTimeRecordManager().getPlayerTimeTrackerDbModel(targetUUID);
         if (timeTrackerDbModel == null) {
-            I18n.send(sender, "command.view.no_record", next);
+            I18n.send(sender, "command.view.no_record", targetName);
             return;
         }
-        I18n.send(sender, "command.view.query_title", next, targetUUID.toString());
-        I18n.send(sender, "command.view.last_seen", timeTrackerDbModel.getLastSeen());
-        I18n.send(sender, "command.view.daily_time", timeTrackerDbModel.getDailyTime());
-        I18n.send(sender, "command.view.weekly_time", timeTrackerDbModel.getWeeklyTime());
-        I18n.send(sender, "command.view.monthly_time", timeTrackerDbModel.getMonthlyTime());
-        I18n.send(sender, "command.view.total_time", timeTrackerDbModel.getTotalTime());
+        I18n.send(sender, "command.view.query_title", targetName, targetUUID.toString());
+        I18n.send(sender, "command.view.last_seen", TimeUtils.dateFormat(timeTrackerDbModel.getLastSeen()));
+        I18n.send(sender, "command.view.daily_time", TimeUtils.timeFormat(timeTrackerDbModel.getDailyTime()));
+        I18n.send(sender, "command.view.weekly_time", TimeUtils.timeFormat(timeTrackerDbModel.getWeeklyTime()));
+        I18n.send(sender, "command.view.monthly_time", TimeUtils.timeFormat(timeTrackerDbModel.getMonthlyTime()));
+        I18n.send(sender, "command.view.total_time", TimeUtils.timeFormat(timeTrackerDbModel.getTotalTime()));
     }
 
     @SubCommand(value = "afkstat", permission = "ptt.command.afkstat")
@@ -80,6 +81,7 @@ public class CommandHandler extends CommandReceiver {
         }
         if (PlayerAFKManager.isEssAfk(player.getUniqueId())) {
             I18n.send(sender, "command.afkstst.ess_afk", player.getName());
+            return;
         }
         long afkTime = PlayTimeTracker.getInstance().getAfkManager().getAfkTime(player.getUniqueId());
         long lastActivity = PlayTimeTracker.getInstance().getAfkManager().getlastActivity(player.getUniqueId());

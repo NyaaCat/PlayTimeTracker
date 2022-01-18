@@ -75,13 +75,14 @@ public class TimeRecordManager {
         if (!onlineSet.equals(holdPlayers)) {
             checkHoldPlayers(onlineSet);
         }
-
         holdPlayers.forEach((uuid) -> TaskUtils.mod64TickToRun(tickNum, uuid, () -> updatePlayerTime(uuid)));
     }
+
     @Nullable
     public TimeTrackerDbModel getPlayerTimeTrackerDbModel(@NotNull Player player) {
         return getPlayerTimeTrackerDbModel(player.getUniqueId());
     }
+
     @Nullable
     public TimeTrackerDbModel getPlayerTimeTrackerDbModel(@NotNull UUID playerId) {
         return timeTrackerConnection.getPlayerTimeTracker(playerId);
@@ -96,21 +97,19 @@ public class TimeRecordManager {
     }
 
     private void updatePlayerTime(UUID playerId, @NotNull TimeTrackerDbModel model, long nowTimestamp, boolean accumulative) {
+        long pre = System.currentTimeMillis();
         long lastSeenTimestamp = model.getLastSeen();
         long duration = nowTimestamp - lastSeenTimestamp;
         if (duration <= 0) return;
-
         if (PlayerAFKManager.isAFK(playerId)) {
             accumulative = false; //todo AFK calculation can be more precise
         }
-
         ZonedDateTime now = TimeUtils.timeStamp2ZonedDateTime(nowTimestamp);
         ZonedDateTime lastSeen = TimeUtils.timeStamp2ZonedDateTime(lastSeenTimestamp);
 
         ZonedDateTime startOfToday = now.truncatedTo(ChronoUnit.DAYS);
         ZonedDateTime startOfWeek = now.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).truncatedTo(ChronoUnit.DAYS);
         ZonedDateTime startOfMonth = now.with(TemporalAdjusters.firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS);
-
         if (startOfToday.isAfter(lastSeen)) {
             Bukkit.getPluginManager().callEvent(new DailyResetEvent(playerId, model.getDailyTime()));
             model.setDailyTime(0);
@@ -135,8 +134,11 @@ public class TimeRecordManager {
         if (accumulative)
             model.setTotalTime(model.getMonthlyTime() + duration);
         model.setLastSeen(nowTimestamp);
-        timeTrackerConnection.updateDbModel(playerId, model);
+        timeTrackerConnection.updateDbModel(model);
+    }
 
+    public TimeTrackerConnection getTimeTrackerConnection() {
+        return timeTrackerConnection;
     }
 
     private void checkHoldPlayers(Set<UUID> onlineSet) {

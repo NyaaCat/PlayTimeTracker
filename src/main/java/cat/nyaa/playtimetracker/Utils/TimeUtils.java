@@ -1,5 +1,6 @@
 package cat.nyaa.playtimetracker.Utils;
 
+import cat.nyaa.playtimetracker.I18n;
 import cat.nyaa.playtimetracker.PlayTimeTracker;
 
 import java.text.SimpleDateFormat;
@@ -12,7 +13,7 @@ import java.util.Date;
 import java.util.TimeZone;
 
 public class TimeUtils {
-    public static SimpleDateFormat simpleDateFormat;
+    private static SimpleDateFormat simpleDateFormat;
 
     public static long getUnixTimeStampNow() {
         return System.currentTimeMillis();
@@ -31,21 +32,17 @@ public class TimeUtils {
     }
 
     public static String timeFormat(long time) {
-        int d = Math.floorMod(time, (24 * 3600 * 1000));
-        time -= 24L * 3600L * 1000L * d;
-        int h = Math.floorMod(time, 3600 * 1000);
+        long h = time / (3600L * 1000L);
         time -= 3600L * 1000L * h;
-        int m = Math.floorMod(time, 60 * 1000);
+        long m = time / (60 * 1000);
         time -= 60L * 1000L * m;
-        int s = Math.floorMod(time, 1000);
+        long s = time / 1000L;
         time -= 1000L * s;
-        int ms = (int) time;
         String result = "";
-        if (d > 0) result += d + "D";
-        if (h > 0) result += h + "H";
-        if (m > 0) result += m + "M";
-        if (s > 0) result += s + "S";
-        if (ms > 0) result += ms + "ms";
+        if (h > 0) result += h + I18n.format("time.format.h");
+        if (m > 0) result += m + I18n.format("time.format.m");
+        if (s > 0) result += s + I18n.format("time.format.s");
+        if (time > 0) result += time + I18n.format("time.format.ms");
         return result;
     }
 

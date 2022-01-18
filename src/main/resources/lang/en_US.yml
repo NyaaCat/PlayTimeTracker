@@ -1,3 +1,9 @@
+time:
+  format:
+    h: " 小时 "
+    m: " 分 "
+    s: " 秒 "
+    ms: " 毫秒 "
 message:
   mission:
     notify:
@@ -18,9 +24,9 @@ command:
     invalid_target: "查询目标: %s 无效"
     no_record: "没有查询到 %s 的记录"
     err: 查询失败
-    query_title: "玩家:%s (%s) 的在线数据"
+    query_title: "玩家: %s (%s) 的在线数据"
     last_seen: "上次更新: %s"
     daily_time: "今日在线: %s"
     weekly_time: "本周在线: %s"
     monthly_time: "本月在线: %s"
-    total_time: "总在线时长"
+    total_time: "总在线时长: %s"
