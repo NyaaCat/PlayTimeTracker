@@ -4,12 +4,20 @@ time:
     m: " 分 "
     s: " 秒 "
     ms: " 毫秒 "
+
 message:
   mission:
+    get_reward: "获得 %s 的任务奖励"
     notify:
       msg: "您的在线时长已经达成 %s 的任务要求"
       command: "ptt acquire %s"
 command:
+  only-player-can-do: "只有玩家可以执行这个命令"
+  acquire:
+    not_found: "待领取的奖励里面并没有 %s"
+    failed: "领取 %s 的奖励失败"
+    success: "成功领取 %s 的奖励"
+    err: "领取失败"
   afkstst:
     ess_afk: ESS AFK中
     not_found: 暂未查询到 %s 的AFK状态

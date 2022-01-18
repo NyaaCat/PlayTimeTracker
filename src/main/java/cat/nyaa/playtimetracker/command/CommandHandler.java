@@ -6,12 +6,14 @@ import cat.nyaa.nyaacore.cmdreceiver.SubCommand;
 import cat.nyaa.playtimetracker.I18n;
 import cat.nyaa.playtimetracker.PlayTimeTracker;
 import cat.nyaa.playtimetracker.PlayerAFKManager;
+import cat.nyaa.playtimetracker.PlayerMissionManager;
 import cat.nyaa.playtimetracker.Utils.CommandUtils;
 import cat.nyaa.playtimetracker.Utils.TimeUtils;
 import cat.nyaa.playtimetracker.db.model.TimeTrackerDbModel;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import java.util.Set;
 import java.util.UUID;
 
 public class CommandHandler extends CommandReceiver {
@@ -86,6 +88,43 @@ public class CommandHandler extends CommandReceiver {
         long afkTime = PlayTimeTracker.getInstance().getAfkManager().getAfkTime(player.getUniqueId());
         long lastActivity = PlayTimeTracker.getInstance().getAfkManager().getlastActivity(player.getUniqueId());
         I18n.send(sender, "command.afkstst.info", player.getName(), TimeUtils.dateFormat(lastActivity), TimeUtils.timeFormat(afkTime));
+    }
+
+    @SubCommand(value = "acquire", alias = {"ac"}, permission = "ptt.acquire")
+    public void acquire(CommandSender sender, Arguments args) {
+        if (!(sender instanceof Player player)) {
+            I18n.send(sender, "command.only-player-can-do");
+            return;
+        }
+        PlayerMissionManager missionManager = plugin.getMissionManager();
+        if (missionManager == null) {
+            I18n.send(sender, "command.acquire.err");
+            return;
+        }
+        String missionName = args.nextString("all");
+        Set<String> missionNameSet = missionManager.getAwaitingMissionNameSet(player);
+        if (missionName.equals("all")) {
+            missionNameSet.forEach(
+                    (mission) -> {
+                        if (missionManager.completeMission(player, mission)) {
+                            I18n.send(sender, "command.acquire.success", mission);
+                        } else {
+                            I18n.send(sender, "command.acquire.failed", mission);
+                        }
+                    }
+            );
+
+        } else {
+            if (!missionNameSet.contains(missionName)) {
+                I18n.send(sender, "command.acquire.not_found", missionName);
+            } else {
+                if (missionManager.completeMission(player, missionName)) {
+                    I18n.send(sender, "command.acquire.success", missionName);
+                } else {
+                    I18n.send(sender, "command.acquire.failed", missionName);
+                }
+            }
+        }
     }
 
     @SubCommand(value = "reload", permission = "ptt.command.reload")
