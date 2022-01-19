@@ -5,7 +5,7 @@ command:
     failed: Failed to acquire reward %s
     not_found: Reward %s Not Found
     success: Successfully acquired reward %s
-  afkstst:
+  afkstatus:
     ess_afk: AFK set by Essentials
     info: Player %s is currently AFK. From %s - Elapsed %s
     no_afk: Player %s is currently online.
@@ -43,9 +43,9 @@ manual:
   acquire:
     description: Acquire rewards
     usage: /ptt acquire <Reward name|all>
-  afkstat:
+  afkstatus:
     description: Check AFK status
-    usage: /ptt afkstat <player>
+    usage: /ptt afkstatus <player>
   reload:
     description: Reload plugin
     usage: /ptt reload

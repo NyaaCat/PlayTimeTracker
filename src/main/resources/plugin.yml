@@ -23,7 +23,7 @@ permissions:
   ptt.command.acquire:
     description: Redeem the reward related to the rule
     default: true
-  ptt.command.afkstat:
+  ptt.command.afkstatus:
     description: player's afk statistic
     default: op
   ptt.command.reset:
