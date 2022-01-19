@@ -10,9 +10,6 @@ import java.util.Arrays;
 import java.util.List;
 
 public class MissionData implements ISerializable {
-    public MissionData() {
-    }
-
     @Serializable
     public List<String> group = new ArrayList<>();
     @Serializable
@@ -27,11 +24,6 @@ public class MissionData implements ISerializable {
     public boolean resetMonthly = false;
     @Serializable(name = "reward-commands-list")
     public List<String> rewardCommandList = new ArrayList<>();
-
-    {
-        rewardCommandList.add("tell %player_name% nya!");
-    }
-
     @Serializable(name = "reward-items-base64")
     public String rewardItemsBase64 = ItemStackUtils.itemsToBase64(
             Arrays.asList(
@@ -39,9 +31,14 @@ public class MissionData implements ISerializable {
                     new ItemStack(Material.OAK_WOOD)
             )
     );
-
     @Serializable
     public boolean notify = true;
     @Serializable(name = "auto-give")
     public boolean autoGive = false;
+
+    {
+        rewardCommandList.add("tell %player_name% nya!");
+    }
+    public MissionData() {
+    }
 }

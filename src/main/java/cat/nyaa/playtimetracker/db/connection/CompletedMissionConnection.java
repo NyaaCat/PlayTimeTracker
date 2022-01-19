@@ -45,6 +45,7 @@ public record CompletedMissionConnection(ITypedTable<CompletedMissionDbModel> co
         return completedMissionTable.selectUniqueUnchecked(WhereClause.EQ("player", playerUniqueId)
                 .whereEq("mission", missionName));
     }
+
     @Nullable
     public List<CompletedMissionDbModel> getPlayerCompletedMissionList(UUID playerUniqueId) {
         return completedMissionTable.select(WhereClause.EQ("player", playerUniqueId));

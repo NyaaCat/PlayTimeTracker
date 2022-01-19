@@ -6,8 +6,8 @@ import cat.nyaa.nyaacore.cmdreceiver.CommandReceiver;
 import cat.nyaa.nyaacore.cmdreceiver.SubCommand;
 import cat.nyaa.playtimetracker.I18n;
 import cat.nyaa.playtimetracker.PlayTimeTracker;
-import cat.nyaa.playtimetracker.Utils.CommandUtils;
 import cat.nyaa.playtimetracker.db.model.CompletedMissionDbModel;
+import cat.nyaa.playtimetracker.utils.CommandUtils;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
 
@@ -48,7 +48,7 @@ public class ResetCommand extends CommandReceiver {
         }
         if (missionName.equals("all")) {
             PlayTimeTracker.getInstance().getMissionManager().resetPlayerMissionData(playerId);
-            I18n.send(sender, "command.reset.mission.success_all",playerName);
+            I18n.send(sender, "command.reset.mission.success_all", playerName);
         } else {
             if (!PlayTimeTracker.getInstance().getMissionManager().getMissionDataMap().containsKey(missionName)) {
                 I18n.send(sender, "command.reset.mission.mission_not_found", playerName, missionName);
@@ -66,7 +66,7 @@ public class ResetCommand extends CommandReceiver {
                 return;
             }
             PlayTimeTracker.getInstance().getMissionManager().resetPlayerMissionData(playerId);
-            I18n.send(sender, "command.reset.mission.success",playerName,missionName);
+            I18n.send(sender, "command.reset.mission.success", playerName, missionName);
         }
 
 

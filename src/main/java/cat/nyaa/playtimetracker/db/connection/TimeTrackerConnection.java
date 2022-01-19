@@ -23,7 +23,7 @@ public final class TimeTrackerConnection {
     public TimeTrackerConnection(ITypedTable<TimeTrackerDbModel> timeTrackerTable, IConnectedDatabase db, Plugin plugin, BackendConfig backendConfig) {
         this.timeTrackerTable = timeTrackerTable;
         this.db = db;
-        this.asyncDbManager = AsyncDbManager.create(TimeTrackerDbModel.class,plugin,backendConfig);
+        this.asyncDbManager = AsyncDbManager.create(TimeTrackerDbModel.class, plugin, backendConfig);
     }
 
     public void deletePlayerData(UUID playerId) {
@@ -64,6 +64,7 @@ public final class TimeTrackerConnection {
         }
         return getPlayerTimeTrackerNocache(playerId);
     }
+
     @Nullable
     public TimeTrackerDbModel getPlayerTimeTrackerNocache(UUID playerId) {
 
@@ -77,7 +78,7 @@ public final class TimeTrackerConnection {
     }
 
     public void doAsyncUpdate() {
-        asyncDbManager.saveModel(cache,true);
+        asyncDbManager.saveModel(cache, true);
     }
 
     public ITypedTable<TimeTrackerDbModel> timeTrackerTable() {
@@ -110,7 +111,7 @@ public final class TimeTrackerConnection {
     }
 
     public void close() {
-        asyncDbManager.saveModel(cache,false);
+        asyncDbManager.saveModel(cache, false);
         this.asyncDbManager.close();
     }
 }

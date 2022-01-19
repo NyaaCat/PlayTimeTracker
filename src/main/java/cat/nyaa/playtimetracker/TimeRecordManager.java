@@ -1,12 +1,12 @@
 package cat.nyaa.playtimetracker;
 
-import cat.nyaa.playtimetracker.Utils.TaskUtils;
-import cat.nyaa.playtimetracker.Utils.TimeUtils;
 import cat.nyaa.playtimetracker.db.connection.TimeTrackerConnection;
 import cat.nyaa.playtimetracker.db.model.TimeTrackerDbModel;
 import cat.nyaa.playtimetracker.event.player.time.DailyResetEvent;
 import cat.nyaa.playtimetracker.event.player.time.MonthlyResetEvent;
 import cat.nyaa.playtimetracker.event.player.time.WeeklyResetEvent;
+import cat.nyaa.playtimetracker.utils.TaskUtils;
+import cat.nyaa.playtimetracker.utils.TimeUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;

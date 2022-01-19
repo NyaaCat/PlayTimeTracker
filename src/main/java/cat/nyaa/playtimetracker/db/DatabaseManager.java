@@ -40,7 +40,7 @@ public class DatabaseManager {
     }
 
     private void loadTables() {
-       // this.setDbSynchronous(DbSynchronousType.OFF);
+        // this.setDbSynchronous(DbSynchronousType.OFF);
         this.timeTrackerTable = db.getTable(TimeTrackerDbModel.class);
         this.timeTrackerConnection = new TimeTrackerConnection(this.timeTrackerTable, db, databaseConfig.getPlugin(), databaseConfig.backendConfig);
         this.completedMissionTable = db.getTable(CompletedMissionDbModel.class);
@@ -56,6 +56,7 @@ public class DatabaseManager {
             throwables.printStackTrace();
         }
     }
+
     public void setDbSynchronous(DbSynchronousType type) {
         try {
             db.getConnection().createStatement().execute("PRAGMA synchronous = " + type.name() + ";");

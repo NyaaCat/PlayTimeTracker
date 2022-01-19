@@ -1,4 +1,4 @@
-package cat.nyaa.playtimetracker.Utils;
+package cat.nyaa.playtimetracker.utils;
 
 import cat.nyaa.nyaacore.utils.OfflinePlayerUtils;
 import org.bukkit.Bukkit;

@@ -7,10 +7,10 @@ import cat.nyaa.playtimetracker.I18n;
 import cat.nyaa.playtimetracker.PlayTimeTracker;
 import cat.nyaa.playtimetracker.PlayerAFKManager;
 import cat.nyaa.playtimetracker.PlayerMissionManager;
-import cat.nyaa.playtimetracker.Utils.CommandUtils;
-import cat.nyaa.playtimetracker.Utils.TimeUtils;
 import cat.nyaa.playtimetracker.command.sub.ResetCommand;
 import cat.nyaa.playtimetracker.db.model.TimeTrackerDbModel;
+import cat.nyaa.playtimetracker.utils.CommandUtils;
+import cat.nyaa.playtimetracker.utils.TimeUtils;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
@@ -20,6 +20,8 @@ import java.util.UUID;
 public class CommandHandler extends CommandReceiver {
     private final I18n i18n;
     private final PlayTimeTracker plugin;
+    @SubCommand(value = "reset", permission = "ptt.reset")
+    public ResetCommand resetCommand;
 
     /**
      * @param plugin for logging purpose only
@@ -132,7 +134,6 @@ public class CommandHandler extends CommandReceiver {
         }
     }
 
-
     @SubCommand(value = "reload", permission = "ptt.command.reload")
     public void reload(CommandSender sender, Arguments args) {
         I18n.send(sender, "command.reload.start");
@@ -149,9 +150,6 @@ public class CommandHandler extends CommandReceiver {
         }
         I18n.send(sender, "command.reload.finish");
     }
-
-    @SubCommand(value = "reset", permission = "ptt.reset")
-    public ResetCommand resetCommand;
 
     public I18n getI18n() {
         return i18n;

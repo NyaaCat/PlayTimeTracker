@@ -25,6 +25,15 @@ public class AsyncDbManager<T> {
     private final Connection jdbcConnection;
     private final Plugin plugin;
 
+    AsyncDbManager(Class<T> recordClass, String tableName, Map<String, Field> columnMap, Field primaryField, String primaryName, Connection jdbcConnection, Plugin plugin) {
+        this.tableName = tableName;
+        this.columnMap = new ConcurrentHashMap<>(columnMap);
+        this.primaryField = primaryField;
+        this.primaryName = primaryName;
+        this.jdbcConnection = jdbcConnection;
+        this.plugin = plugin;
+    }
+
     public static <U> @Nullable AsyncDbManager<U> create(@NotNull Class<U> recordClass, Plugin plugin, BackendConfig backendConfig) {
         Table table = recordClass.getAnnotation(cat.nyaa.nyaacore.orm.annotations.Table.class);
         if (table == null) return null;
@@ -62,15 +71,6 @@ public class AsyncDbManager<T> {
         }
 
         return new AsyncDbManager<>(recordClass, tableName, fieldMap, primaryField, primaryName, jdbcConnection, plugin);
-    }
-
-    AsyncDbManager(Class<T> recordClass, String tableName, Map<String, Field> columnMap, Field primaryField, String primaryName, Connection jdbcConnection, Plugin plugin) {
-        this.tableName = tableName;
-        this.columnMap = new ConcurrentHashMap<>(columnMap);
-        this.primaryField = primaryField;
-        this.primaryName = primaryName;
-        this.jdbcConnection = jdbcConnection;
-        this.plugin = plugin;
     }
 
     public boolean saveModel(Collection<T> models, boolean async) {//main server thread,Arguments must be thread safe

@@ -1,4 +1,4 @@
-package cat.nyaa.playtimetracker.Utils;
+package cat.nyaa.playtimetracker.utils;
 
 import cat.nyaa.playtimetracker.I18n;
 import cat.nyaa.playtimetracker.PlayTimeTracker;

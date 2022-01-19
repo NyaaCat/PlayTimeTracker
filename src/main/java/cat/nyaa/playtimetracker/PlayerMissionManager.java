@@ -2,13 +2,13 @@ package cat.nyaa.playtimetracker;
 
 import cat.nyaa.nyaacore.utils.InventoryUtils;
 import cat.nyaa.nyaacore.utils.ItemStackUtils;
-import cat.nyaa.playtimetracker.Utils.TaskUtils;
-import cat.nyaa.playtimetracker.Utils.TimeUtils;
 import cat.nyaa.playtimetracker.config.PTTConfiguration;
 import cat.nyaa.playtimetracker.config.data.MissionData;
 import cat.nyaa.playtimetracker.db.connection.CompletedMissionConnection;
 import cat.nyaa.playtimetracker.db.model.CompletedMissionDbModel;
 import cat.nyaa.playtimetracker.db.model.TimeTrackerDbModel;
+import cat.nyaa.playtimetracker.utils.TaskUtils;
+import cat.nyaa.playtimetracker.utils.TimeUtils;
 import com.udojava.evalex.Expression;
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.ess3.api.IEssentials;
@@ -28,9 +28,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 public class PlayerMissionManager {
-    private final PlayTimeTracker plugin;
     @Nullable
     private static PlayerMissionManager instance;
+    private final PlayTimeTracker plugin;
     private final List<AwaitingReward> awaitingRewardList = new ArrayList<>();
     private final CompletedMissionConnection completedMissionConnection;
     private final PTTConfiguration pttConfiguration;
@@ -45,13 +45,13 @@ public class PlayerMissionManager {
         this.timeRecordManager = timeRecordManager;
     }
 
-    public PlayTimeTracker getPlugin() {
-        return plugin;
-    }
-
     @Nullable
     public static PlayerMissionManager getInstance() {
         return instance;
+    }
+
+    public PlayTimeTracker getPlugin() {
+        return plugin;
     }
 
     public void getMissionReward(Player player, String mission) {
@@ -69,7 +69,7 @@ public class PlayerMissionManager {
                 e.printStackTrace();
             }
             for (ItemStack item : items) {
-                if(item == null || item.getType().isAir())continue;
+                if (item == null || item.getType().isAir()) continue;
                 if (InventoryUtils.hasEnoughSpace(player.getInventory(), item)) {
                     InventoryUtils.addItem(player, item);
                 } else {

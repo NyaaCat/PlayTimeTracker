@@ -1,7 +1,7 @@
 package cat.nyaa.playtimetracker;
 
-import cat.nyaa.playtimetracker.Utils.TimeUtils;
 import cat.nyaa.playtimetracker.config.PTTConfiguration;
+import cat.nyaa.playtimetracker.utils.TimeUtils;
 import net.ess3.api.IEssentials;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerMoveEvent;

@@ -1,4 +1,4 @@
-package cat.nyaa.playtimetracker.Utils;
+package cat.nyaa.playtimetracker.utils;
 
 import org.jetbrains.annotations.NotNull;
 
