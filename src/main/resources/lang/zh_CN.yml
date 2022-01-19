@@ -10,6 +10,19 @@ command:
     info: 玩家 %s PTT AFK,开始时间:%s,持续时间:%s
     no_afk: 玩家 %s 没有AFK状态
     not_found: 暂未查询到 %s 的AFK状态
+  migration:
+    can_not_read: 记录文件不可读.
+    confirm: |
+      这是一个数据迁移命令.
+      注意: 该操作会从旧的yaml记录中(如果有)读取玩家的在线数据并强制更新现有的数据.
+      警告: 不正确的使用该命令可能会损坏数据库,请确保在执行之前做好备份.
+      该操作并不会影响玩家的任务记录.
+      请使用 /ptt migration confirm 来确认你的操作.
+    does_not_exist: 记录文件不存在.
+    err: 执行失败
+    finish: 数据迁移命令执行结束.
+    insert: 成功插入 %s 的玩家数据.
+    nor_a_file: 记录文件是一个目录.
   only-player-can-do: 只有玩家可以执行这个命令
   reload:
     err: 未能成功重载
@@ -46,6 +59,9 @@ manual:
   afkstatus:
     description: 查看玩家的afk状态
     usage: /ptt afkstatus <player>
+  migration:
+    description: 用于数据迁移
+    usage: /ptt migration
   reload:
     description: 重载插件
     usage: /ptt reload

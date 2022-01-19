@@ -34,7 +34,9 @@ public final class TimeTrackerConnection {
             timeTrackerTable.delete(WhereClause.EQ("player", playerId));
         }
     }
-
+    public void insertPlayer(TimeTrackerDbModel trackerDbModel) {
+        timeTrackerTable.insert(trackerDbModel);
+    }
     public void insertPlayer(UUID playerId, long time) {
         synchronized (TimeTrackerConnection.class) {
             TimeTrackerDbModel trackerDbModel = getPlayerTimeTracker(playerId);
@@ -46,7 +48,7 @@ public final class TimeTrackerConnection {
                 trackerDbModel.setMonthlyTime(0L);
                 trackerDbModel.setTotalTime(0L);
                 trackerDbModel.setLastSeen(time);
-                timeTrackerTable.insert(trackerDbModel);
+                insertPlayer(trackerDbModel);
             }
 //            else {
 //                trackerDbModel.setLastSeen(time);

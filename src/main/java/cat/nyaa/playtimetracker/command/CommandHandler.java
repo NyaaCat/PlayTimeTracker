@@ -3,24 +3,29 @@ package cat.nyaa.playtimetracker.command;
 import cat.nyaa.nyaacore.cmdreceiver.Arguments;
 import cat.nyaa.nyaacore.cmdreceiver.CommandReceiver;
 import cat.nyaa.nyaacore.cmdreceiver.SubCommand;
-import cat.nyaa.playtimetracker.I18n;
-import cat.nyaa.playtimetracker.PlayTimeTracker;
-import cat.nyaa.playtimetracker.PlayerAFKManager;
-import cat.nyaa.playtimetracker.PlayerMissionManager;
+import cat.nyaa.nyaacore.utils.OfflinePlayerUtils;
+import cat.nyaa.playtimetracker.*;
 import cat.nyaa.playtimetracker.command.sub.ResetCommand;
 import cat.nyaa.playtimetracker.db.model.TimeTrackerDbModel;
 import cat.nyaa.playtimetracker.utils.CommandUtils;
 import cat.nyaa.playtimetracker.utils.TimeUtils;
+import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 
+import java.io.File;
 import java.util.Set;
 import java.util.UUID;
 
 public class CommandHandler extends CommandReceiver {
     private final I18n i18n;
     private final PlayTimeTracker plugin;
-    @SubCommand(value = "reset", permission = "ptt.reset")
+
+
+    @SubCommand(value = "reset", permission = "ptt.command.reset")
     public ResetCommand resetCommand;
 
     /**
@@ -72,25 +77,81 @@ public class CommandHandler extends CommandReceiver {
         I18n.send(sender, "command.view.total_time", TimeUtils.timeFormat(timeTrackerDbModel.getTotalTime()));
     }
 
-    @SubCommand(value = "afkstat", permission = "ptt.command.afkstat")
+    @SubCommand(value = "migration", permission = "ptt.command.migration")
+    public void migration(CommandSender sender, Arguments args) {
+        if (!args.nextString("").equals("confirm")) {
+            I18n.send(sender, "command.migration.confirm");
+            return;
+        }
+        TimeRecordManager timeRecordManager = plugin.getTimeRecordManager();
+        if (timeRecordManager == null) {
+            I18n.send(sender, "command.migration.err");
+            return;
+        }
+        File dbFile = new File(getPlugin().getDataFolder(), "database.yml");
+
+
+        if (!dbFile.canRead()) {
+            I18n.send(sender, "command.migration.can_not_read");
+            return;
+        }
+        if (!dbFile.exists()) {
+            I18n.send(sender, "command.migration.does_not_exist");
+            return;
+        }
+        if (!dbFile.isFile()) {
+            I18n.send(sender, "command.migration.nor_a_file");
+            return;
+        }
+
+        ConfigurationSection cfg = YamlConfiguration.loadConfiguration(dbFile);
+        for (String uuid_str : cfg.getKeys(false)) {
+            try {
+                ConfigurationSection sec = cfg.getConfigurationSection(uuid_str);
+                //ZonedDateTime rec_lastSeen = ZonedDateTime.parse(sec.getString("last_seen"));
+                UUID rec_id = UUID.fromString(uuid_str);
+                long rec_dailyTime = sec.getLong("daily_play_time");
+                long rec_weeklyTime = sec.getLong("weekly_play_time");
+                long rec_monthlyTime = sec.getLong("monthly_play_time");
+                long rec_totalTime = sec.getLong("total_play_time");
+                TimeTrackerDbModel trackerDbModel = new TimeTrackerDbModel();
+                trackerDbModel.setLastSeen(TimeUtils.getUnixTimeStampNow());
+                trackerDbModel.setDailyTime(rec_dailyTime);
+                trackerDbModel.setWeeklyTime(rec_weeklyTime);
+                trackerDbModel.setMonthlyTime(rec_monthlyTime);
+                trackerDbModel.setTotalTime(rec_totalTime);
+                trackerDbModel.setPlayerUniqueId(rec_id);
+                timeRecordManager.insertOrResetPlayer(trackerDbModel);
+                OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(rec_id);
+
+                I18n.send(sender, "command.migration.insert", offlinePlayer.getName());
+            } catch (Exception e) {
+                e.printStackTrace();
+                sender.sendMessage(e.getLocalizedMessage());
+            }
+            I18n.send(sender, "command.migration.finish");
+        }
+    }
+
+    @SubCommand(value = "afkstatus", permission = "ptt.command.afkstatus")
     public void afkStatus(CommandSender sender, Arguments args) {
         Player player = args.nextPlayer();
 
         if (!PlayerAFKManager.isAFK(player.getUniqueId())) {
-            I18n.send(sender, "command.afkstst.no_afk", player.getName());
+            I18n.send(sender, "command.afkstatus.no_afk", player.getName());
             return;
         }
         if (PlayTimeTracker.getInstance() == null || PlayTimeTracker.getInstance().getAfkManager() == null) {
-            I18n.send(sender, "command.afkstst.not_found", player.getName());
+            I18n.send(sender, "command.afkstatus.not_found", player.getName());
             return;
         }
         if (PlayerAFKManager.isEssAfk(player.getUniqueId())) {
-            I18n.send(sender, "command.afkstst.ess_afk", player.getName());
+            I18n.send(sender, "command.afkstatus.ess_afk", player.getName());
             return;
         }
         long afkTime = PlayTimeTracker.getInstance().getAfkManager().getAfkTime(player.getUniqueId());
         long lastActivity = PlayTimeTracker.getInstance().getAfkManager().getlastActivity(player.getUniqueId());
-        I18n.send(sender, "command.afkstst.info", player.getName(), TimeUtils.dateFormat(lastActivity), TimeUtils.timeFormat(afkTime));
+        I18n.send(sender, "command.afkstatus.info", player.getName(), TimeUtils.dateFormat(lastActivity), TimeUtils.timeFormat(afkTime));
     }
 
     @SubCommand(value = "acquire", alias = {"ac"}, permission = "ptt.acquire")

@@ -10,6 +10,19 @@ command:
     info: Player %s is currently AFK. From %s - Elapsed %s
     no_afk: Player %s is currently online.
     not_found: Player %s AFK status unknown.
+  migration:
+    can_not_read: Opening records file failed.
+    confirm: |
+      This is a data migration command.
+      Note: This operation will read the player's online data from the old yaml records (if available) and force the existing data to be updated.
+      Warning: incorrect use of this command may cause damage to the database, please make sure to backup it before executing it.
+      This command does not affect the player's mission records.
+      Please use /ptt migration confirm to confirm.
+    does_not_exist: File does not exist.
+    err: Execute failed
+    finish: All done.
+    insert: Insert data of player %s successful.
+    nor_a_file: Target is a directory.
   only-player-can-do: Only player can do this.
   reload:
     err: Reload error
@@ -31,12 +44,12 @@ command:
   view:
     daily_time: 'Online for today: %s'
     err: Query Failed
-    invalid_target: 'Query target %s Invalid'
+    invalid_target: Query target %s Invalid
     last_seen: 'Last updated: %s'
     monthly_time: 'Online for this month: %s'
     no_record: No record for %s
     no_view_other_permission: 'Permission required: %s'
-    query_title: 'Player %s (%s) Online data'
+    query_title: Player %s (%s) Online data
     total_time: 'Total online: %s'
     weekly_time: 'Online for this week: %s'
 manual:
@@ -46,6 +59,9 @@ manual:
   afkstatus:
     description: Check AFK status
     usage: /ptt afkstatus <player>
+  migration:
+    description: This command is used for data migration
+    usage: /ptt migration
   reload:
     description: Reload plugin
     usage: /ptt reload

@@ -80,6 +80,15 @@ public class TimeRecordManager {
         this.updatePlayerTime(playerId, model, timestamp, false);
     }
 
+    public void insertOrResetPlayer(TimeTrackerDbModel model) {
+        TimeTrackerDbModel PlayerModel = timeTrackerConnection.getPlayerTimeTracker(model.getPlayerUniqueId());
+        if (PlayerModel == null) {
+            timeTrackerConnection.insertPlayer(model);
+        } else {
+            timeTrackerConnection.updateDbModel(model);
+        }
+    }
+
     public void checkAndUpdateTick() {
         this.tickNum++;
         Set<UUID> onlineSet = Bukkit.getOnlinePlayers().stream().map(Player::getUniqueId).collect(Collectors.toSet());
@@ -145,6 +154,7 @@ public class TimeRecordManager {
         if (accumulative)
             model.setTotalTime(model.getMonthlyTime() + duration);
         model.setLastSeen(nowTimestamp);
+
         timeTrackerConnection.updateDbModel(model);
     }
 

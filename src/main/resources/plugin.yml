@@ -36,8 +36,11 @@ permissions:
     description: Reset player's time record
     default: op
   ptt.command.reload:
-    description: Reload plugin
+    description: Reload this plugin.
+    default: op
+  ptt.command.migration:
+    description: Data migration command.
     default: op
   ptt.command.debug:
-    description: debug command
+    description: Debug command.
     default: false
