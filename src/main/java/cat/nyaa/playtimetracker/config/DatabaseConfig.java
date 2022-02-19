@@ -8,7 +8,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class DatabaseConfig extends FileConfigure {
     private final PlayTimeTracker plugin;
     @Serializable(name = "backend-config")
-    public BackendConfig backendConfig = BackendConfig.sqliteBackend("dataBase.db");
+    public BackendConfig backendConfig = BackendConfig.sqliteBackend("pluginDatabase.db");
 
     public DatabaseConfig(PlayTimeTracker plugin) {
         this.plugin = plugin;
@@ -16,7 +16,7 @@ public class DatabaseConfig extends FileConfigure {
 
     @Override
     protected String getFileName() {
-        return "database.yml";
+        return "databaseConfig.yml";
     }
 
     @Override
