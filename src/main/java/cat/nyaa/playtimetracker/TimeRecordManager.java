@@ -80,7 +80,7 @@ public class TimeRecordManager {
         this.updatePlayerTime(playerId, model, timestamp, false);
     }
 
-    public void insertOrResetPlayer(TimeTrackerDbModel model) {
+    public void insertOrResetPlayer(@NotNull TimeTrackerDbModel model) {
         TimeTrackerDbModel PlayerModel = timeTrackerConnection.getPlayerTimeTracker(model.getPlayerUniqueId());
         if (PlayerModel == null) {
             timeTrackerConnection.insertPlayer(model);
@@ -91,10 +91,8 @@ public class TimeRecordManager {
 
     public void checkAndUpdateTick() {
         this.tickNum++;
-        Set<UUID> onlineSet = Bukkit.getOnlinePlayers().stream().map(Player::getUniqueId).collect(Collectors.toSet());
-        if (!onlineSet.equals(holdPlayers)) {
-            checkHoldPlayers(onlineSet);
-        }
+        Set<UUID> onlineSet = Bukkit.getOnlinePlayers().stream().map(Player::getUniqueId).collect(Collectors.toUnmodifiableSet());
+        checkHoldPlayers(onlineSet);
         holdPlayers.forEach((uuid) -> TaskUtils.mod64TickToRun(tickNum, uuid, () -> updatePlayerTime(uuid)));
     }
 
@@ -163,16 +161,13 @@ public class TimeRecordManager {
     }
 
     private void checkHoldPlayers(Set<UUID> onlineSet) {
-        Set<UUID> onlineSet_ = new HashSet<>(onlineSet);
-        Set<UUID> holdSet_ = new HashSet<>(holdPlayers);
-        Set<UUID> andSet = new HashSet<>(onlineSet);
-        andSet.retainAll(holdSet_);
-
-        onlineSet_.removeAll(andSet);
-        holdSet_.removeAll(andSet);
-        holdSet_.forEach(this::removePlayer);
-        onlineSet_.forEach(this::addPlayer);
-//        onlineSet_ = holdSet_ = andSet = null;
+        if (holdPlayers.equals(onlineSet)) return;
+        onlineSet.forEach(uuid -> {
+            if (!holdPlayers.contains(uuid)) addPlayer(uuid);
+        });
+        holdPlayers.forEach(uuid -> {
+            if (!onlineSet.contains(uuid)) removePlayer(uuid);
+        });
     }
 
 

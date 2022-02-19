@@ -1,3 +1,0 @@
-package cat.nyaa.playtimetracker;
-
-
