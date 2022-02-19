@@ -53,8 +53,8 @@ public class TimeRecordManager {
     }
 
     public void addPlayer(UUID playerId) {
-        holdPlayers.add(playerId);
         insertOrResetPlayer(playerId, TimeUtils.getUnixTimeStampNow());
+        holdPlayers.add(playerId);
     }
 
     public void addPlayer(@NotNull Player player) {
@@ -109,13 +109,14 @@ public class TimeRecordManager {
     private void updatePlayerTime(UUID playerId) {
         TimeTrackerDbModel model = timeTrackerConnection.getPlayerTimeTracker(playerId);
         if (model == null) {
-            throw new RuntimeException("Unable to update player data : player id " + playerId.toString() + " not found in database.");
+            addPlayer(playerId);
+            getPlugin().getLogger().warning("Unable to update player data : player id " + playerId.toString() + " not found in database.");
+            return;
         }
         this.updatePlayerTime(playerId, model, TimeUtils.getUnixTimeStampNow(), true);
     }
 
     private void updatePlayerTime(UUID playerId, @NotNull TimeTrackerDbModel model, long nowTimestamp, boolean accumulative) {
-        long pre = System.currentTimeMillis();
         long lastSeenTimestamp = model.getLastSeen();
         long duration = nowTimestamp - lastSeenTimestamp;
         if (duration <= 0) return;

@@ -6,6 +6,7 @@ import cat.nyaa.nyaacore.orm.backends.IConnectedDatabase;
 import cat.nyaa.nyaacore.orm.backends.ITypedTable;
 import cat.nyaa.playtimetracker.db.async.AsyncDbManager;
 import cat.nyaa.playtimetracker.db.model.TimeTrackerDbModel;
+import cat.nyaa.playtimetracker.utils.TimeUtils;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,9 +35,11 @@ public final class TimeTrackerConnection {
             timeTrackerTable.delete(WhereClause.EQ("player", playerId));
         }
     }
+
     public void insertPlayer(TimeTrackerDbModel trackerDbModel) {
         timeTrackerTable.insert(trackerDbModel);
     }
+
     public void insertPlayer(UUID playerId, long time) {
         synchronized (TimeTrackerConnection.class) {
             TimeTrackerDbModel trackerDbModel = getPlayerTimeTracker(playerId);
@@ -75,6 +78,8 @@ public final class TimeTrackerConnection {
 
 
     public void updateDbModel(TimeTrackerDbModel model) {
+        if (getPlayerTimeTracker(model.getPlayerUniqueId()) == null)
+            insertPlayer(model.getPlayerUniqueId(), TimeUtils.getUnixTimeStampNow());
         cache.add(model);
         //timeTrackerTable.update(model, WhereClause.EQ("player", model.getPlayerUniqueId()));
     }
