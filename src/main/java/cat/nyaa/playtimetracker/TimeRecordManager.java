@@ -154,9 +154,7 @@ public class TimeRecordManager {
         if (accumulative)
             model.setTotalTime(model.getMonthlyTime() + duration);
         model.setLastSeen(nowTimestamp);
-        var debugPre = System.nanoTime();
         timeTrackerConnection.updateDbModel(model);
-        Logger.getAnonymousLogger().info(String.valueOf((System.nanoTime() - debugPre) * 1e-6d));
     }
 
     public TimeTrackerConnection getTimeTrackerConnection() {
