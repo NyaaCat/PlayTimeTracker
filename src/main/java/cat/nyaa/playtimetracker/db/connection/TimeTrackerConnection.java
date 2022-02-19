@@ -8,15 +8,15 @@ import cat.nyaa.playtimetracker.db.async.AsyncDbManager;
 import cat.nyaa.playtimetracker.db.model.TimeTrackerDbModel;
 import cat.nyaa.playtimetracker.utils.TimeUtils;
 import org.bukkit.plugin.Plugin;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class TimeTrackerConnection {
-    static CopyOnWriteArraySet<TimeTrackerDbModel> cache = new CopyOnWriteArraySet<>();
+    static ConcurrentHashMap<UUID,TimeTrackerDbModel> cache = new ConcurrentHashMap<>();
     private final ITypedTable<TimeTrackerDbModel> timeTrackerTable;
     private final IConnectedDatabase db;
     private final AsyncDbManager<TimeTrackerDbModel> asyncDbManager;
@@ -31,7 +31,7 @@ public final class TimeTrackerConnection {
         synchronized (TimeTrackerConnection.class) {
             TimeTrackerDbModel trackerDbModel = getPlayerTimeTracker(playerId);
             if (trackerDbModel == null) return;
-            cache.remove(trackerDbModel);
+            cache.remove(trackerDbModel.getPlayerUniqueId());
             timeTrackerTable.delete(WhereClause.EQ("player", playerId));
         }
     }
@@ -62,10 +62,8 @@ public final class TimeTrackerConnection {
 
     @Nullable
     public TimeTrackerDbModel getPlayerTimeTracker(UUID playerId) {
-        for (TimeTrackerDbModel trackerDbModel : Collections.unmodifiableCollection(cache)) {
-            if (trackerDbModel.getPlayerUniqueId() == playerId) {
-                return trackerDbModel;
-            }
+        if(cache.containsKey(playerId)) {
+            return cache.get(playerId);
         }
         return getPlayerTimeTrackerNocache(playerId);
     }
@@ -77,15 +75,15 @@ public final class TimeTrackerConnection {
     }
 
 
-    public void updateDbModel(TimeTrackerDbModel model) {
+    public void updateDbModel(@NotNull TimeTrackerDbModel model) {
         if (getPlayerTimeTracker(model.getPlayerUniqueId()) == null)
             insertPlayer(model.getPlayerUniqueId(), TimeUtils.getUnixTimeStampNow());
-        cache.add(model);
+        cache.put(model.getPlayerUniqueId(),model);
         //timeTrackerTable.update(model, WhereClause.EQ("player", model.getPlayerUniqueId()));
     }
 
     public void doAsyncUpdate() {
-        asyncDbManager.saveModel(cache, true);
+        asyncDbManager.saveModel(cache.values(), true);
     }
 
     public ITypedTable<TimeTrackerDbModel> timeTrackerTable() {
@@ -118,7 +116,7 @@ public final class TimeTrackerConnection {
     }
 
     public void close() {
-        asyncDbManager.saveModel(cache, false);
+        asyncDbManager.saveModel(cache.values(), false);
         this.asyncDbManager.close();
     }
 }

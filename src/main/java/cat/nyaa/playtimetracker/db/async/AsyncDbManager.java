@@ -11,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
@@ -96,26 +95,20 @@ public class AsyncDbManager<T> {
 
             String selectSql = "SELECT " + primaryName + " FROM " + tableName + " WHERE " + primaryName + "=?";
             selectSql += " LIMIT 1";
-            PreparedStatement selectPreparedStatement;
             StringBuilder spdateSql = new StringBuilder("UPDATE " + tableName + " SET ");
             for (int i = 0; i < keys.size(); i++) {
                 spdateSql.append(keys.get(i)).append("=?");
                 if (i + 1 < keys.size()) spdateSql.append(",");
             }
             spdateSql.append(" WHERE ").append(primaryName).append("=?");
-            PreparedStatement updatePreparedStatement;
-            try {
-                selectPreparedStatement = jdbcConnection.prepareStatement(selectSql);
-                updatePreparedStatement = jdbcConnection.prepareStatement(spdateSql.toString());
-            } catch (SQLException e) {
-                e.printStackTrace();
-                return false;
-            }
+
+            String finalSelectSql = selectSql;
             modelList_.removeIf((model) -> {
-                        try {
-                            selectPreparedStatement.setObject(1, primaryField.get(model));
-                            ResultSet resultSet = selectPreparedStatement.executeQuery();
-                            if (resultSet.getObject(primaryName) == null) return true;
+                        try (var ps = jdbcConnection.prepareStatement(finalSelectSql)) {
+                            ps.setObject(1, primaryField.get(model));
+                            try (ResultSet resultSet = ps.executeQuery();) {
+                                if (resultSet.getObject(primaryName) == null) return true;
+                            }
                         } catch (SQLException | IllegalAccessException e) {
                             e.printStackTrace();
                             return true;
@@ -124,21 +117,21 @@ public class AsyncDbManager<T> {
                     }
             );
 
-            for (T model : modelList_) {
-                if (!models.contains(model)) continue;
-                try {
+            try (var ps = jdbcConnection.prepareStatement(spdateSql.toString());) {
+                for (T model : modelList_) {
+                    if (!models.contains(model)) continue;
                     for (int i = 1; i <= keys.size(); i++) {
                         String columnName = keys.get(i - 1);
                         if (!columnMap.containsKey(columnName)) break;
-                        updatePreparedStatement.setObject(i, columnMap.get(columnName).get(model));
+                        ps.setObject(i, columnMap.get(columnName).get(model));
                     }
-                    updatePreparedStatement.setObject(keys.size() + 1, primaryField.get(model));
-                    updatePreparedStatement.executeUpdate();
-                } catch (SQLException | IllegalAccessException e) {
-                    e.printStackTrace();
-                    break;
+                    ps.setObject(keys.size() + 1, primaryField.get(model));
+                    ps.addBatch();
+                    models.remove(model);
                 }
-                models.remove(model);
+                ps.executeBatch();
+            } catch (SQLException | IllegalAccessException e) {
+                e.printStackTrace();
             }
             return true;
         }
