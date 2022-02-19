@@ -38,7 +38,7 @@ public class CompletedMissionConnection {
                 completedMissionTable.insert(newModel);
             } else {
                 model.setLastCompletedTime(lastCompletedTime);
-                completedMissionTable.update(model, model.getId());
+                completedMissionTable.updatePlayer(model, model.getId());
             }
         }
     }

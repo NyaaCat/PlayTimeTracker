@@ -26,7 +26,7 @@ public class PTTTaskManager {
         this.timeRecordTaskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(getPlugin(), new TimeRecordTask(), 1, 1);
         this.missionCheckTaskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(getPlugin(), new MissionCheckTask(), 1, 1);
         this.notifyAcquireTaskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(getPlugin(), new NotifyAcquireTask(), pluginConfiguration.checkAcquireTick, pluginConfiguration.checkAcquireTick);
-        this.saveDbTaskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(getPlugin(), new SaveDbTask(), 20, 20 * 60 * 5);
+        this.saveDbTaskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(getPlugin(), new SaveDbTask(), 20, 20 * 60);
     }
 
     public void destructor() {
