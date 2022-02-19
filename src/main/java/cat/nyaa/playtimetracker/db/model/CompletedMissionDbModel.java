@@ -8,13 +8,24 @@ import java.util.UUID;
 @Table("completed")
 public class CompletedMissionDbModel {
     @Column(name = "id", primary = true, autoIncrement = true, nullable = true)
-    int id;
+    public int id;
     @Column(name = "player")
-    UUID playerUniqueId;
+    public UUID playerUniqueId;
     @Column(name = "mission")
-    String missionName;
+    public String missionName;
     @Column(name = "lastCompleted")
-    long lastCompletedTime;
+    public long lastCompletedTime;
+
+    public CompletedMissionDbModel(int id, UUID playerUniqueId, String missionName, long lastCompletedTime) {
+        this.id = id;
+        this.playerUniqueId = playerUniqueId;
+        this.missionName = missionName;
+        this.lastCompletedTime = lastCompletedTime;
+    }
+
+    public CompletedMissionDbModel() {
+
+    }
 
     public UUID getPlayerUniqueId() {
         return playerUniqueId;

@@ -1,32 +1,35 @@
 package cat.nyaa.playtimetracker.db.connection;
 
-import cat.nyaa.nyaacore.orm.WhereClause;
-import cat.nyaa.nyaacore.orm.backends.IConnectedDatabase;
-import cat.nyaa.nyaacore.orm.backends.ITypedTable;
 import cat.nyaa.playtimetracker.db.model.CompletedMissionDbModel;
+import cat.nyaa.playtimetracker.db.tables.CompletedMissionTable;
+import com.zaxxer.hikari.HikariDataSource;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.UUID;
 
-public record CompletedMissionConnection(ITypedTable<CompletedMissionDbModel> completedMissionTable,
-                                         IConnectedDatabase db) {
+public class CompletedMissionConnection {
+    private HikariDataSource ds;
+    private CompletedMissionTable completedMissionTable;
+
+    public CompletedMissionConnection(HikariDataSource ds) {
+        this.ds = ds;
+        this.completedMissionTable = new CompletedMissionTable(ds);
+
+    }
 
     public void resetPlayerCompletedMission(UUID playerId) {
-        completedMissionTable.delete(WhereClause.EQ("player", playerId));
+        completedMissionTable.delete(playerId);
     }
 
     public void resetPlayerCompletedMission(String missionName, UUID playerUniqueId) {
-        completedMissionTable.delete(WhereClause.EQ("player", playerUniqueId)
-                .whereEq("mission", missionName));
+        completedMissionTable.delete(playerUniqueId, missionName);
     }
 
     public void WriteMissionCompleted(UUID playerUniqueId, String missionName, long lastCompletedTime) {
         synchronized (CompletedMissionConnection.class) {
-            CompletedMissionDbModel model = completedMissionTable.selectUniqueUnchecked(
-                    WhereClause.EQ("player", playerUniqueId)
-                            .whereEq("mission", missionName)
-            );
+            CompletedMissionDbModel model = completedMissionTable.select(playerUniqueId, missionName).get(0);
             if (model == null) {
                 CompletedMissionDbModel newModel = new CompletedMissionDbModel();
                 newModel.setMissionName(missionName);
@@ -35,19 +38,22 @@ public record CompletedMissionConnection(ITypedTable<CompletedMissionDbModel> co
                 completedMissionTable.insert(newModel);
             } else {
                 model.setLastCompletedTime(lastCompletedTime);
-                completedMissionTable.update(model, WhereClause.EQ("id", model.getId()), "lastCompleted");
+                completedMissionTable.update(model, model.getId());
             }
         }
     }
 
     @Nullable
     public CompletedMissionDbModel getPlayerCompletedMission(UUID playerUniqueId, String missionName) {
-        return completedMissionTable.selectUniqueUnchecked(WhereClause.EQ("player", playerUniqueId)
-                .whereEq("mission", missionName));
+        var rs = completedMissionTable.select(playerUniqueId, missionName);
+        if (rs.size() > 0) {
+            return rs.get(0);
+        }
+        return null;
     }
 
-    @Nullable
+    @NotNull
     public List<CompletedMissionDbModel> getPlayerCompletedMissionList(UUID playerUniqueId) {
-        return completedMissionTable.select(WhereClause.EQ("player", playerUniqueId));
+        return completedMissionTable.select(playerUniqueId, null);
     }
 }

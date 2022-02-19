@@ -1,43 +1,40 @@
 package cat.nyaa.playtimetracker.db.connection;
 
-import cat.nyaa.nyaacore.orm.WhereClause;
 import cat.nyaa.nyaacore.orm.backends.BackendConfig;
-import cat.nyaa.nyaacore.orm.backends.IConnectedDatabase;
-import cat.nyaa.nyaacore.orm.backends.ITypedTable;
-import cat.nyaa.playtimetracker.db.async.AsyncDbManager;
 import cat.nyaa.playtimetracker.db.model.TimeTrackerDbModel;
+import cat.nyaa.playtimetracker.db.tables.TimeTrackerTable;
 import cat.nyaa.playtimetracker.utils.TimeUtils;
+import com.zaxxer.hikari.HikariDataSource;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 public final class TimeTrackerConnection {
-    static ConcurrentHashMap<UUID,TimeTrackerDbModel> cache = new ConcurrentHashMap<>();
-    private final ITypedTable<TimeTrackerDbModel> timeTrackerTable;
-    private final IConnectedDatabase db;
-    private final AsyncDbManager<TimeTrackerDbModel> asyncDbManager;
+   // static ConcurrentHashMap<UUID,TimeTrackerDbModel> cache = new ConcurrentHashMap<>();
+    private final TimeTrackerTable timeTrackerTable;
+    private final HikariDataSource ds;
+//    private final AsyncDbManager<TimeTrackerDbModel> asyncDbManager;
 
-    public TimeTrackerConnection(ITypedTable<TimeTrackerDbModel> timeTrackerTable, IConnectedDatabase db, Plugin plugin, BackendConfig backendConfig) {
-        this.timeTrackerTable = timeTrackerTable;
-        this.db = db;
-        this.asyncDbManager = AsyncDbManager.create(TimeTrackerDbModel.class, plugin, backendConfig);
+    public TimeTrackerConnection(HikariDataSource ds, Plugin plugin, BackendConfig backendConfig) {
+        this.ds = ds;
+//        this.asyncDbManager = AsyncDbManager.create(TimeTrackerDbModel.class, plugin, backendConfig);
+        this.timeTrackerTable = new TimeTrackerTable(ds);
     }
 
     public void deletePlayerData(UUID playerId) {
         synchronized (TimeTrackerConnection.class) {
             TimeTrackerDbModel trackerDbModel = getPlayerTimeTracker(playerId);
             if (trackerDbModel == null) return;
-            cache.remove(trackerDbModel.getPlayerUniqueId());
-            timeTrackerTable.delete(WhereClause.EQ("player", playerId));
+//            cache.remove(trackerDbModel.getPlayerUniqueId());
+            timeTrackerTable.deletePlayer(playerId);
         }
     }
 
     public void insertPlayer(TimeTrackerDbModel trackerDbModel) {
-        timeTrackerTable.insert(trackerDbModel);
+        timeTrackerTable.insertPlayer(trackerDbModel);
     }
 
     public void insertPlayer(UUID playerId, long time) {
@@ -62,36 +59,28 @@ public final class TimeTrackerConnection {
 
     @Nullable
     public TimeTrackerDbModel getPlayerTimeTracker(UUID playerId) {
-        if(cache.containsKey(playerId)) {
-            return cache.get(playerId);
-        }
+//        if(cache.containsKey(playerId)) {
+//            return cache.get(playerId);
+//        }
         return getPlayerTimeTrackerNocache(playerId);
     }
 
     @Nullable
     public TimeTrackerDbModel getPlayerTimeTrackerNocache(UUID playerId) {
 
-        return timeTrackerTable.selectUniqueUnchecked(WhereClause.EQ("player", playerId));
+        return timeTrackerTable.selectPlayer(playerId);
     }
 
 
     public void updateDbModel(@NotNull TimeTrackerDbModel model) {
         if (getPlayerTimeTracker(model.getPlayerUniqueId()) == null)
             insertPlayer(model.getPlayerUniqueId(), TimeUtils.getUnixTimeStampNow());
-        cache.put(model.getPlayerUniqueId(),model);
-        //timeTrackerTable.update(model, WhereClause.EQ("player", model.getPlayerUniqueId()));
+//        cache.put(model.getPlayerUniqueId(),model);
+        timeTrackerTable.update(model, model.getPlayerUniqueId());
     }
 
     public void doAsyncUpdate() {
-        asyncDbManager.saveModel(cache.values(), true);
-    }
-
-    public ITypedTable<TimeTrackerDbModel> timeTrackerTable() {
-        return timeTrackerTable;
-    }
-
-    public IConnectedDatabase db() {
-        return db;
+//        asyncDbManager.saveModel(cache.values(), true);
     }
 
     @Override
@@ -100,23 +89,24 @@ public final class TimeTrackerConnection {
         if (obj == null || obj.getClass() != this.getClass()) return false;
         var that = (TimeTrackerConnection) obj;
         return Objects.equals(this.timeTrackerTable, that.timeTrackerTable) &&
-                Objects.equals(this.db, that.db);
+                Objects.equals(this.ds, that.ds);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(timeTrackerTable, db);
+        return Objects.hash(timeTrackerTable, ds);
     }
 
     @Override
     public String toString() {
         return "TimeTrackerConnection[" +
                 "timeTrackerTable=" + timeTrackerTable + ", " +
-                "db=" + db + ']';
+                "db=" + ds + ']';
     }
 
     public void close() {
-        asyncDbManager.saveModel(cache.values(), false);
-        this.asyncDbManager.close();
+//        asyncDbManager.saveModel(cache.values(), false);
+//        this.asyncDbManager.close();
     }
+
 }

@@ -4,21 +4,35 @@ import cat.nyaa.nyaacore.orm.annotations.Column;
 import cat.nyaa.nyaacore.orm.annotations.Table;
 
 import java.util.UUID;
-
 @Table("time")
 public class TimeTrackerDbModel {
+
+    public TimeTrackerDbModel(UUID playerUniqueId, long lastSeen, long dailyTime, long weeklyTime, long monthlyTime, long totalTime) {
+        this.playerUniqueId = playerUniqueId;
+        this.lastSeen = lastSeen;
+        this.dailyTime = dailyTime;
+        this.weeklyTime = weeklyTime;
+        this.monthlyTime = monthlyTime;
+        this.totalTime = totalTime;
+    }
     @Column(name = "player", primary = true)
-    UUID playerUniqueId;
+    public UUID playerUniqueId;
     @Column(name = "lastSeen")
-    long lastSeen; //Unix timestamp
+    public long lastSeen; //Unix timestamp
     @Column(name = "dailyTime")
-    long dailyTime; // millisecond
+    public long dailyTime; // millisecond
     @Column(name = "weeklyTime")
-    long weeklyTime; // millisecond
+    public long weeklyTime; // millisecond
     @Column(name = "monthlyTime")
-    long monthlyTime; // millisecond
+    public long monthlyTime; // millisecond
     @Column(name = "totalTime")
-    long totalTime; // millisecond
+    public long totalTime; // millisecond
+
+
+    public TimeTrackerDbModel() {
+
+    }
+
 
     public UUID getPlayerUniqueId() {
         return playerUniqueId;

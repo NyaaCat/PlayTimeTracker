@@ -44,7 +44,8 @@ dependencies {
     compileOnly 'net.essentialsx:EssentialsX:2.19.0'
     compileOnly 'me.clip:placeholderapi:2.11.1'
     compileOnly 'com.udojava:EvalEx:2.7'
-
+    compileOnly 'org.xerial:sqlite-jdbc:3.36.0.3'
+    compileOnly 'com.zaxxer:HikariCP:5.0.1'
     // other nyaa plugins
     if (gradle.hasProperty("useLocalDependencies") && gradle.useLocalDependencies) {
         compileOnly project(":NyaaCore")
