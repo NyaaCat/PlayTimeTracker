@@ -3,6 +3,7 @@ package cat.nyaa.playtimetracker.db.tables;
 import cat.nyaa.playtimetracker.db.model.CompletedMissionDbModel;
 import com.zaxxer.hikari.HikariDataSource;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -60,7 +61,8 @@ public class CompletedMissionTable {
         }
     }
 
-    public List<CompletedMissionDbModel> select(@NotNull UUID playerId, String missionName) {
+    @NotNull
+    public List<CompletedMissionDbModel> select(@NotNull UUID playerId, @Nullable String missionName) {
         synchronized (lock) {
             var sql = "SELECT * FROM completed WHERE player = ?";
             var res = new ArrayList<CompletedMissionDbModel>();

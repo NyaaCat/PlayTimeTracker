@@ -3,6 +3,7 @@ package cat.nyaa.playtimetracker.db.tables;
 import cat.nyaa.playtimetracker.db.model.TimeTrackerDbModel;
 import com.zaxxer.hikari.HikariDataSource;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.sql.SQLException;
 import java.util.Collection;
@@ -47,19 +48,23 @@ public class TimeTrackerTable {
         }
     }
 
+    @Nullable
     public TimeTrackerDbModel selectPlayer(@NotNull UUID playerId) {
         synchronized (lock) {
             try (var conn = ds.getConnection()) {
                 try (var ps = conn.prepareStatement("SELECT * FROM time WHERE player = ?")) {
                     ps.setObject(1, playerId.toString());
                     try (var rs = ps.executeQuery()) {
-                        var dailyTime = rs.getLong(1);
-                        var lastSeen = rs.getLong(2);
-                        var monthlyTime = rs.getLong(3);
-                        var _playerId = UUID.fromString(rs.getString(4));
-                        var totalTime = rs.getLong(5);
-                        var weeklyTIme = rs.getLong(6);
-                        return new TimeTrackerDbModel(_playerId, lastSeen, dailyTime, weeklyTIme, monthlyTime, totalTime);
+                        while (rs.next()) {
+                            var dailyTime = rs.getLong(1);
+                            var lastSeen = rs.getLong(2);
+                            var monthlyTime = rs.getLong(3);
+                            var _playerId = UUID.fromString(rs.getString(4));
+                            var totalTime = rs.getLong(5);
+                            var weeklyTIme = rs.getLong(6);
+                            return new TimeTrackerDbModel(_playerId, lastSeen, dailyTime, weeklyTIme, monthlyTime, totalTime);
+                        }
+                        return null;
                     }
                 }
             } catch (SQLException e) {
