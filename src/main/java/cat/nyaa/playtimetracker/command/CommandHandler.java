@@ -3,7 +3,6 @@ package cat.nyaa.playtimetracker.command;
 import cat.nyaa.nyaacore.cmdreceiver.Arguments;
 import cat.nyaa.nyaacore.cmdreceiver.CommandReceiver;
 import cat.nyaa.nyaacore.cmdreceiver.SubCommand;
-import cat.nyaa.nyaacore.utils.OfflinePlayerUtils;
 import cat.nyaa.playtimetracker.*;
 import cat.nyaa.playtimetracker.command.sub.ResetCommand;
 import cat.nyaa.playtimetracker.db.model.TimeTrackerDbModel;
@@ -123,8 +122,8 @@ public class CommandHandler extends CommandReceiver {
                 trackerDbModel.setPlayerUniqueId(rec_id);
                 timeRecordManager.insertOrResetPlayer(trackerDbModel);
                 OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(rec_id);
-
-                I18n.send(sender, "command.migration.insert", offlinePlayer.getName());
+                var playerName = offlinePlayer.getName();
+                I18n.send(sender, "command.migration.insert", playerName == null ? "{" + rec_id + "}" : playerName);
             } catch (Exception e) {
                 e.printStackTrace();
                 sender.sendMessage(e.getLocalizedMessage());
