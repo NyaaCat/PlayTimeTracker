@@ -16,6 +16,7 @@ public class DatabaseManager {
     private final DatabaseConfig databaseConfig;
     HikariDataSource ds;
     private TimeTrackerConnection timeTrackerConnection;
+    private CompletedMissionConnection completedMissionConnection;
 
     public DatabaseManager(DatabaseConfig databaseConfig) {
         this.databaseConfig = databaseConfig;
@@ -26,7 +27,14 @@ public class DatabaseManager {
         config.addDataSourceProperty("prepStmtCacheSize", "250");
         config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
         ds = new HikariDataSource(config);
+        loadTables();
+
+    }
+
+    private void loadTables() {
         createTables();
+        this.timeTrackerConnection = new TimeTrackerConnection(ds, databaseConfig.getPlugin());
+        this.completedMissionConnection = new CompletedMissionConnection(ds);
     }
 
     private boolean tableExists(String tableName, Connection dbConn) throws SQLException {
@@ -50,6 +58,8 @@ public class DatabaseManager {
     }
 
     public void close() {
+        this.timeTrackerConnection.close();
+        this.completedMissionConnection.close();
         ds.close();
     }
 
@@ -62,11 +72,11 @@ public class DatabaseManager {
     }
 
     public TimeTrackerConnection getTimeTrackerConnection() {
-        return new TimeTrackerConnection(ds, databaseConfig.getPlugin());
+        return this.timeTrackerConnection;
     }
 
     public CompletedMissionConnection getCompletedMissionConnection() {
-        return new CompletedMissionConnection(ds);
+        return this.completedMissionConnection;
     }
 
 }

@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.UUID;
 
 public class CompletedMissionTable {
-    private final HikariDataSource ds;
     public static final UUID lock = UUID.randomUUID();
+    private final HikariDataSource ds;
 
     public CompletedMissionTable(HikariDataSource ds) {
         this.ds = ds;
@@ -73,7 +73,7 @@ public class CompletedMissionTable {
                     if (missionName != null) {
                         ps.setObject(2, missionName);
                     }
-                    try (var rs = ps.executeQuery();) {
+                    try (var rs = ps.executeQuery()) {
                         while (rs.next()) {
                             var id = rs.getInt(1);
                             var lastCompleted = rs.getLong(2);

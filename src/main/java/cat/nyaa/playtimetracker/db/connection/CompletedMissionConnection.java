@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.UUID;
 
 public class CompletedMissionConnection {
-    private HikariDataSource ds;
-    private CompletedMissionTable completedMissionTable;
+    private final HikariDataSource ds;
+    private final CompletedMissionTable completedMissionTable;
 
     public CompletedMissionConnection(HikariDataSource ds) {
         this.ds = ds;
@@ -56,4 +56,5 @@ public class CompletedMissionConnection {
     public List<CompletedMissionDbModel> getPlayerCompletedMissionList(UUID playerUniqueId) {
         return completedMissionTable.select(playerUniqueId, null);
     }
+    public void close() {}
 }

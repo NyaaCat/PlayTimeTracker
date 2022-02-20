@@ -10,7 +10,6 @@ import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -73,10 +72,18 @@ public final class TimeTrackerConnection {
     }
 
     public void doAsyncUpdate() {
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, getReFlashCacheRunnable());
+    }
+
+    private Runnable getReFlashCacheRunnable() {
+        return () -> {
             var cacheSet = Sets.newHashSet(cache.values());
             timeTrackerTable.updateBatch(cacheSet);
             cacheSet.forEach(model -> cache.remove(model.getPlayerUniqueId(), model));
-        });
+        };
+    }
+
+    public void close() {
+        getReFlashCacheRunnable().run();
     }
 }

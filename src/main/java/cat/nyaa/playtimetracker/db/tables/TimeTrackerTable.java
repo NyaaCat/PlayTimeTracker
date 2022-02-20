@@ -6,12 +6,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.sql.SQLException;
 import java.util.Collection;
-import java.util.List;
 import java.util.UUID;
 
 public class TimeTrackerTable {
-    static HikariDataSource ds;
     public static final UUID lock = UUID.randomUUID();
+    static HikariDataSource ds;
 
     public TimeTrackerTable(HikariDataSource ds) {
         TimeTrackerTable.ds = ds;
@@ -53,7 +52,7 @@ public class TimeTrackerTable {
             try (var conn = ds.getConnection()) {
                 try (var ps = conn.prepareStatement("SELECT * FROM time WHERE player = ?")) {
                     ps.setObject(1, playerId.toString());
-                    try (var rs = ps.executeQuery();) {
+                    try (var rs = ps.executeQuery()) {
                         var dailyTime = rs.getLong(1);
                         var lastSeen = rs.getLong(2);
                         var monthlyTime = rs.getLong(3);
