@@ -29,14 +29,15 @@ public class CompletedMissionConnection {
 
     public void WriteMissionCompleted(UUID playerUniqueId, String missionName, long lastCompletedTime) {
         synchronized (CompletedMissionConnection.class) {
-            CompletedMissionDbModel model = completedMissionTable.select(playerUniqueId, missionName).get(0);
-            if (model == null) {
+            var rs = completedMissionTable.select(playerUniqueId, missionName);
+            if (rs.size() == 0) {
                 CompletedMissionDbModel newModel = new CompletedMissionDbModel();
                 newModel.setMissionName(missionName);
                 newModel.setLastCompletedTime(lastCompletedTime);
                 newModel.setPlayerUniqueId(playerUniqueId);
                 completedMissionTable.insert(newModel);
             } else {
+                var model = rs.get(0);
                 model.setLastCompletedTime(lastCompletedTime);
                 completedMissionTable.updatePlayer(model, model.getId());
             }
