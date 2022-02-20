@@ -5,6 +5,7 @@ import cat.nyaa.playtimetracker.config.PTTConfiguration;
 import cat.nyaa.playtimetracker.db.DatabaseManager;
 import cat.nyaa.playtimetracker.listener.ListenerManager;
 import cat.nyaa.playtimetracker.task.PTTTaskManager;
+import cat.nyaa.playtimetracker.utils.PlaceholderAPIUtils;
 import net.ess3.api.IEssentials;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.Plugin;
@@ -55,6 +56,8 @@ public final class PlayTimeTracker extends JavaPlugin {
 
         //db
         this.databaseManager = new DatabaseManager(pttConfiguration.databaseConfig);
+        // papi
+        PlaceholderAPIUtils.init();
         // Essential Hook
         Plugin essentials = getServer().getPluginManager().getPlugin("Essentials");
         if (essentials != null) {

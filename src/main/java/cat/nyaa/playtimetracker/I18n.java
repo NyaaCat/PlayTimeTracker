@@ -1,7 +1,7 @@
 package cat.nyaa.playtimetracker;
 
 import cat.nyaa.nyaacore.LanguageRepository;
-import me.clip.placeholderapi.PlaceholderAPI;
+import cat.nyaa.playtimetracker.utils.PlaceholderAPIUtils;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
@@ -34,7 +34,7 @@ public class I18n extends LanguageRepository {
 
     public static void send(CommandSender recipient, String key, Object... args) {
         if (recipient instanceof Player) {
-            recipient.sendMessage(PlaceholderAPI.setPlaceholders((Player) recipient, format(key, args)));
+            recipient.sendMessage(PlaceholderAPIUtils.setPlaceholders((Player) recipient, format(key, args)));
             return;
         }
         recipient.sendMessage(format(key, args));

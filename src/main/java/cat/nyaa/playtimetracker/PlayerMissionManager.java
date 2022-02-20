@@ -7,10 +7,10 @@ import cat.nyaa.playtimetracker.config.data.MissionData;
 import cat.nyaa.playtimetracker.db.connection.CompletedMissionConnection;
 import cat.nyaa.playtimetracker.db.model.CompletedMissionDbModel;
 import cat.nyaa.playtimetracker.db.model.TimeTrackerDbModel;
+import cat.nyaa.playtimetracker.utils.PlaceholderAPIUtils;
 import cat.nyaa.playtimetracker.utils.TaskUtils;
 import cat.nyaa.playtimetracker.utils.TimeUtils;
 import com.udojava.evalex.Expression;
-import me.clip.placeholderapi.PlaceholderAPI;
 import net.ess3.api.IEssentials;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ClickEvent;
@@ -83,7 +83,7 @@ public class PlayerMissionManager {
             for (String command : missionData.rewardCommandList) {
                 if (command != null && !command.isEmpty()) {
                     try {
-                        Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), PlaceholderAPI.setPlaceholders(player, command));
+                        Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), PlaceholderAPIUtils.setPlaceholders(player, command));
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -240,8 +240,8 @@ public class PlayerMissionManager {
             if (awaitingReward.isNotify) {
                 Player player = Bukkit.getPlayer(awaitingReward.playerId);
                 if (player != null) {
-                    String command = PlaceholderAPI.setPlaceholders(player, I18n.format("message.mission.notify.command", awaitingReward.mission));
-                    String msg = PlaceholderAPI.setPlaceholders(player, I18n.format("message.mission.notify.msg", awaitingReward.mission));
+                    String command = PlaceholderAPIUtils.setPlaceholders(player, I18n.format("message.mission.notify.command", awaitingReward.mission));
+                    String msg = PlaceholderAPIUtils.setPlaceholders(player, I18n.format("message.mission.notify.msg", awaitingReward.mission));
                     BaseComponent[] commandComponent = new ComponentBuilder()
                             .append(msg)
                             .append(command)
