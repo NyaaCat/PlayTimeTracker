@@ -16,6 +16,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 
 import java.io.File;
+import java.time.ZonedDateTime;
 import java.util.Set;
 import java.util.UUID;
 
@@ -109,18 +110,20 @@ public class CommandHandler extends CommandReceiver {
                 ConfigurationSection sec = cfg.getConfigurationSection(uuid_str);
                 //ZonedDateTime rec_lastSeen = ZonedDateTime.parse(sec.getString("last_seen"));
                 UUID rec_id = UUID.fromString(uuid_str);
+                ZonedDateTime rec_lastSeen = ZonedDateTime.parse(sec.getString("last_seen"));
                 long rec_dailyTime = sec.getLong("daily_play_time");
                 long rec_weeklyTime = sec.getLong("weekly_play_time");
                 long rec_monthlyTime = sec.getLong("monthly_play_time");
                 long rec_totalTime = sec.getLong("total_play_time");
                 TimeTrackerDbModel trackerDbModel = new TimeTrackerDbModel();
-                trackerDbModel.setLastSeen(TimeUtils.getUnixTimeStampNow());
+                trackerDbModel.setLastSeen(rec_lastSeen.toInstant().toEpochMilli());
                 trackerDbModel.setDailyTime(rec_dailyTime);
                 trackerDbModel.setWeeklyTime(rec_weeklyTime);
                 trackerDbModel.setMonthlyTime(rec_monthlyTime);
                 trackerDbModel.setTotalTime(rec_totalTime);
                 trackerDbModel.setPlayerUniqueId(rec_id);
                 timeRecordManager.insertOrResetPlayer(trackerDbModel);
+                timeRecordManager.insertOrResetPlayer(rec_id,TimeUtils.getUnixTimeStampNow());
                 OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(rec_id);
                 var playerName = offlinePlayer.getName();
                 I18n.send(sender, "command.migration.insert", playerName == null ? "{" + rec_id + "}" : playerName);
