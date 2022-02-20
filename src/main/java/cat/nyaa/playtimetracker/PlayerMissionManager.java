@@ -61,13 +61,16 @@ public class PlayerMissionManager {
         MissionData missionData = missionDataMap.get(mission);
         //item
 
-        if (missionData.rewardItemsBase64 != null && !missionData.rewardItemsBase64.isEmpty()) {
+        if (missionData.rewardItemBase64List != null && !missionData.rewardItemBase64List.isEmpty()) {
             List<ItemStack> items = new ArrayList<>();
-            try {
-                items = ItemStackUtils.itemsFromBase64(missionData.rewardItemsBase64);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            missionData.rewardItemBase64List.forEach(s -> {
+                try {
+                    if (s != null && !s.isEmpty())
+                        items.addAll(ItemStackUtils.itemsFromBase64(s));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
             for (ItemStack item : items) {
                 if (item == null || item.getType().isAir()) continue;
                 if (InventoryUtils.hasEnoughSpace(player.getInventory(), item)) {

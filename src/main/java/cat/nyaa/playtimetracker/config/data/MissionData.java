@@ -6,7 +6,6 @@ import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class MissionData implements ISerializable {
@@ -24,13 +23,14 @@ public class MissionData implements ISerializable {
     public boolean resetMonthly = false;
     @Serializable(name = "reward-commands-list")
     public List<String> rewardCommandList = new ArrayList<>();
-    @Serializable(name = "reward-items-base64")
-    public String rewardItemsBase64 = ItemStackUtils.itemsToBase64(
-            Arrays.asList(
-                    new ItemStack(Material.STONE),
-                    new ItemStack(Material.OAK_WOOD)
-            )
-    );
+    @Serializable(name = "reward-item-base64-list")
+    public List<String> rewardItemBase64List = new ArrayList<>();
+
+    {
+        rewardItemBase64List.add(ItemStackUtils.itemToBase64(new ItemStack(Material.STONE)));
+        rewardItemBase64List.add(ItemStackUtils.itemToBase64(new ItemStack(Material.OAK_WOOD)));
+    }
+
     @Serializable
     public boolean notify = true;
     @Serializable(name = "auto-give")
@@ -39,6 +39,7 @@ public class MissionData implements ISerializable {
     {
         rewardCommandList.add("tell %player_name% nya!");
     }
+
     public MissionData() {
     }
 }
