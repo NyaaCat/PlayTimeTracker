@@ -48,11 +48,10 @@ public class CompletedMissionTable {
     public void insert(@NotNull CompletedMissionDbModel model) {
         synchronized (lock) {
             try (var conn = ds.getConnection()) {
-                try (var ps = conn.prepareStatement("INSERT INTO completed (id, lastCompleted, mission, player) VALUES (?,?,?,?)")) {
-                    ps.setObject(1, model.id);
-                    ps.setObject(2, model.lastCompletedTime);
-                    ps.setObject(3, model.missionName);
-                    ps.setObject(4, model.playerUniqueId);
+                try (var ps = conn.prepareStatement("INSERT INTO completed (lastCompleted, mission, player) VALUES (?,?,?)")) {
+                    ps.setObject(1, model.lastCompletedTime);
+                    ps.setObject(2, model.missionName);
+                    ps.setObject(3, model.playerUniqueId);
                     ps.executeUpdate();
                 }
             } catch (SQLException e) {
@@ -88,7 +87,7 @@ public class CompletedMissionTable {
                 }
             } catch (SQLException e) {
                 e.printStackTrace();
-                return null;
+                return new ArrayList<>();
             }
         }
     }
