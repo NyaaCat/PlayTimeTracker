@@ -81,7 +81,7 @@ message:
   mission:
     get_reward: 获得 %s 的任务奖励
     notify:
-      command: ptt acquire %s
+      command: /ptt acquire %s
       msg: 您的在线时长已经达成 %s 的任务要求
 time:
   format:

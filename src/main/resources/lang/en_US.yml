@@ -81,7 +81,7 @@ message:
   mission:
     get_reward: Acquired reward for mission %s
     notify:
-      command: ptt acquire %s
+      command: /ptt acquire %s
       msg: You may now acquire reward for mission %s
 time:
   format:
