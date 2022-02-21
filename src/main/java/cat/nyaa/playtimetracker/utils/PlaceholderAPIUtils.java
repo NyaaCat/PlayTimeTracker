@@ -17,7 +17,6 @@ public class PlaceholderAPIUtils {
     }
 
     public static String setPlaceholders(final Player player, @NotNull String text) {
-
         if (loadPlugin) {
             try {
                 return PlaceholderAPI.setPlaceholders(player, text);
@@ -25,9 +24,12 @@ public class PlaceholderAPIUtils {
                 if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") == null) {
                     loadPlugin = false;
                 }
-                return text;
+                return setPlaceholdersWithoutPapi(player,text);
             }
         }
-        return text;
+        return setPlaceholdersWithoutPapi(player,text);
+    }
+    private static @NotNull String setPlaceholdersWithoutPapi(final @NotNull Player player, @NotNull String text){
+        return text.replace("%player_name%",player.getName());
     }
 }
