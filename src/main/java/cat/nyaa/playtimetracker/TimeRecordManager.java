@@ -19,7 +19,6 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class TimeRecordManager {
@@ -152,7 +151,7 @@ public class TimeRecordManager {
         }
 
         if (accumulative)
-            model.setTotalTime(model.getMonthlyTime() + duration);
+            model.setTotalTime(model.getTotalTime() + duration);
         model.setLastSeen(nowTimestamp);
         timeTrackerConnection.updateDbModel(model);
     }
