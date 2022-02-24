@@ -1,5 +1,6 @@
 package cat.nyaa.playtimetracker.db.tables;
 
+import cat.nyaa.playtimetracker.db.DatabaseManager;
 import cat.nyaa.playtimetracker.db.model.CompletedMissionDbModel;
 import com.zaxxer.hikari.HikariDataSource;
 import org.jetbrains.annotations.NotNull;
@@ -11,7 +12,6 @@ import java.util.List;
 import java.util.UUID;
 
 public class CompletedMissionTable {
-    public static final UUID lock = UUID.randomUUID();
     private final HikariDataSource ds;
 
     public CompletedMissionTable(HikariDataSource ds) {
@@ -19,7 +19,7 @@ public class CompletedMissionTable {
     }
 
     public void delete(@NotNull UUID playerId, String missionName) {
-        synchronized (lock) {
+        synchronized (DatabaseManager.lock) {
             try (var conn = ds.getConnection()) {
                 try (var ps = conn.prepareStatement("DELETE FROM completed WHERE (player = ? AND mission = ?)")) {
                     ps.setObject(1, playerId.toString());
@@ -33,7 +33,7 @@ public class CompletedMissionTable {
     }
 
     public void delete(@NotNull UUID playerId) {
-        synchronized (lock) {
+        synchronized (DatabaseManager.lock) {
             try (var conn = ds.getConnection()) {
                 try (var ps = conn.prepareStatement("DELETE FROM completed WHERE player = ?")) {
                     ps.setObject(1, playerId.toString());
@@ -46,7 +46,7 @@ public class CompletedMissionTable {
     }
 
     public void insert(@NotNull CompletedMissionDbModel model) {
-        synchronized (lock) {
+        synchronized (DatabaseManager.lock) {
             try (var conn = ds.getConnection()) {
                 try (var ps = conn.prepareStatement("INSERT INTO completed (lastCompleted, mission, player) VALUES (?,?,?)")) {
                     ps.setObject(1, model.lastCompletedTime);
@@ -62,7 +62,7 @@ public class CompletedMissionTable {
 
     @NotNull
     public List<CompletedMissionDbModel> select(@NotNull UUID playerId, @Nullable String missionName) {
-        synchronized (lock) {
+        synchronized (DatabaseManager.lock) {
             var sql = "SELECT * FROM completed WHERE player = ?";
             var res = new ArrayList<CompletedMissionDbModel>();
             if (missionName != null) {
@@ -93,7 +93,7 @@ public class CompletedMissionTable {
     }
 
     public void updatePlayer(CompletedMissionDbModel model, int id) {
-        synchronized (lock) {
+        synchronized (DatabaseManager.lock) {
             try (var conn = ds.getConnection()) {
                 try (var ps = conn.prepareStatement("UPDATE completed SET id = ?, lastCompleted = ?, mission = ?, player = ? WHERE id = ?")) {
                     ps.setObject(1, model.id);

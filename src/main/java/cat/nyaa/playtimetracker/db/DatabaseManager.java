@@ -11,8 +11,10 @@ import java.io.File;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.UUID;
 
 public class DatabaseManager {
+    public static final UUID lock = UUID.randomUUID();
     private final DatabaseConfig databaseConfig;
     HikariDataSource ds;
     private TimeTrackerConnection timeTrackerConnection;

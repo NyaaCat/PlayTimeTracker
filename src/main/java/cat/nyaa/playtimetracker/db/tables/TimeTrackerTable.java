@@ -1,5 +1,6 @@
 package cat.nyaa.playtimetracker.db.tables;
 
+import cat.nyaa.playtimetracker.db.DatabaseManager;
 import cat.nyaa.playtimetracker.db.model.TimeTrackerDbModel;
 import com.zaxxer.hikari.HikariDataSource;
 import org.jetbrains.annotations.NotNull;
@@ -10,7 +11,7 @@ import java.util.Collection;
 import java.util.UUID;
 
 public class TimeTrackerTable {
-    public static final UUID lock = UUID.randomUUID();
+
     static HikariDataSource ds;
 
     public TimeTrackerTable(HikariDataSource ds) {
@@ -18,7 +19,7 @@ public class TimeTrackerTable {
     }
 
     public void deletePlayer(@NotNull UUID playerId) {
-        synchronized (lock) {
+        synchronized (DatabaseManager.lock) {
             try (var conn = ds.getConnection()) {
                 try (var ps = conn.prepareStatement("DELETE FROM time WHERE player = ?")) {
                     ps.setObject(1, playerId.toString());
@@ -31,7 +32,7 @@ public class TimeTrackerTable {
     }
 
     public void insertPlayer(@NotNull TimeTrackerDbModel model) {
-        synchronized (lock) {
+        synchronized (DatabaseManager.lock) {
             try (var conn = ds.getConnection()) {
                 try (var ps = conn.prepareStatement("INSERT INTO time (player, lastSeen, dailyTime, weeklyTime, monthlyTime, totalTime) VALUES (?,?,?,?,?,?)")) {
                     ps.setObject(1, model.playerUniqueId.toString());
@@ -50,7 +51,7 @@ public class TimeTrackerTable {
 
     @Nullable
     public TimeTrackerDbModel selectPlayer(@NotNull UUID playerId) {
-        synchronized (lock) {
+        synchronized (DatabaseManager.lock) {
             try (var conn = ds.getConnection()) {
                 try (var ps = conn.prepareStatement("SELECT * FROM time WHERE player = ?")) {
                     ps.setObject(1, playerId.toString());
@@ -75,7 +76,7 @@ public class TimeTrackerTable {
     }
 
     public void update(@NotNull TimeTrackerDbModel model, UUID player) {
-        synchronized (lock) {
+        synchronized (DatabaseManager.lock) {
             try (var conn = ds.getConnection()) {
                 try (var ps = conn.prepareStatement("UPDATE time SET player = ?, lastSeen = ?, dailyTime = ?, weeklyTime = ?, monthlyTime = ?, totalTime = ? WHERE player = ?")) {
                     ps.setObject(1, model.playerUniqueId.toString());
@@ -94,7 +95,7 @@ public class TimeTrackerTable {
     }
 
     public void updateBatch(@NotNull Collection<TimeTrackerDbModel> model) {
-        synchronized (lock) {
+        synchronized (DatabaseManager.lock) {
             try (var conn = ds.getConnection()) {
                 try (var ps = conn.prepareStatement("UPDATE time SET player = ?, lastSeen = ?, dailyTime = ?, weeklyTime = ?, monthlyTime = ?, totalTime = ? WHERE player = ?")) {
                     for (var m : model) {

@@ -26,7 +26,7 @@ public class I18n extends LanguageRepository {
         if (instance == null) return "<Not initialized>";
         return instance.getFormatted(key, args);
     }
-
+    @Contract(pure = true)
     public static String substitute(String key, Object... args) {
         if (instance == null) return "<Not initialized>";
         return instance.getSubstituted(key, args);
