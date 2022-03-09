@@ -156,7 +156,7 @@ public class CommandHandler extends CommandReceiver {
         I18n.send(sender, "command.afkstatus.info", player.getName(), TimeUtils.dateFormat(lastActivity), TimeUtils.timeFormat(afkTime));
     }
 
-    @SubCommand(value = "acquire", alias = {"ac"}, permission = "ptt.acquire")
+    @SubCommand(value = "acquire", alias = {"ac"}, permission = "ptt.command.acquire")
     public void acquire(CommandSender sender, Arguments args) {
         String missionName = args.nextString("all");
         if (!(sender instanceof Player player)) {
