@@ -9,7 +9,7 @@ ext.pluginName = "PlayTimeTracker"
 ext.pluginname = ext.pluginName.toLowerCase()
 ext.majorVersion = 0
 ext.minorVersion = 7
-ext.minecraftVersion = "1.18.1"
+ext.minecraftVersion = "1.19.2"
 sourceCompatibility = 17
 targetCompatibility = 17
 
@@ -23,7 +23,7 @@ group = "cat.nyaa"
 archivesBaseName = "${pluginName}-mc$minecraftVersion"
 version = "$majorVersion.$minorVersion.$buildNumber".toString()
 runServer {
-    minecraftVersion("1.18.1")
+    minecraftVersion("1.19.2")
 }
 repositories {
     mavenCentral()
@@ -41,10 +41,10 @@ repositories {
 
 dependencies {
     compileOnly "org.spigotmc:spigot-api:$minecraftVersion-R0.1-SNAPSHOT"
-    compileOnly 'net.essentialsx:EssentialsX:2.19.0'
-    compileOnly 'me.clip:placeholderapi:2.11.1'
+    compileOnly 'net.essentialsx:EssentialsX:2.19.6'
+    compileOnly 'me.clip:placeholderapi:2.11.2'
     compileOnly 'com.udojava:EvalEx:2.7'
-    compileOnly 'org.xerial:sqlite-jdbc:3.36.0.3'
+    compileOnly 'org.xerial:sqlite-jdbc:3.39.3.0'
     compileOnly 'com.zaxxer:HikariCP:5.0.1'
     // other nyaa plugins
     if (gradle.hasProperty("useLocalDependencies") && gradle.useLocalDependencies) {
@@ -53,7 +53,7 @@ dependencies {
         compileOnly('cat.nyaa:nyaacore:9.0-SNAPSHOT') { transitive = true }
     }
 
-    compileOnly 'org.jetbrains:annotations:22.0.0'
+    compileOnly 'org.jetbrains:annotations:23.0.0'
 }
 
 compileJava {
