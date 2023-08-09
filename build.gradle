@@ -9,7 +9,7 @@ ext.pluginName = "PlayTimeTracker"
 ext.pluginname = ext.pluginName.toLowerCase()
 ext.majorVersion = 0
 ext.minorVersion = 7
-ext.minecraftVersion = "1.19.2"
+ext.minecraftVersion = "1.20.1"
 sourceCompatibility = 17
 targetCompatibility = 17
 
@@ -23,7 +23,7 @@ group = "cat.nyaa"
 archivesBaseName = "${pluginName}-mc$minecraftVersion"
 version = "$majorVersion.$minorVersion.$buildNumber".toString()
 runServer {
-    minecraftVersion("1.19.2")
+    minecraftVersion("1.20.1")
 }
 repositories {
     mavenCentral()
@@ -44,7 +44,7 @@ dependencies {
     compileOnly 'net.essentialsx:EssentialsX:2.19.6'
     compileOnly 'me.clip:placeholderapi:2.11.2'
     compileOnly 'com.udojava:EvalEx:2.7'
-    compileOnly 'org.xerial:sqlite-jdbc:3.39.3.0'
+    compileOnly 'org.xerial:sqlite-jdbc:3.42.0.0'
     compileOnly 'com.zaxxer:HikariCP:5.0.1'
     // other nyaa plugins
     if (gradle.hasProperty("useLocalDependencies") && gradle.useLocalDependencies) {
