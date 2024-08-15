@@ -58,7 +58,7 @@ publishing {
     repositories {
         maven {
             name = "maven-publish"
-            url = uri(System.getenv("MAVEN_URL") ?: layout.buildDirectory.dir("repo"))
+            url = uri(System.getenv("MAVEN_PUBLISH_URL") ?: layout.buildDirectory.dir("repo"))
             val mavenUsername = System.getenv("MAVEN_PUBLISH_USERNAME")
             val mavenPassword = System.getenv("MAVEN_PUBLISH_PASSWORD")
             if(mavenUsername != null && mavenPassword != null) {
