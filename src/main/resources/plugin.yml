@@ -1,7 +1,7 @@
 name: PlayTimeTracker
-version: '${version}'
+version: ${version}
 main: cat.nyaa.playtimetracker.PlayTimeTracker
-api-version: 1.18
+api-version: ${api_version}
 prefix: PlayTimeTracker
 depend: [ NyaaCore ]
 softdepend: [ Essentials,PlaceholderAPI ]
