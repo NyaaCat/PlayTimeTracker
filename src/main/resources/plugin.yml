@@ -7,8 +7,8 @@ depend: [ NyaaCore ]
 softdepend: [ Essentials,PlaceholderAPI ]
 libraries:
   - com.udojava:EvalEx:2.7
-  - org.xerial:sqlite-jdbc:3.42.0.0
-  - com.zaxxer:HikariCP:5.0.1
+  - org.xerial:sqlite-jdbc:3.46.0.0
+  - com.zaxxer:HikariCP:5.1.0
 commands:
   playtimetracker:
     aliases: [ ptt ]
