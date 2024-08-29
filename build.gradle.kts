@@ -10,7 +10,7 @@ val paperApiName = "1.21.1-R0.1-SNAPSHOT"
 
 // Version used for distribution. Different from maven repo
 group = "cat.nyaa"
-version = "0.9-SNAPSHOT"
+version = "0.10-alpha.1"
 
 java {
     // Configure the java toolchain. This allows gradle to auto-provision JDK 21 on systems that only have JDK 8 installed for example.
@@ -21,16 +21,16 @@ repositories {
     mavenCentral()
     maven { url = uri("https://papermc.io/repo/repository/maven-public/") } //paper
     maven { url = uri("https://libraries.minecraft.net") } // mojang
-    // maven { url = uri("https://repo.essentialsx.net/releases/") } // essentials
+//    maven { url = uri("https://repo.essentialsx.net/releases/") } // essentials
     maven { url = uri("https://repo.essentialsx.net/snapshots/") } // essentials
-    // maven { url = uri("https://ci.nyaacat.com/maven/") } // nyaacat
-    maven {
-        url = uri("https://maven.pkg.github.com/NyaaCat/NyaaCore")
-        credentials {
-            username = System.getenv("GITHUB_MAVEN_USER") ?: project.findProperty("gpr.user").toString()
-            password = System.getenv("GITHUB_MAVEN_TOKEN") ?: project.findProperty("gpr.key").toString()
-        }
-    } // NyaaCore
+    maven { url = uri("https://ci.nyaacat.com/maven/") } // nyaacat
+//    maven {
+//        url = uri("https://maven.pkg.github.com/NyaaCat/NyaaCore")
+//        credentials {
+//            username = System.getenv("GITHUB_MAVEN_USER") ?: project.findProperty("gpr.user").toString()
+//            password = System.getenv("GITHUB_MAVEN_TOKEN") ?: project.findProperty("gpr.key").toString()
+//        }
+//    } // NyaaCore
     maven { url = uri("https://repo.extendedclip.com/content/repositories/placeholderapi/") } // placeholderapi
 }
 
@@ -45,6 +45,17 @@ dependencies {
     compileOnly("com.zaxxer:HikariCP:5.1.0")
     // other nyaa plugins
     compileOnly("cat.nyaa:nyaacore:9.4")
+    compileOnly("cat.nyaa:ecore:0.3.4")  // optional
+
+    // test
+    testImplementation(platform("org.junit:junit-bom:5.10.3"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testImplementation("org.slf4j:slf4j-simple:2.0.9")
+    testImplementation("com.github.seeseemelk:MockBukkit-v1.21:3.107.0")
+    testImplementation("org.xerial:sqlite-jdbc:3.46.0.0")
+    testImplementation("com.zaxxer:HikariCP:5.1.0")
+    testImplementation("cat.nyaa:nyaacore:9.4")
+    testImplementation("cat.nyaa:ecore:0.3.4")
 }
 
 publishing {
@@ -90,6 +101,7 @@ tasks {
         // See https://openjdk.java.net/jeps/247 for more information.
         options.release.set(21)
     }
+
     javadoc {
         with((options as StandardJavadocDocletOptions)) {
             options.encoding = Charsets.UTF_8.name() // We want UTF-8 for everything
@@ -117,6 +129,12 @@ tasks {
 
     }
 
+    test {
+        useJUnitPlatform()
+        testLogging {
+            events("passed", "skipped", "failed")
+        }
+    }
 }
 
 private fun getMcVersion(apiNameString: String, parts: Int = -1): String {
@@ -128,3 +146,5 @@ private fun getMcVersion(apiNameString: String, parts: Int = -1): String {
         mcVersion
     }
 }
+
+

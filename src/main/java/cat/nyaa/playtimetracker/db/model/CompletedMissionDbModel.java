@@ -7,7 +7,7 @@ import java.util.UUID;
 
 @Table("completed")
 public class CompletedMissionDbModel {
-    @Column(name = "id", primary = true, autoIncrement = true, nullable = true)
+    @Column(name = "id", primary = true, autoIncrement = true)
     public int id;
     @Column(name = "player")
     public UUID playerUniqueId;
