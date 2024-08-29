@@ -6,11 +6,11 @@ import cat.nyaa.playtimetracker.PlayTimeTracker;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class DatabaseConfig extends FileConfigure {
-    private final PlayTimeTracker plugin;
+    private final JavaPlugin plugin;
     @Serializable(name = "backend-config")
     public BackendConfig backendConfig = BackendConfig.sqliteBackend("pluginDatabase.db");
 
-    public DatabaseConfig(PlayTimeTracker plugin) {
+    public DatabaseConfig(JavaPlugin plugin) {
         this.plugin = plugin;
     }
 

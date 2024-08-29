@@ -5,6 +5,11 @@ command:
     failed: 领取 %s 的奖励失败
     not_found: 待领取的奖励里面并没有 %s
     success: 成功领取 %s 的奖励
+  listrewards:
+    show_all: 有 %s 个任务奖励待领取
+    show: 有 %s 个 %s 任务奖励待领取
+    empty_all: 没有可以领取的任务奖励
+    empty: 没有可以领取的 %s 任务奖励
   afkstatus:
     ess_afk: ESS AFK中
     info: 玩家 %s PTT AFK,开始时间:%s,持续时间:%s
@@ -56,6 +61,9 @@ manual:
   acquire:
     description: 领取奖励
     usage: /ptt acquire <奖励名称|all>
+  listrewards:
+    description: 查看所有奖励
+    usage: /ptt listrewards <奖励名称|all>
   afkstatus:
     description: 查看玩家的afk状态
     usage: /ptt afkstatus <player>

@@ -156,6 +156,21 @@ public class CommandHandler extends CommandReceiver {
         I18n.send(sender, "command.afkstatus.info", player.getName(), TimeUtils.dateFormat(lastActivity), TimeUtils.timeFormat(afkTime));
     }
 
+    @SubCommand(value = "listrewards", alias = {"lsr"}, permission = "ptt.command.listrewards")
+    public void listRewards(CommandSender sender, Arguments args) {
+        String missionName = args.nextString("all");
+        if (!(sender instanceof Player player)) {
+            I18n.send(sender, "command.only-player-can-do");
+            return;
+        }
+        PlayerMissionManager missionManager = plugin.getMissionManager();
+        if (missionManager == null) {
+            I18n.send(sender, "command.acquire.err");
+            return;
+        }
+        missionManager.showPlayerRewards(player, missionName, false);
+    }
+
     @SubCommand(value = "acquire", alias = {"ac"}, permission = "ptt.command.acquire")
     public void acquire(CommandSender sender, Arguments args) {
         String missionName = args.nextString("all");
@@ -168,33 +183,34 @@ public class CommandHandler extends CommandReceiver {
             I18n.send(sender, "command.acquire.err");
             return;
         }
-        Set<String> missionNameSet = missionManager.getAwaitingMissionNameSet(player);
-        if (missionName.equals("all")) {
-            if (missionNameSet.isEmpty()) {
-                I18n.send(sender, "command.acquire.empty");
-                return;
-            }
-            missionNameSet.forEach(
-                    (mission) -> {
-                        if (missionManager.completeMission(player, mission)) {
-                            I18n.send(sender, "command.acquire.success", mission);
-                        } else {
-                            I18n.send(sender, "command.acquire.failed", mission);
-                        }
-                    }
-            );
-
-        } else {
-            if (!missionNameSet.contains(missionName)) {
-                I18n.send(sender, "command.acquire.not_found", missionName);
-            } else {
-                if (missionManager.completeMission(player, missionName)) {
-                    I18n.send(sender, "command.acquire.success", missionName);
-                } else {
-                    I18n.send(sender, "command.acquire.failed", missionName);
-                }
-            }
-        }
+        missionManager.executeAcquire(player, missionName);
+//        Set<String> missionNameSet = missionManager.getAwaitingMissionNameSet(player);
+//        if (missionName.equals("all")) {
+//            if (missionNameSet.isEmpty()) {
+//                I18n.send(sender, "command.acquire.empty");
+//                return;
+//            }
+//            missionNameSet.forEach(
+//                    (mission) -> {
+//                        if (missionManager.completeMission(player, mission)) {
+//                            I18n.send(sender, "command.acquire.success", mission);
+//                        } else {
+//                            I18n.send(sender, "command.acquire.failed", mission);
+//                        }
+//                    }
+//            );
+//
+//        } else {
+//            if (!missionNameSet.contains(missionName)) {
+//                I18n.send(sender, "command.acquire.not_found", missionName);
+//            } else {
+//                if (missionManager.completeMission(player, missionName)) {
+//                    I18n.send(sender, "command.acquire.success", missionName);
+//                } else {
+//                    I18n.send(sender, "command.acquire.failed", missionName);
+//                }
+//            }
+//        }
     }
 
     @SubCommand(value = "reload", permission = "ptt.command.reload")

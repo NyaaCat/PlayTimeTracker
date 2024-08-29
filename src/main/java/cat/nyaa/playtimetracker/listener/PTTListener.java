@@ -45,6 +45,7 @@ public class PTTListener implements Listener {
         if (PlayTimeTracker.getInstance() != null) {
             if (PlayTimeTracker.getInstance().getMissionManager() != null) {
                 PlayTimeTracker.getInstance().getMissionManager().checkPlayerMission(event.getPlayer());
+                PlayTimeTracker.getInstance().getMissionManager().showPlayerRewards(event.getPlayer(), null, true);
             }
             if (PlayTimeTracker.getInstance().getTimeRecordManager() != null) {
                 PlayTimeTracker.getInstance().getTimeRecordManager().addPlayer(event.getPlayer());

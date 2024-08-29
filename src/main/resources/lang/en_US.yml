@@ -5,6 +5,11 @@ command:
     failed: Failed to acquire reward %s
     not_found: Reward %s Not Found
     success: Successfully acquired reward %s
+  listrewards:
+    show_all: There are %s reward(s) awaiting for acquiring
+    show: There are %s reward(s) of %s awaiting for acquiring
+    empty_all: No reward for acquiring currently.
+    empty: No reward of %s for acquiring currently.
   afkstatus:
     ess_afk: AFK set by Essentials
     info: Player %s is currently AFK. From %s - Elapsed %s
@@ -56,6 +61,9 @@ manual:
   acquire:
     description: Acquire rewards
     usage: /ptt acquire <Reward name|all>
+  listrewards:
+    description: 查看所有奖励
+    usage: /ptt listrewards <Reward name|all>
   afkstatus:
     description: Check AFK status
     usage: /ptt afkstatus <player>

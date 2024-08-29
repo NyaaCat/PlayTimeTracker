@@ -3,6 +3,7 @@ package cat.nyaa.playtimetracker.db.connection;
 import cat.nyaa.playtimetracker.db.model.CompletedMissionDbModel;
 import cat.nyaa.playtimetracker.db.tables.CompletedMissionTable;
 import com.zaxxer.hikari.HikariDataSource;
+import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,13 +11,11 @@ import java.util.List;
 import java.util.UUID;
 
 public class CompletedMissionConnection {
-    private final HikariDataSource ds;
     private final CompletedMissionTable completedMissionTable;
 
-    public CompletedMissionConnection(HikariDataSource ds) {
-        this.ds = ds;
+    public CompletedMissionConnection(HikariDataSource ds, Plugin plugin) {
         this.completedMissionTable = new CompletedMissionTable(ds);
-
+        this.completedMissionTable.tryCreateTable(plugin);
     }
 
     public void resetPlayerCompletedMission(UUID playerId) {
@@ -27,7 +26,7 @@ public class CompletedMissionConnection {
         completedMissionTable.delete(playerUniqueId, missionName);
     }
 
-    public void WriteMissionCompleted(UUID playerUniqueId, String missionName, long lastCompletedTime) {
+    public void writeMissionCompleted(UUID playerUniqueId, String missionName, long lastCompletedTime) {
         synchronized (CompletedMissionConnection.class) {
             var rs = completedMissionTable.select(playerUniqueId, missionName);
             if (rs.size() == 0) {

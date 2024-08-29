@@ -37,6 +37,7 @@ public class ResetCommand extends CommandReceiver {
             I18n.send(sender, "command.reset.mission.target_not_found", playerName);
             return;
         }
+        // TODO: necessary to get all data?
         List<CompletedMissionDbModel> allData = PlayTimeTracker.getInstance().getMissionManager().getPlayerCompletedMissionList(playerId);
         if (allData == null || allData.isEmpty()) {
             I18n.send(sender, "command.reset.mission.not_found", playerName);
@@ -65,7 +66,7 @@ public class ResetCommand extends CommandReceiver {
                 I18n.send(sender, "command.reset.mission.mission_not_found", playerName, missionName);
                 return;
             }
-            PlayTimeTracker.getInstance().getMissionManager().resetPlayerMissionData(playerId);
+            PlayTimeTracker.getInstance().getMissionManager().resetPlayerMissionData(playerId, missionName);
             I18n.send(sender, "command.reset.mission.success", playerName, missionName);
         }
 
@@ -79,7 +80,7 @@ public class ResetCommand extends CommandReceiver {
             return;
         }
         String playerName = args.nextString();
-        UUID playerId = CommandUtils.getPlayerUUIDByStr(args.nextString(), sender);
+        UUID playerId = CommandUtils.getPlayerUUIDByStr(playerName, sender);
         if (playerId == null) {
             I18n.send(sender, "command.reset.time.target_not_found", playerName);
             return;

@@ -1,10 +1,10 @@
 name: PlayTimeTracker
 version: ${version}
 main: cat.nyaa.playtimetracker.PlayTimeTracker
-api-version: ${api_version}
+api-version: 1.21
 prefix: PlayTimeTracker
 depend: [ NyaaCore ]
-softdepend: [ Essentials,PlaceholderAPI ]
+softdepend: [ Essentials,PlaceholderAPI, Ecore ]
 libraries:
   - com.udojava:EvalEx:2.7
   - org.xerial:sqlite-jdbc:3.46.0.0
@@ -21,6 +21,9 @@ permissions:
     default: true
   ptt.command.view:
     description: player's statistic
+    default: true
+  ptt.command.listrewards:
+    description: List rewards
     default: true
   ptt.command.acquire:
     description: Redeem the reward related to the rule

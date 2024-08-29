@@ -1,9 +1,11 @@
 package cat.nyaa.playtimetracker;
 
+import cat.nyaa.ecore.EconomyCore;
 import cat.nyaa.playtimetracker.command.CommandHandler;
 import cat.nyaa.playtimetracker.config.PTTConfiguration;
 import cat.nyaa.playtimetracker.db.DatabaseManager;
 import cat.nyaa.playtimetracker.listener.ListenerManager;
+import cat.nyaa.playtimetracker.reward.IEconomyCoreProvider;
 import cat.nyaa.playtimetracker.task.PTTTaskManager;
 import cat.nyaa.playtimetracker.utils.PlaceholderAPIUtils;
 import net.ess3.api.IEssentials;
@@ -14,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.time.ZoneId;
 
-public final class PlayTimeTracker extends JavaPlugin {
+public final class PlayTimeTracker extends JavaPlugin implements IEconomyCoreProvider {
     @Nullable
     private static PlayTimeTracker instance;
     @Nullable
@@ -37,6 +39,8 @@ public final class PlayTimeTracker extends JavaPlugin {
     private PlayerMissionManager missionManager;
     @Nullable
     private Plugin essentialsPlugin;
+    @Nullable
+    private EconomyCore economyCore;
     private ZoneId timezone;
 
 
@@ -69,6 +73,12 @@ public final class PlayTimeTracker extends JavaPlugin {
             getLogger().warning("Essential not exists, afk setting will be ignored.");
             this.essentialsPlugin = null;
         }
+        // Ecore
+        var economyProvider = this.getServer().getServicesManager().getRegistration(EconomyCore.class);
+        if (economyProvider != null) {
+            this.economyCore = economyProvider.getProvider();
+        }
+
         //command
         this.commandHandler = new CommandHandler(this, i18n);
         PluginCommand mainCommand = getCommand("playtimetracker");
@@ -85,7 +95,7 @@ public final class PlayTimeTracker extends JavaPlugin {
         //record
         this.timeRecordManager = new TimeRecordManager(this, databaseManager.getTimeTrackerConnection());
         //Mission
-        this.missionManager = new PlayerMissionManager(this, pttConfiguration, timeRecordManager, databaseManager.getCompletedMissionConnection());
+        this.missionManager = new PlayerMissionManager(this, pttConfiguration, timeRecordManager, databaseManager.getCompletedMissionConnection(), databaseManager.getRewardsConnection());
     }
 
     @Nullable
@@ -126,6 +136,12 @@ public final class PlayTimeTracker extends JavaPlugin {
     @Nullable
     public DatabaseManager getDatabaseManager() {
         return databaseManager;
+    }
+
+    @Override
+    @Nullable
+    public EconomyCore getEconomyCore() {
+        return economyCore;
     }
 
     @Nullable

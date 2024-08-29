@@ -16,13 +16,12 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class TimeTrackerConnection {
     static ConcurrentHashMap<UUID, TimeTrackerDbModel> cache = new ConcurrentHashMap<>();
     private final TimeTrackerTable timeTrackerTable;
-    private final HikariDataSource ds;
     private final Plugin plugin;
 
     public TimeTrackerConnection(HikariDataSource ds, Plugin plugin) {
-        this.ds = ds;
         this.plugin = plugin;
         this.timeTrackerTable = new TimeTrackerTable(ds);
+        this.timeTrackerTable.tryCreateTable(plugin);
     }
 
     public void deletePlayerData(UUID playerId) {

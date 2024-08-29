@@ -13,7 +13,7 @@ public class PTTConfiguration extends PluginConfigure {
     @StandaloneConfig
     public final MissionConfig missionConfig;
 
-    private final PlayTimeTracker plugin;
+    private final JavaPlugin plugin;
 
     @Serializable
     public String language = "en_US";
@@ -28,7 +28,7 @@ public class PTTConfiguration extends PluginConfigure {
     @Serializable(name = "check-acquire-tick")
     public long checkAcquireTick = 10 * 20L;
 
-    public PTTConfiguration(PlayTimeTracker plugin) {
+    public PTTConfiguration(JavaPlugin plugin) {
         this.plugin = plugin;
         this.databaseConfig = new DatabaseConfig(plugin);
         this.missionConfig = new MissionConfig(plugin);
