@@ -45,13 +45,15 @@ public class PTTListener implements Listener {
         if (PlayTimeTracker.getInstance() != null) {
             if (PlayTimeTracker.getInstance().getMissionManager() != null) {
                 PlayTimeTracker.getInstance().getMissionManager().checkPlayerMission(event.getPlayer());
-                PlayTimeTracker.getInstance().getMissionManager().showPlayerRewards(event.getPlayer(), null, true);
             }
             if (PlayTimeTracker.getInstance().getTimeRecordManager() != null) {
                 PlayTimeTracker.getInstance().getTimeRecordManager().addPlayer(event.getPlayer());
             }
             if (PlayTimeTracker.getInstance().getAfkManager() != null) {
                 PlayTimeTracker.getInstance().getAfkManager().addPlayer(event.getPlayer());
+            }
+            if(PlayTimeTracker.getInstance().getRewardManager() != null){
+                PlayTimeTracker.getInstance().getRewardManager().executeRewardsAutoCheckAsync(event.getPlayer(), 10);
             }
         }
     }

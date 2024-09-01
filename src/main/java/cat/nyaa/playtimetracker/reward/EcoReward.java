@@ -1,7 +1,11 @@
 package cat.nyaa.playtimetracker.reward;
 
 import cat.nyaa.ecore.EconomyCore;
+import cat.nyaa.playtimetracker.I18n;
 import cat.nyaa.playtimetracker.config.data.EcoRewardData;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.Nullable;
@@ -12,6 +16,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.List;
 import java.util.UUID;
 
 public class EcoReward implements IReward {
@@ -73,7 +78,11 @@ public class EcoReward implements IReward {
                     amount = cfg.amount;
                 }
             };
-            return amount != null;
+            if(amount != null) {
+                logger.debug("Prepared eco-reward ({}) for {}", amount, player.getName());
+                return true;
+            }
+            return false;
         } catch (Exception e) {
             logger.error("Failed to prepare eco-reward", e);
             amount = null;
@@ -82,7 +91,7 @@ public class EcoReward implements IReward {
     }
 
     @Override
-    public Boolean distribute(Player player, Plugin plugin) {
+    public Boolean distribute(Player player, Plugin plugin, List<Component> outputMessages) {
         EconomyCore ecore = null;
         if(plugin instanceof IEconomyCoreProvider provider) {
             ecore = provider.getEconomyCore();
@@ -92,7 +101,12 @@ public class EcoReward implements IReward {
         }
         try {
             boolean success = ecore.depositPlayer(player.getUniqueId(), amount);
-            if(!success) {
+            if(success) {
+                // TODO: use adventure text api
+                String text = I18n.format("message.reward.eco.success", amount, amount == 1.0 ? ecore.currencyNameSingular() : ecore.currencyNamePlural());
+                TextComponent msg = LegacyComponentSerializer.legacySection().deserialize(text);
+                outputMessages.add(msg);
+            } else {
                 logger.error("Failed to distribute eco-reward ({}) to {}", amount, player.getName());
                 if(rollbackFlag == 1) {
                     if(!ecore.depositSystemVault(amount)) {

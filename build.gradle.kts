@@ -10,7 +10,7 @@ val paperApiName = "1.21.1-R0.1-SNAPSHOT"
 
 // Version used for distribution. Different from maven repo
 group = "cat.nyaa"
-version = "0.10-alpha.1"
+version = "0.10-alpha.2"
 
 java {
     // Configure the java toolchain. This allows gradle to auto-provision JDK 21 on systems that only have JDK 8 installed for example.
@@ -69,7 +69,7 @@ publishing {
     }
     repositories {
         maven {
-            name = "maven-publish"
+            name = "GithubPackage"
             url = uri(System.getenv("MAVEN_PUBLISH_URL") ?: layout.buildDirectory.dir("repo"))
             val mavenUsername = System.getenv("MAVEN_PUBLISH_USERNAME")
             val mavenPassword = System.getenv("MAVEN_PUBLISH_PASSWORD")
@@ -80,7 +80,22 @@ publishing {
                 }
             }
         }
+        maven {
+            name = "NyaaCatCILocal"
+            //local maven repository
+            url = uri("file://${System.getenv("MAVEN_DIR")}")
+        }
     }
+}
+
+// Custom tasks for publishing to specific repositories
+tasks.register("publishToGithubPackage") {
+    dependsOn("publishMavenJavaPublicationToGithubPackageRepository")
+    // auto generated task: publish<PublicationName>PublicationTo<RepositoryName>Repository
+}
+
+tasks.register("publishToNyaaCatCILocal") {
+    dependsOn("publishMavenJavaPublicationToNyaaCatCILocalRepository")
 }
 
 

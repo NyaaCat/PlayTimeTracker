@@ -10,6 +10,7 @@ import org.bukkit.plugin.Plugin;
 
 import java.io.*;
 import java.time.Instant;
+import java.util.List;
 
 public class DemoReward implements IReward {
 
@@ -39,7 +40,7 @@ public class DemoReward implements IReward {
     }
 
     @Override
-    public Boolean distribute(Player player, Plugin plugin) {
+    public Boolean distribute(Player player, Plugin plugin, List<Component> outputMessages) {
         if(this.message == null) {
             return false;
         }

@@ -13,8 +13,6 @@ name: Publish to GitHub Packages
 run-name: 'Package Publish #${{github.run_number}}'
 
 on:
-  release:
-    types: [published]
   workflow_dispatch:
 
 jobs:
@@ -36,7 +34,7 @@ jobs:
           distribution: 'oracle'
 
       - name: Publish to GitHub Packages Apache Maven
-        run: ./gradlew publish -i
+        run: ./gradlew publishToGithubPackage
         env:
           MAVEN_PUBLISH_URL: https://maven.pkg.github.com/${{github.repository}}
           MAVEN_PUBLISH_USERNAME: ${{github.actor}}

@@ -18,13 +18,13 @@ import java.util.UUID;
 
 public class CompletedMissionTable {
 
-    private static final Logger logger = LoggerFactory.getLogger(CompletedMissionTable.class);
-
     public static final String TABLE_NAME = "completed";
     private final HikariDataSource ds;
+    private final Logger logger;
 
-    public CompletedMissionTable(HikariDataSource ds) {
+    public CompletedMissionTable(HikariDataSource ds, Logger logger) {
         this.ds = ds;
+        this.logger = logger;
     }
 
     public boolean tryCreateTable(Plugin plugin) {

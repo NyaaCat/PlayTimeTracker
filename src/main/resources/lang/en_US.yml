@@ -6,8 +6,10 @@ command:
     not_found: Reward %s Not Found
     success: Successfully acquired reward %s
   listrewards:
+    err: Internal Server Query Failed
     show_all: There are %s reward(s) awaiting for acquiring
     show: There are %s reward(s) of %s awaiting for acquiring
+    show_item: "- mission %s: %s"
     empty_all: No reward for acquiring currently.
     empty: No reward of %s for acquiring currently.
   afkstatus:
@@ -91,6 +93,12 @@ message:
     notify:
       command: /ptt acquire %s
       msg: You may now acquire reward for mission %s
+  reward:
+    notify:
+      command: /ptt acquire
+      msg: You have %s reward(s) awaiting for acquiring
+    eco:
+      success: Economy Reward of %s%s has been added to your account
 time:
   format:
     h: ' hours '

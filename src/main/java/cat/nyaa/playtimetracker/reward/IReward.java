@@ -1,10 +1,12 @@
 package cat.nyaa.playtimetracker.reward;
 
+import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.List;
 
 public interface IReward {
 
@@ -17,11 +19,17 @@ public interface IReward {
 
     /**
      * distribute the reward to the player
+     * @param player the player to distribute the reward to
+     * @param plugin the plugin
+     * @param outputMessages the messages to be sent to the player;
+     *                       a component message of reward description can be added to the list on success;
+     *                       a component message of error message can be added to the list otherwise;
+     *                       in any cases, no message be put in the list are allowed
      * @return true if the reward is successfully distributed;
      *         false if the reward distribution has failed;
      *         null if the reward distribution is blocked and should be retried later
      */
-    Boolean distribute(Player player, Plugin plugin);
+    Boolean distribute(Player player, Plugin plugin, List<Component> outputMessages);
 
 
     /**

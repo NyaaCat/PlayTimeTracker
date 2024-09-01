@@ -6,7 +6,9 @@ command:
     not_found: 待领取的奖励里面并没有 %s
     success: 成功领取 %s 的奖励
   listrewards:
+    err: 查询失败
     show_all: 有 %s 个任务奖励待领取
+    show_item: "- 任务 %s: %s"
     show: 有 %s 个 %s 任务奖励待领取
     empty_all: 没有可以领取的任务奖励
     empty: 没有可以领取的 %s 任务奖励
@@ -91,6 +93,12 @@ message:
     notify:
       command: /ptt acquire %s
       msg: 您的在线时长已经达成 %s 的任务要求
+  reward:
+    notify:
+      command: /ptt acquire
+      msg: 您有 %s 个任务奖励可以领取
+    eco:
+      success: 经济奖励%s%s已经添加到您的账户
 time:
   format:
     h: ' 小时 '

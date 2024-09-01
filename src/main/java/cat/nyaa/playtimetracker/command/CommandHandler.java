@@ -17,7 +17,6 @@ import org.bukkit.entity.Player;
 
 import java.io.File;
 import java.time.ZonedDateTime;
-import java.util.Set;
 import java.util.UUID;
 
 public class CommandHandler extends CommandReceiver {
@@ -163,12 +162,12 @@ public class CommandHandler extends CommandReceiver {
             I18n.send(sender, "command.only-player-can-do");
             return;
         }
-        PlayerMissionManager missionManager = plugin.getMissionManager();
+        PlayerRewardManager missionManager = plugin.getRewardManager();
         if (missionManager == null) {
             I18n.send(sender, "command.acquire.err");
             return;
         }
-        missionManager.showPlayerRewards(player, missionName, false);
+        missionManager.executeListRewardsAsync(player, "all".equals(missionName) ? null : missionName);
     }
 
     @SubCommand(value = "acquire", alias = {"ac"}, permission = "ptt.command.acquire")
@@ -178,12 +177,12 @@ public class CommandHandler extends CommandReceiver {
             I18n.send(sender, "command.only-player-can-do");
             return;
         }
-        PlayerMissionManager missionManager = plugin.getMissionManager();
+        PlayerRewardManager missionManager = plugin.getRewardManager();
         if (missionManager == null) {
             I18n.send(sender, "command.acquire.err");
             return;
         }
-        missionManager.executeAcquire(player, missionName);
+        missionManager.executeDistributeRewardsAsync(player, "all".equals(missionName) ? null : missionName);
 //        Set<String> missionNameSet = missionManager.getAwaitingMissionNameSet(player);
 //        if (missionName.equals("all")) {
 //            if (missionNameSet.isEmpty()) {
