@@ -1,5 +1,7 @@
+
 # PlayTimeTracker
 Playtime tracking plugin for ~~Bukkit/Spigot~~ PaperMC
+
 
 ## Configuration
 
@@ -58,6 +60,122 @@ missions:
 5. **If you modified `gradle.properties` under this repo, When committing changes, make sure to remove what you add in step 3. so that `GITHUB_TOKEN` is not exposed.**
 
 
+## Change Log
+
+### 0.9-SNAPSHOT
+
+- [Tech] port to 1.21.1 and CI migration;
+- [Tech] publish to github packages
+- **[BREAKING] Abandon support for other Bukkit/Spigot, Only support PaperMC ** 
+
+  we don't have enough effort for different distributions
+
+### 0.10-alpha.1
+
+- [Feature] **Rewards storage & any-time acquire**: Now rewards will be record when a mission is completed, and you can use `/ptt acquire` to acquire it at anytime, no need to worry about missing it!
+
+- [Feature/WIP] Reward Module instead of use command all the time. Currently only support ECO Rewards. Command Rewards and Item Rewards are WIP.
+
+- [Feature] Add `/ptt listrewards <missionName|all>` to show rewards awaiting for acquiring.
+
+- [Configuration] `missions.yml` :
+
+  ```yaml
+  missions:
+    eco:
+      __class__: cat.nyaa.playtimetracker.config.data.MissionData
+      group: []
+      expression: lastSeen>1&&dailyTime>1&&weeklyTime>1&&monthlyTime>1&&totalTime>1&&1==2
+      reset-daily: true
+      reset-weekly: false
+      reset-monthly: false
+      reward-list: # can be multiple rewards; the key is not important, but reward will be executed in key order
+        reward1:
+          __class__: cat.nyaa.playtimetracker.config.data.EcoRewardData
+          type: TRANSFER  # TRANSFER, ADD
+          ref-vault: $system # "$system" or player uuid
+          ratio: 0.01
+          min: 1.0
+          max: 1024.0
+          vault: $system # "$system" or player uuid  # same as /eco transfer 0.01:1:1024:$system $system %player_name%
+      notify: true
+    daily:
+      __class__: cat.nyaa.playtimetracker.config.data.MissionData
+      group: []
+      expression: dailyTime>3600000
+      reset-daily: true
+      reset-weekly: false
+      reset-monthly: false
+      reward-list:
+        reward2:
+          __class__: cat.nyaa.playtimetracker.config.data.EcoRewardData
+          type: ADD
+          amount: 100 # same as /eco add 100 %player%
+      notify: true
+  ```
+
+- [Configuration] lang
+
+  - `command.listrewards.*`
+  - `manual.listrewards.*`
+
+  ```yaml
+  command:
+    listrewards:
+      show_all: 有 %s 个任务奖励待领取
+      show: 有 %s 个 %s 任务奖励待领取
+      empty_all: 没有可以领取的任务奖励
+      empty: 没有可以领取的 %s 任务奖励
+  manual:
+    listrewards:
+      description: 查看所有奖励
+      usage: /ptt listrewards <奖励名称|all>
+  ```
+
+- [Tech] Add some Unit Tests.
+
+- [Tech] Recover to use NyaaCat CI
+
+### 0.10-alpha.2
+
+- [Feature] Add notification for ECO Rewards. Now when acquire ECO Rewards, it displays how much you get.
+
+- [Feature] `/ptt listrewards all` now display detailed information of how many rewards for each mission.
+
+- [Configuration] lang
+
+  - `command.listrewards.err`
+
+  - `command.listrewards.show_item`
+
+  - `message.reward.notify` for login notification
+
+  - `message.reward.eco` for ECO Rewards acquiring detailed information
+
+  ```yaml
+  command:
+    listrewards:
+      err: 查询失败
+      show_item: "- 任务 %s: %s"  # first %s is mission name; second %s is rewards count
+  message:
+    reward:
+      notify:
+        command: /ptt acquire
+        msg: 您有 %s 个任务奖励可以领取
+      eco:
+        success: 经济奖励%s%s已经添加到您的账户  # first %s is amount; second %s is eco-unit
+  ```
+
+- [Fix] Database wrapper log
+
+- [Fix] remove `NotifyAcquireTask` since it should not work.
+
+- [Fix] pipeline for github-package and NyaaCat CI
+
+- [Tech/WIP] PaperMC Adventure for messages instead of legacy Bukkit API
+
+
+
 ## TODO
 
 #### 0.10-alpha
@@ -69,13 +187,17 @@ missions:
 
 - [ ] add reward module: command
 - [ ] add reward module: item
-- [ ] logging system
+- [x] logging system
+- [ ] i18n: https://docs.papermc.io/paper/dev/component-api/i18n#examples
+- [ ] mission completion notification (sound or Advancement)
 
 #### 1.0
-
+- [ ] Use time-wheel instead of 1gt polling
+   - [ ] Optimize Expressions
+   - [ ] calculate next mission completion time
+   - [ ] time-wheel for mission completion
+   - [ ] command for querying next mission completion time
 - [ ] Make all db operations async
    - [ ] Remove `cat.nyan.playtimetracker.db.connection`
    - [ ] Make `CachedXXXTable` and async methods
-- [ ] Use time-wheel instead of 1gt polling
-- [ ] Optimize Expressions
-
+- [ ] disable plugin: self-disable

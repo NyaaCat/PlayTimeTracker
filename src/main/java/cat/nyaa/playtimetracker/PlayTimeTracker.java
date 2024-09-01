@@ -36,6 +36,8 @@ public final class PlayTimeTracker extends JavaPlugin implements IEconomyCorePro
     @Nullable
     private TimeRecordManager timeRecordManager;
     @Nullable
+    private PlayerRewardManager rewardManager;
+    @Nullable
     private PlayerMissionManager missionManager;
     @Nullable
     private Plugin essentialsPlugin;
@@ -94,8 +96,10 @@ public final class PlayTimeTracker extends JavaPlugin implements IEconomyCorePro
         this.afkManager = new PlayerAFKManager(this);
         //record
         this.timeRecordManager = new TimeRecordManager(this, databaseManager.getTimeTrackerConnection());
+        //reward
+        this.rewardManager = new PlayerRewardManager(this, databaseManager.getRewardsConnection());
         //Mission
-        this.missionManager = new PlayerMissionManager(this, pttConfiguration, timeRecordManager, databaseManager.getCompletedMissionConnection(), databaseManager.getRewardsConnection());
+        this.missionManager = new PlayerMissionManager(this, pttConfiguration, timeRecordManager, rewardManager, databaseManager.getCompletedMissionConnection());
     }
 
     @Nullable
@@ -121,6 +125,11 @@ public final class PlayTimeTracker extends JavaPlugin implements IEconomyCorePro
     @Nullable
     public TimeRecordManager getTimeRecordManager() {
         return timeRecordManager;
+    }
+
+    @Nullable
+    public PlayerRewardManager getRewardManager() {
+        return rewardManager;
     }
 
     @Nullable

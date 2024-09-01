@@ -60,7 +60,7 @@ public class TestDatabase {
 
     @Test
     public void testRewardsTable() {
-        RewardsTable rewardsTable = new RewardsTable(ds);
+        RewardsTable rewardsTable = new RewardsTable(ds, logger);
         rewardsTable.tryCreateTable(plugin);
 
         server.setPlayers(3);
@@ -89,11 +89,13 @@ public class TestDatabase {
 
         // test query
         var listP1 = rewardsTable.selectRewards(player1.getUniqueId(), null);
-        var listP1c = rewardsTable.selectRewardsCount(player1.getUniqueId(), null);
-        Assertions.assertEquals(2, listP1c);
+        var listP1c = rewardsTable.selectRewardsCount(player1.getUniqueId());
+        Assertions.assertEquals(2, listP1c.values().intStream().sum());
 
         var listP2 = rewardsTable.selectRewards(player2.getUniqueId(), rewardName1);
+        var listP2c = rewardsTable.selectRewardsCount(player2.getUniqueId(), rewardName1);
         Assertions.assertEquals(1, listP2.size());
+        Assertions.assertEquals(1, listP2c);
 
         logger.info("add new records: {} {} {}", listP1.get(0).id, listP1.get(1).id, listP2.get(0).id);
 
@@ -104,16 +106,16 @@ public class TestDatabase {
         ids.add(listP2.get(0).id);
         rewardsTable.deleteRewardBatch(ids);
 
-        var list01c = rewardsTable.selectRewardsCount(player1.getUniqueId(), null);
-        Assertions.assertEquals(0, list01c);
-        var list02c = rewardsTable.selectRewardsCount(player2.getUniqueId(), null);
-        Assertions.assertEquals(0, list02c);
+        var list01c = rewardsTable.selectRewardsCount(player1.getUniqueId());
+        Assertions.assertEquals(0, list01c.values().intStream().sum());
+        var list02c = rewardsTable.selectRewardsCount(player2.getUniqueId());
+        Assertions.assertEquals(0, list02c.values().intStream().sum());
     }
 
     @Test
     void testCompletedMissionTable() {
 
-        CompletedMissionTable completedMissionTable = new CompletedMissionTable(ds);
+        CompletedMissionTable completedMissionTable = new CompletedMissionTable(ds, logger);
         completedMissionTable.tryCreateTable(plugin);
 
         server.setPlayers(3);
@@ -166,7 +168,7 @@ public class TestDatabase {
 
     @Test
     void testTimeTrackerTable() {
-        TimeTrackerTable timeTrackerTable = new TimeTrackerTable(ds);
+        TimeTrackerTable timeTrackerTable = new TimeTrackerTable(ds, logger);
         timeTrackerTable.tryCreateTable(plugin);
 
         server.setPlayers(3);

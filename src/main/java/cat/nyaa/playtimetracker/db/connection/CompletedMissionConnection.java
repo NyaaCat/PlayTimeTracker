@@ -14,7 +14,7 @@ public class CompletedMissionConnection {
     private final CompletedMissionTable completedMissionTable;
 
     public CompletedMissionConnection(HikariDataSource ds, Plugin plugin) {
-        this.completedMissionTable = new CompletedMissionTable(ds);
+        this.completedMissionTable = new CompletedMissionTable(ds, plugin.getSLF4JLogger());
         this.completedMissionTable.tryCreateTable(plugin);
     }
 

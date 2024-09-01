@@ -7,7 +7,7 @@ public class NotifyAcquireTask implements Runnable {
     public void run() {
         if (PlayTimeTracker.getInstance() != null) {
             if (PlayTimeTracker.getInstance().getMissionManager() != null) {
-                PlayTimeTracker.getInstance().getMissionManager().notifyAcquire();
+                //PlayTimeTracker.getInstance().getMissionManager().notifyAcquire();
             }
         }
     }

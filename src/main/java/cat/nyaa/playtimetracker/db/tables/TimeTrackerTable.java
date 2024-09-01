@@ -17,14 +17,14 @@ import java.util.UUID;
 
 public class TimeTrackerTable {
 
-    private static final Logger logger = LoggerFactory.getLogger(TimeTrackerTable.class);
-
     public static final String TABLE_NAME = "time";
 
     private final HikariDataSource ds;
+    private final Logger logger;
 
-    public TimeTrackerTable(HikariDataSource ds) {
+    public TimeTrackerTable(HikariDataSource ds, Logger logger) {
         this.ds = ds;
+        this.logger = logger;
     }
 
     public boolean tryCreateTable(Plugin plugin) {

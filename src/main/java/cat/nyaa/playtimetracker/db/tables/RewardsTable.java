@@ -6,6 +6,9 @@ import cat.nyaa.playtimetracker.db.model.RewardDbModel;
 import cat.nyaa.playtimetracker.reward.IReward;
 import com.zaxxer.hikari.HikariDataSource;
 import it.unimi.dsi.fastutil.ints.IntIterable;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import org.bukkit.Server;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -23,16 +26,16 @@ import java.util.UUID;
 
 public class RewardsTable {
 
-    private static final Logger logger = LoggerFactory.getLogger(RewardsTable.class);
-
     public static final String TABLE_NAME = "rewards";
 
     public static final int HEAD_MAGIC = 0x505454FE;
 
     private final HikariDataSource ds;
+    private final Logger logger;
 
-    public RewardsTable(HikariDataSource ds) {
+    public RewardsTable(HikariDataSource ds, Logger logger) {
         this.ds = ds;
+        this.logger = logger;
     }
 
     private static ByteOutputStreamEx serializeReward(IReward reward, int capacity) throws Exception {
@@ -237,20 +240,12 @@ public class RewardsTable {
         }
     }
 
-    public int selectRewardsCount(UUID playerUniqueID, @Nullable String rewardName){
+    public int selectRewardsCount(UUID playerUniqueID, String rewardName){
         synchronized (DatabaseManager.lock) {
             try (var conn = this.ds.getConnection()) {
-                String sql;
-                if (rewardName == null) {
-                    sql = "SELECT COUNT(*) FROM " + TABLE_NAME + " WHERE player = ?";
-                } else {
-                    sql = "SELECT COUNT(*) FROM " + TABLE_NAME + " WHERE player = ? AND rewardName = ?";
-                }
-                try (var ps = conn.prepareStatement(sql)) {
+                try (var ps = conn.prepareStatement("SELECT COUNT(*) FROM " + TABLE_NAME + " WHERE player = ? AND rewardName = ?")) {
                     ps.setString(1, playerUniqueID.toString());
-                    if (rewardName != null) {
-                        ps.setString(2, rewardName);
-                    }
+                    ps.setString(2, rewardName);
                     try (var rs = ps.executeQuery()) {
                         if(rs.next()) {
                             return rs.getInt(1);
@@ -268,34 +263,30 @@ public class RewardsTable {
         }
     }
 
-//    public RewardDbModel selectReward(UUID playerUniqueID, String rewardName){
-//        synchronized (DatabaseManager.lock) {
-//            try (var conn = this.ds.getConnection()) {
-//                try (var ps = conn.prepareStatement("SELECT * FROM " + TABLE_NAME + " WHERE player = ? AND rewardName = ?")) {
-//                    ps.setString(1, playerUniqueID.toString());
-//                    ps.setString(2, rewardName);
-//                    try (var rs = ps.executeQuery()) {
-//                        if (rs.next()) {
-//                            var reward = new RewardDbModel();
-//                            reward.id = rs.getInt(1);
-//                            reward.completedTime = rs.getLong(2);
-//                            reward.playerUniqueID = UUID.fromString(rs.getString(3));
-//                            reward.rewardName = rs.getString(4);
-//                            reward.reward = deserializeReward(rs.getBinaryStream(5));
-//                            return reward;
-//                        }
-//                        return null;
-//                    }
-//                }
-//            } catch (SQLException e) {
-//                logger.error("Failed to select from {}", TABLE_NAME, e);
-//                return null;
-//            } catch (Exception e) {
-//                logger.error("Failed to deserialize reward", e);
-//                return null;
-//            }
-//        }
-//    }
+    public @Nullable Object2IntMap<String> selectRewardsCount(UUID playerUniqueID){
+        synchronized (DatabaseManager.lock) {
+            try (var conn = this.ds.getConnection()) {
+                try (var ps = conn.prepareStatement("SELECT rewardName, COUNT(rewardName) FROM " + TABLE_NAME + " WHERE player = ? GROUP BY rewardName")) {
+                    ps.setString(1, playerUniqueID.toString());
+                    try (var rs = ps.executeQuery()) {
+                        Object2IntMap<String> map = new Object2IntOpenHashMap<>();
+                        while (rs.next()) {
+                            String rewardName = rs.getString(1);
+                            int count = rs.getInt(2);
+                            map.put(rewardName, count);
+                        }
+                        return map;
+                    }
+                }
+            } catch (SQLException e) {
+                logger.error("Failed to select from {}", TABLE_NAME, e);
+                return null;
+            } catch (Exception e) {
+                logger.error("Failed to deserialize", e);
+                return null;
+            }
+        }
+    }
 
 
     // for extract byte array from ByteArrayOutputStream without copying

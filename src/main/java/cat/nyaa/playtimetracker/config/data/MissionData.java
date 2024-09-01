@@ -35,13 +35,14 @@ public class MissionData implements ISerializableExt {
     }
 
     @Override
-    public boolean validate() {
+    public boolean validate(List<String> outputError) {
         List<ISerializableExt> sortedList = new ArrayList<>(rewardList.size());
         var keys = rewardList.keySet().stream().sorted().iterator();
         while (keys.hasNext()) {
             var key = keys.next();
             var reward = rewardList.get(key);
-            if(reward == null || !reward.validate()) {
+            if(reward == null || !reward.validate(outputError)) {
+                outputError.add("Invalid reward: " + key);
                 return false;
             }
             sortedList.add(reward);

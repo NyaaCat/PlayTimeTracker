@@ -20,7 +20,7 @@ public final class TimeTrackerConnection {
 
     public TimeTrackerConnection(HikariDataSource ds, Plugin plugin) {
         this.plugin = plugin;
-        this.timeTrackerTable = new TimeTrackerTable(ds);
+        this.timeTrackerTable = new TimeTrackerTable(ds, plugin.getSLF4JLogger());
         this.timeTrackerTable.tryCreateTable(plugin);
     }
 
