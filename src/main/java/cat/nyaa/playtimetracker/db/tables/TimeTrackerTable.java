@@ -1,14 +1,14 @@
 package cat.nyaa.playtimetracker.db.tables;
 
-import cat.nyaa.nyaacore.orm.BundledSQLUtils;
 import cat.nyaa.playtimetracker.db.DatabaseManager;
 import cat.nyaa.playtimetracker.db.model.TimeTrackerDbModel;
+import cat.nyaa.playtimetracker.db.utils.DatabaseUtils;
+import cat.nyaa.playtimetracker.utils.Constants;
 import com.zaxxer.hikari.HikariDataSource;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -17,26 +17,19 @@ import java.util.UUID;
 
 public class TimeTrackerTable {
 
+    private static final Logger logger = Constants.getPluginLogger();
     public static final String TABLE_NAME = "time";
 
     private final HikariDataSource ds;
-    private final Logger logger;
 
-    public TimeTrackerTable(HikariDataSource ds, Logger logger) {
+    public TimeTrackerTable(HikariDataSource ds) {
         this.ds = ds;
-        this.logger = logger;
     }
 
     public boolean tryCreateTable(Plugin plugin) {
         synchronized (DatabaseManager.lock) {
-            try (var conn = this.ds.getConnection()) {
-                final String[] types = { "TABLE" };
-                ResultSet rs = conn.getMetaData().getTables(null, null, TABLE_NAME, types);
-                if(rs.next()){
-                    return false;
-                }
-                BundledSQLUtils.queryBundledAs(plugin, conn, "create_table_time.sql", null, null);
-                return true;
+            try {
+                return DatabaseUtils.tryCreateTable(ds, TABLE_NAME, "create_table_time.sql", plugin);
             } catch (SQLException e) {
                 logger.error("Failed to create {}", TABLE_NAME, e);
                 return false;

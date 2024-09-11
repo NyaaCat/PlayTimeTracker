@@ -1,7 +1,7 @@
 package cat.nyaa.playtimetracker;
 
 import cat.nyaa.playtimetracker.config.data.EcoRewardData;
-import cat.nyaa.playtimetracker.config.data.ISerializableExt;
+import cat.nyaa.playtimetracker.config.ISerializableExt;
 import cat.nyaa.playtimetracker.db.connection.RewardsConnection;
 import cat.nyaa.playtimetracker.db.model.RewardDbModel;
 import cat.nyaa.playtimetracker.db.tables.RewardsTable;
@@ -70,7 +70,7 @@ public class PlayerRewardManager {
         final var scheduler = this.plugin.getServer().getScheduler();
         final var logger = this.plugin.getSLF4JLogger();
         scheduler.runTaskAsynchronously(this.plugin, () -> {
-            final var rewardList = this.rewardsTable.selectRewards(player.getUniqueId(), missionName);
+            final var rewardList = this.rewardsTable.selectRewards(player.getUniqueId(), missionName, true);
             if(rewardList.isEmpty()) {
                 scheduler.runTask(this.plugin, () -> {
                     if(missionName == null) {

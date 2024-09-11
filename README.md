@@ -98,6 +98,7 @@ missions:
           min: 1.0
           max: 1024.0
           vault: $system # "$system" or player uuid  # same as /eco transfer 0.01:1:1024:$system $system %player_name%
+          sync-ref-cache-time: 12800 # make sure players completing the mission within `sync-ref-cache-time` get the same reward amount (that is, use the same reference vault value). In milliseconds.
       notify: true
     daily:
       __class__: cat.nyaa.playtimetracker.config.data.MissionData
@@ -111,6 +112,10 @@ missions:
           __class__: cat.nyaa.playtimetracker.config.data.EcoRewardData
           type: ADD
           amount: 100 # same as /eco add 100 %player%
+        reward3:
+          __class__: cat.nyaa.playtimetracker.config.data.CommandRewardData
+          pre-command: ''  # command executed immediately when the mission is completed; can be empty string
+          command: /tell %%player_name%% hello, world! # command executed when the reward is acquired
       notify: true
   ```
 
@@ -175,6 +180,27 @@ missions:
 - [Tech/WIP] PaperMC Adventure for messages instead of legacy Bukkit API
 
 
+### 0.10-alpha.3
+
+- [Fix] When use transfer type ECO Reward, if there are multiple players complete the mission at the same time, the reward amount decreases by the order of player list.
+
+- [Feature]  (As the [Fix] Above) Add configuration in `mission.yml` for transfer type ECO reward: 
+
+  `missions[].reward-list[].sync-ref-cache-time` 
+
+  to make sure players completing the mission within `sync-ref-cache-time` get the same reward amount (that is, use the same reference vault value).
+
+  The time unit is milliseconds. Default is 12800 (12.8s = 4 * 64gt). Set to zero or `-1` to disable this feature.
+
+- [Feature] Add Command Rewards. Now you can execute a command when a mission is completed and a reward is acquired.
+
+- [Feature] Add configuration in `mission.yml` for later send information of awaiting rewards when login:
+  
+  `login-check-delay-ticks`
+
+  to make it possible to show this information at the end of login information. The time unit is ticks. Default is 20 (1s).
+
+- [Tech] When distributing rewards, database will delete invalid records so that it will not occupy player's rewards list forever.
 
 ## TODO
 
@@ -185,7 +211,7 @@ missions:
 
 #### 0.10
 
-- [ ] add reward module: command
+- [x] add reward module: command
 - [ ] add reward module: item
 - [x] logging system
 - [ ] i18n: https://docs.papermc.io/paper/dev/component-api/i18n#examples

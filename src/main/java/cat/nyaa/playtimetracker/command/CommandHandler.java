@@ -7,6 +7,7 @@ import cat.nyaa.playtimetracker.*;
 import cat.nyaa.playtimetracker.command.sub.ResetCommand;
 import cat.nyaa.playtimetracker.db.model.TimeTrackerDbModel;
 import cat.nyaa.playtimetracker.utils.CommandUtils;
+import cat.nyaa.playtimetracker.utils.Constants;
 import cat.nyaa.playtimetracker.utils.TimeUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -14,12 +15,16 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
+import org.slf4j.Logger;
 
 import java.io.File;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
 public class CommandHandler extends CommandReceiver {
+
+    private static final Logger logger = Constants.getPluginLogger();
+
     private final I18n i18n;
     private final PlayTimeTracker plugin;
 
@@ -127,7 +132,7 @@ public class CommandHandler extends CommandReceiver {
                 var playerName = offlinePlayer.getName();
                 I18n.send(sender, "command.migration.insert", playerName == null ? "{" + rec_id + "}" : playerName);
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("Error while migrating player data", e);
                 sender.sendMessage(e.getLocalizedMessage());
             }
             I18n.send(sender, "command.migration.finish");
@@ -177,39 +182,12 @@ public class CommandHandler extends CommandReceiver {
             I18n.send(sender, "command.only-player-can-do");
             return;
         }
-        PlayerRewardManager missionManager = plugin.getRewardManager();
-        if (missionManager == null) {
+        PlayerRewardManager rewardManager = plugin.getRewardManager();
+        if (rewardManager == null) {
             I18n.send(sender, "command.acquire.err");
             return;
         }
-        missionManager.executeDistributeRewardsAsync(player, "all".equals(missionName) ? null : missionName);
-//        Set<String> missionNameSet = missionManager.getAwaitingMissionNameSet(player);
-//        if (missionName.equals("all")) {
-//            if (missionNameSet.isEmpty()) {
-//                I18n.send(sender, "command.acquire.empty");
-//                return;
-//            }
-//            missionNameSet.forEach(
-//                    (mission) -> {
-//                        if (missionManager.completeMission(player, mission)) {
-//                            I18n.send(sender, "command.acquire.success", mission);
-//                        } else {
-//                            I18n.send(sender, "command.acquire.failed", mission);
-//                        }
-//                    }
-//            );
-//
-//        } else {
-//            if (!missionNameSet.contains(missionName)) {
-//                I18n.send(sender, "command.acquire.not_found", missionName);
-//            } else {
-//                if (missionManager.completeMission(player, missionName)) {
-//                    I18n.send(sender, "command.acquire.success", missionName);
-//                } else {
-//                    I18n.send(sender, "command.acquire.failed", missionName);
-//                }
-//            }
-//        }
+        rewardManager.executeDistributeRewardsAsync(player, "all".equals(missionName) ? null : missionName);
     }
 
     @SubCommand(value = "reload", permission = "ptt.command.reload")

@@ -1,7 +1,6 @@
 package cat.nyaa.playtimetracker.config;
 
 import cat.nyaa.nyaacore.configuration.PluginConfigure;
-import cat.nyaa.playtimetracker.PlayTimeTracker;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.time.ZoneId;

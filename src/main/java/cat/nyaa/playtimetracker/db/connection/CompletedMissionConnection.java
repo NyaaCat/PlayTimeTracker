@@ -14,7 +14,7 @@ public class CompletedMissionConnection {
     private final CompletedMissionTable completedMissionTable;
 
     public CompletedMissionConnection(HikariDataSource ds, Plugin plugin) {
-        this.completedMissionTable = new CompletedMissionTable(ds, plugin.getSLF4JLogger());
+        this.completedMissionTable = new CompletedMissionTable(ds);
         this.completedMissionTable.tryCreateTable(plugin);
     }
 
@@ -29,14 +29,14 @@ public class CompletedMissionConnection {
     public void writeMissionCompleted(UUID playerUniqueId, String missionName, long lastCompletedTime) {
         synchronized (CompletedMissionConnection.class) {
             var rs = completedMissionTable.select(playerUniqueId, missionName);
-            if (rs.size() == 0) {
+            if (rs.isEmpty()) {
                 CompletedMissionDbModel newModel = new CompletedMissionDbModel();
                 newModel.setMissionName(missionName);
                 newModel.setLastCompletedTime(lastCompletedTime);
                 newModel.setPlayerUniqueId(playerUniqueId);
                 completedMissionTable.insert(newModel);
             } else {
-                var model = rs.get(0);
+                var model = rs.getFirst();
                 model.setLastCompletedTime(lastCompletedTime);
                 completedMissionTable.updatePlayer(model, model.getId());
             }
@@ -46,8 +46,8 @@ public class CompletedMissionConnection {
     @Nullable
     public CompletedMissionDbModel getPlayerCompletedMission(UUID playerUniqueId, String missionName) {
         var rs = completedMissionTable.select(playerUniqueId, missionName);
-        if (rs.size() > 0) {
-            return rs.get(0);
+        if (!rs.isEmpty()) {
+            return rs.getFirst();
         }
         return null;
     }

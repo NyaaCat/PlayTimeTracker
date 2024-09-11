@@ -7,6 +7,7 @@ import cat.nyaa.playtimetracker.db.DatabaseManager;
 import cat.nyaa.playtimetracker.listener.ListenerManager;
 import cat.nyaa.playtimetracker.reward.IEconomyCoreProvider;
 import cat.nyaa.playtimetracker.task.PTTTaskManager;
+import cat.nyaa.playtimetracker.utils.Constants;
 import cat.nyaa.playtimetracker.utils.PlaceholderAPIUtils;
 import net.ess3.api.IEssentials;
 import org.bukkit.command.PluginCommand;
@@ -53,6 +54,9 @@ public final class PlayTimeTracker extends JavaPlugin implements IEconomyCorePro
 
     @Override
     public void onEnable() {
+
+        Constants.init(this);
+
         instance = this;
         this.pttConfiguration = new PTTConfiguration(this);
         pttConfiguration.load();

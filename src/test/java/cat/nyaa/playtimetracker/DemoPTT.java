@@ -29,6 +29,11 @@ public class DemoPTT extends MockPlugin implements IEconomyCoreProvider {
 
         public double systemBalance = SYSTEM_BALANCE;
 
+        public void init() {
+            balances.clear();
+            systemBalance = SYSTEM_BALANCE;
+        }
+
         @Override
         public TransactionResult playerTransfer(UUID uuid, UUID uuid1, double v) {
             throw new UnsupportedOperationException();

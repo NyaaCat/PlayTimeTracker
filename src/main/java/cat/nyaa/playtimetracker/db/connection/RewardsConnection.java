@@ -10,7 +10,7 @@ public class RewardsConnection {
     
     public RewardsConnection(HikariDataSource ds, Plugin plugin) {
         this.plugin = plugin;
-        this.rewardsTable = new RewardsTable(ds, plugin.getSLF4JLogger());
+        this.rewardsTable = new RewardsTable(ds);
         this.rewardsTable.tryCreateTable(plugin);
     }
 

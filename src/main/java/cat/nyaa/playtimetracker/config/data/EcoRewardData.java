@@ -1,6 +1,6 @@
 package cat.nyaa.playtimetracker.config.data;
 
-import cat.nyaa.nyaacore.configuration.ISerializable;
+import cat.nyaa.playtimetracker.config.ISerializableExt;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -24,6 +24,8 @@ public class EcoRewardData implements ISerializableExt {
     public String vault = SYSTEM_VAULT;
     @Serializable
     public double amount = 0.0;
+    @Serializable(name = "sync-ref-cache-time")
+    public long syncRefCacheTime = 256 * 50; // sync ref vault by cache its value, keeps $value milliseconds; default set to 4 * 64 gt
 
     private @Nullable UUID refVaultUUID = null;
     private @Nullable UUID vaultUUID = null;

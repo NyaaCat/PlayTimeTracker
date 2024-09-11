@@ -10,7 +10,7 @@ val paperApiName = "1.21.1-R0.1-SNAPSHOT"
 
 // Version used for distribution. Different from maven repo
 group = "cat.nyaa"
-version = "0.10-alpha.2"
+version = "0.10-alpha.3"
 
 java {
     // Configure the java toolchain. This allows gradle to auto-provision JDK 21 on systems that only have JDK 8 installed for example.
