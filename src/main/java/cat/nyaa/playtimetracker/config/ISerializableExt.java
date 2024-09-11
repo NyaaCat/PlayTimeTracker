@@ -1,4 +1,4 @@
-package cat.nyaa.playtimetracker.config.data;
+package cat.nyaa.playtimetracker.config;
 
 import cat.nyaa.nyaacore.configuration.ISerializable;
 
