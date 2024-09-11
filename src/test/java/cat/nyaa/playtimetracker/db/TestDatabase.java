@@ -3,6 +3,7 @@ package cat.nyaa.playtimetracker.db;
 import be.seeseemelk.mockbukkit.MockPlugin;
 import be.seeseemelk.mockbukkit.ServerMock;
 import be.seeseemelk.mockbukkit.MockBukkit;
+import cat.nyaa.playtimetracker.DemoInvalidReward;
 import cat.nyaa.playtimetracker.db.model.CompletedMissionDbModel;
 import cat.nyaa.playtimetracker.db.model.RewardDbModel;
 import cat.nyaa.playtimetracker.db.model.TimeTrackerDbModel;
@@ -60,7 +61,7 @@ public class TestDatabase {
 
     @Test
     public void testRewardsTable() {
-        RewardsTable rewardsTable = new RewardsTable(ds, logger);
+        RewardsTable rewardsTable = new RewardsTable(ds);
         rewardsTable.tryCreateTable(plugin);
 
         server.setPlayers(3);
@@ -88,11 +89,11 @@ public class TestDatabase {
         rewardsTable.insertReward(model3);
 
         // test query
-        var listP1 = rewardsTable.selectRewards(player1.getUniqueId(), null);
+        var listP1 = rewardsTable.selectRewards(player1.getUniqueId(), null, false);
         var listP1c = rewardsTable.selectRewardsCount(player1.getUniqueId());
         Assertions.assertEquals(2, listP1c.values().intStream().sum());
 
-        var listP2 = rewardsTable.selectRewards(player2.getUniqueId(), rewardName1);
+        var listP2 = rewardsTable.selectRewards(player2.getUniqueId(), rewardName1, false);
         var listP2c = rewardsTable.selectRewardsCount(player2.getUniqueId(), rewardName1);
         Assertions.assertEquals(1, listP2.size());
         Assertions.assertEquals(1, listP2c);
@@ -113,9 +114,50 @@ public class TestDatabase {
     }
 
     @Test
+    void testRewardTableFallback() {
+        RewardsTable rewardsTable = new RewardsTable(ds);
+        rewardsTable.tryCreateTable(plugin);
+
+        server.setPlayers(3);
+
+        Player player1 = server.getPlayer(0);
+        String rewardName1 = "reward1";
+        DemoReward reward1 = new DemoReward();
+        long completedTime1 = System.currentTimeMillis();
+        reward1.prepare(rewardName1, completedTime1, player1, plugin);
+        RewardDbModel model1 = new RewardDbModel(0, completedTime1, player1.getUniqueId(), rewardName1, reward1);
+        rewardsTable.insertReward(model1);
+
+        String rewardName2 = "reward2";
+        DemoInvalidReward reward2 = new DemoInvalidReward(true, false);
+        long completedTime2 = completedTime1 + 1000;
+        reward2.prepare(rewardName2, completedTime2, player1, plugin);
+        RewardDbModel model2 = new RewardDbModel(0, completedTime2, player1.getUniqueId(), rewardName2, reward2);
+        rewardsTable.insertReward(model2);
+
+        Player player2 = server.getPlayer(1);
+        DemoInvalidReward reward3 = new DemoInvalidReward(true, false);
+        long completedTime3 = completedTime2 + 1000;
+        reward3.prepare(rewardName1, completedTime3, player2, plugin);
+        RewardDbModel model3 = new RewardDbModel(0, completedTime3, player2.getUniqueId(), rewardName1, reward3);
+        rewardsTable.insertReward(model3);
+
+        // test query
+        var listP1 = rewardsTable.selectRewards(player1.getUniqueId(), null, false);
+        var listP1c = rewardsTable.selectRewardsCount(player1.getUniqueId());
+        Assertions.assertEquals(1, listP1.size());
+        Assertions.assertEquals(2, listP1c.values().intStream().sum());
+
+        listP1 = rewardsTable.selectRewards(player1.getUniqueId(), null, true);
+        listP1c = rewardsTable.selectRewardsCount(player1.getUniqueId());
+        Assertions.assertEquals(1, listP1.size());
+        Assertions.assertEquals(1, listP1c.values().intStream().sum());
+    }
+
+    @Test
     void testCompletedMissionTable() {
 
-        CompletedMissionTable completedMissionTable = new CompletedMissionTable(ds, logger);
+        CompletedMissionTable completedMissionTable = new CompletedMissionTable(ds);
         completedMissionTable.tryCreateTable(plugin);
 
         server.setPlayers(3);
@@ -168,7 +210,7 @@ public class TestDatabase {
 
     @Test
     void testTimeTrackerTable() {
-        TimeTrackerTable timeTrackerTable = new TimeTrackerTable(ds, logger);
+        TimeTrackerTable timeTrackerTable = new TimeTrackerTable(ds);
         timeTrackerTable.tryCreateTable(plugin);
 
         server.setPlayers(3);

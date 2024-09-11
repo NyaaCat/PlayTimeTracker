@@ -2,7 +2,6 @@ package cat.nyaa.playtimetracker.config;
 
 import cat.nyaa.nyaacore.configuration.FileConfigure;
 import cat.nyaa.nyaacore.orm.backends.BackendConfig;
-import cat.nyaa.playtimetracker.PlayTimeTracker;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class DatabaseConfig extends FileConfigure {

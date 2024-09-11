@@ -4,6 +4,8 @@ import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
@@ -47,4 +49,19 @@ public interface IReward {
      * @throws Exception if any error occurs
      */
     void deserialize(InputStream inputStream) throws Exception;
+
+
+    static DataOutputStream fromOutputStream(OutputStream outputStream) {
+        if(outputStream instanceof DataOutputStream dataOutputStream) {
+            return dataOutputStream;
+        }
+        return new DataOutputStream(outputStream);
+    }
+
+    static DataInputStream fromInputStream(InputStream inputStream) {
+        if(inputStream instanceof DataInputStream dataInputStream) {
+            return dataInputStream;
+        }
+        return new DataInputStream(inputStream);
+    }
 }

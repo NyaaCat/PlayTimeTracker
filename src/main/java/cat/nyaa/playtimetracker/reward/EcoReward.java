@@ -3,6 +3,8 @@ package cat.nyaa.playtimetracker.reward;
 import cat.nyaa.ecore.EconomyCore;
 import cat.nyaa.playtimetracker.I18n;
 import cat.nyaa.playtimetracker.config.data.EcoRewardData;
+import cat.nyaa.playtimetracker.utils.Constants;
+import it.unimi.dsi.fastutil.longs.LongDoubleMutablePair;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
@@ -10,18 +12,50 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public class EcoReward implements IReward {
 
-    private static final Logger logger = LoggerFactory.getLogger(EcoReward.class);
+    private static final Logger logger = Constants.getPluginLogger();
+
+    private static LongDoubleMutablePair cachedSystemBalance = new LongDoubleMutablePair(0L, 0.0);
+    private static Map<UUID, LongDoubleMutablePair> cachedPlayerBalances = new HashMap<>();
+
+    static double getBalance(@Nullable UUID uuid, long timestamp, long cacheKeep, EconomyCore ecore) {
+        if(uuid == null) {
+            if(cacheKeep <= 0) {
+                return ecore.getSystemBalance();
+            }
+            if(timestamp - cachedSystemBalance.leftLong() > cacheKeep) {
+                double balance = ecore.getSystemBalance();
+                cachedSystemBalance.right(balance);
+                cachedSystemBalance.left(timestamp);
+                return balance;
+            }
+            return cachedSystemBalance.rightDouble();
+        } else {
+            if(cacheKeep <= 0) {
+                return ecore.getPlayerBalance(uuid);
+            }
+            LongDoubleMutablePair pair = cachedPlayerBalances.compute(uuid, (k, v) -> {
+               if(v == null || timestamp - v.leftLong() > cacheKeep) {
+                   double balance = ecore.getPlayerBalance(uuid);
+                   return new LongDoubleMutablePair(timestamp, balance);
+               } else {
+                   return v;
+               }
+            });
+            return pair.rightDouble();
+        }
+    }
 
     private final @Nullable EcoRewardData cfg;
 
@@ -52,12 +86,7 @@ public class EcoReward implements IReward {
         try {
             switch (cfg.type) {
                 case TRANSFER -> {
-                    double balance = 0.0;
-                    if(cfg.isRefVaultSystemVault()) {
-                        balance = ecore.getSystemBalance();
-                    } else {
-                        balance = ecore.getPlayerBalance(cfg.getRefVaultAsUUID());
-                    }
+                    double balance = getBalance(cfg.isRefVaultSystemVault() ? null : cfg.getRefVaultAsUUID(), completedTime, cfg.syncRefCacheTime, ecore);
                     double expect = balance * cfg.ratio;
                     amount = Math.max(Math.min(cfg.max, expect), cfg.min);
                     boolean success = false;
@@ -130,7 +159,7 @@ public class EcoReward implements IReward {
         if(amount == null) {
             throw new IllegalStateException("prepare() must be called before serialize()");
         }
-        DataOutputStream dos = new DataOutputStream(outputStream);
+        DataOutputStream dos = IReward.fromOutputStream(outputStream);
         dos.writeDouble(amount);
         dos.writeInt(rollbackFlag);
         if(rollbackFlag == 2 && rollbackPlayerUUID != null) {
@@ -141,7 +170,7 @@ public class EcoReward implements IReward {
 
     @Override
     public void deserialize(InputStream inputStream) throws Exception {
-        DataInputStream dis = new DataInputStream(inputStream);
+        DataInputStream dis = IReward.fromInputStream(inputStream);
         amount = dis.readDouble();
         rollbackFlag = dis.readInt();
         rollbackPlayerUUID = null;
@@ -152,7 +181,7 @@ public class EcoReward implements IReward {
         }
     }
 
-    public Double getAmount() {
+    public @Nullable Double getAmount() {
         return amount;
     }
 }

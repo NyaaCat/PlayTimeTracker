@@ -1,22 +1,23 @@
 package cat.nyaa.playtimetracker.reward;
 
 import be.seeseemelk.mockbukkit.MockBukkit;
-import be.seeseemelk.mockbukkit.MockPlugin;
 import be.seeseemelk.mockbukkit.ServerMock;
 import cat.nyaa.playtimetracker.DemoPTT;
 import cat.nyaa.playtimetracker.config.data.EcoRewardData;
+import it.unimi.dsi.fastutil.doubles.DoubleObjectImmutablePair;
+import it.unimi.dsi.fastutil.doubles.DoubleObjectPair;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginDescriptionFile;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.function.DoubleSupplier;
 
 public class TestRewardOperate {
 
@@ -37,83 +38,148 @@ public class TestRewardOperate {
         MockBukkit.unmock();
     }
 
+    void testEcoRewardTransferInner(EcoRewardData cfg, long dt, List<DoubleObjectPair<Boolean>> results, List<Player> players) {
+        var logger = plugin.getSLF4JLogger();
+
+        var playerNum = results.size();
+        List<String> outputError = new ObjectArrayList<>();
+        Assertions.assertTrue(cfg.validate(outputError));
+
+        DoubleSupplier getSrcVault = null;
+        if(cfg.isRefVaultSystemVault()) {
+            getSrcVault = () -> plugin.getEconomyCore().getSystemBalance();
+        } else {
+            final var srcVault = cfg.getVaultAsUUID();
+            getSrcVault = () -> plugin.getEconomyCore().getPlayerBalance(srcVault);
+        }
+
+        List<EcoReward> ecoRewards = new ArrayList<>();
+
+        long completedTime = System.currentTimeMillis();
+        final double original = getSrcVault.getAsDouble();
+        double acc = 0;
+        for(int i = 0; i < playerNum; i++, completedTime += dt) {
+            Player player = players.get(i);
+            EcoReward ecoReward = new EcoReward(cfg);
+            Assertions.assertTrue(ecoReward.prepare("reward1", completedTime, player, plugin));
+            double result = results.get(i).leftDouble();
+            acc += result;
+            Assertions.assertEquals(result, ecoReward.getAmount());
+            Assertions.assertEquals(original - acc, getSrcVault.getAsDouble());
+            ecoRewards.add(ecoReward);
+            logger.info("player {} ecoReward: {}", i, ecoReward.getAmount());
+        }
+
+        for(int i = 0; i < playerNum; i++) {
+            Player player = players.get(i);
+            EcoReward ecoReward = ecoRewards.get(i);
+            var result = results.get(i);
+            Assertions.assertEquals(result.right(), ecoReward.distribute(player, plugin, outputMessages));
+            var balance = plugin.getEconomyCore().getPlayerBalance(player.getUniqueId());
+            Assertions.assertEquals(result.right() ? result.leftDouble() : 0, balance);
+
+            if(!result.right()) {
+                acc -= result.leftDouble();
+            }
+            Assertions.assertEquals(original - acc, getSrcVault.getAsDouble());
+            logger.info("player {} balance: {}", i, balance);
+        }
+    }
+
     @Test
     void testEcoReward1() {
-        server.setPlayers(2);
-        List<String> outputError = new ObjectArrayList<>();
+        server.setPlayers(4);
+        List<Player> players = server.getOnlinePlayers().stream().map((playerMock -> (Player)playerMock)).toList();
+
+        ((DemoPTT.FakeEcore)plugin.getEconomyCore()).init();
+
         EcoRewardData ecoRewardData = new EcoRewardData();
         ecoRewardData.min = 10;
         ecoRewardData.max = 500;
         ecoRewardData.ratio = 0.1;
-        Assertions.assertTrue(ecoRewardData.validate(outputError));
+        List<DoubleObjectPair<Boolean>> results = List.of(
+                DoubleObjectImmutablePair.of(500, true)
+        );
 
-        EcoReward ecoReward = new EcoReward(ecoRewardData);
+        testEcoRewardTransferInner(ecoRewardData, 0, results, players);
 
-        Player player = server.getPlayer(0);
-        long completedTime = System.currentTimeMillis();
+        ((DemoPTT.FakeEcore)plugin.getEconomyCore()).init();
 
-        Assertions.assertTrue(ecoReward.prepare("reward1", completedTime, player, plugin));
+        ecoRewardData = new EcoRewardData();
+        ecoRewardData.min = 10;
+        ecoRewardData.max = 2000; // will fail in distribute
+        ecoRewardData.ratio = 0.15;
+        results = List.of(
+                DoubleObjectImmutablePair.of(1500, false)
+        );
 
-        Assertions.assertEquals(500, ecoReward.getAmount());
-        Assertions.assertEquals(DemoPTT.FakeEcore.SYSTEM_BALANCE - 500, plugin.getEconomyCore().getSystemBalance());
+        testEcoRewardTransferInner(ecoRewardData, 0, results, players);
 
-        Assertions.assertTrue(ecoReward.distribute(player, plugin, outputMessages));
-        Assertions.assertEquals(500, plugin.getEconomyCore().getPlayerBalance(player.getUniqueId()));
+        Player playerSrc = players.get(2);
+        Player playerRef = players.get(3);
+
+        ((DemoPTT.FakeEcore)plugin.getEconomyCore()).init();
+        plugin.getEconomyCore().setPlayerBalance(playerSrc.getUniqueId(), 100);
+        plugin.getEconomyCore().setPlayerBalance(playerRef.getUniqueId(), 200);
+
+        ecoRewardData = new EcoRewardData();
+        ecoRewardData.min = 10;
+        ecoRewardData.max = 500;
+        ecoRewardData.ratio = 0.1;
+        ecoRewardData.vault = playerSrc.getUniqueId().toString();
+        ecoRewardData.refVault = playerRef.getUniqueId().toString();
+        results = List.of(
+                DoubleObjectImmutablePair.of(20, true)
+        );
+        testEcoRewardTransferInner(ecoRewardData, 0, results, players);
     }
 
     @Test
     void testEcoReward2() {
-        server.setPlayers(2);
-        List<String> outputError = new ObjectArrayList<>();
-        EcoRewardData ecoRewardData = new EcoRewardData();
-        ecoRewardData.min = 10;
-        ecoRewardData.max = 2000;
-        ecoRewardData.ratio = 0.15;
-        Assertions.assertTrue(ecoRewardData.validate(outputError));
 
-        EcoReward ecoReward = new EcoReward(ecoRewardData);
+        server.setPlayers(4);
+        List<Player> players = server.getOnlinePlayers().stream().map((playerMock -> (Player)playerMock)).toList();
 
-        Player player = server.getPlayer(0);
-        long completedTime = System.currentTimeMillis();
+        ((DemoPTT.FakeEcore)plugin.getEconomyCore()).init();
 
-        Assertions.assertTrue(ecoReward.prepare("reward1", completedTime, player, plugin));
-
-        Assertions.assertEquals(1500, ecoReward.getAmount());
-        Assertions.assertEquals(DemoPTT.FakeEcore.SYSTEM_BALANCE - 1500, plugin.getEconomyCore().getSystemBalance());
-
-        Assertions.assertFalse(ecoReward.distribute(player, plugin, outputMessages));
-        Assertions.assertEquals(DemoPTT.FakeEcore.SYSTEM_BALANCE, plugin.getEconomyCore().getSystemBalance());
-    }
-
-    @Test
-    void testEcoReward3() {
-        server.setPlayers(3);
-
-        Player player0 = server.getPlayer(1);
-        Player player1 = server.getPlayer(2);
-        plugin.getEconomyCore().setPlayerBalance(player0.getUniqueId(), 100);
-        plugin.getEconomyCore().setPlayerBalance(player1.getUniqueId(), 200);
-        List<String> outputError = new ObjectArrayList<>();
         EcoRewardData ecoRewardData = new EcoRewardData();
         ecoRewardData.min = 10;
         ecoRewardData.max = 500;
-        ecoRewardData.ratio = 0.1;
-        ecoRewardData.vault = player0.getUniqueId().toString();
-        ecoRewardData.refVault = player1.getUniqueId().toString();
-        Assertions.assertTrue(ecoRewardData.validate(outputError));
+        ecoRewardData.ratio = 0.01;
+        List<DoubleObjectPair<Boolean>> results = List.of(
+                DoubleObjectImmutablePair.of(100, true),
+                DoubleObjectImmutablePair.of(100, true),
+                DoubleObjectImmutablePair.of(100, true)
+        );
 
-        EcoReward ecoReward = new EcoReward(ecoRewardData);
+        testEcoRewardTransferInner(ecoRewardData, 5, results, players);
 
-        Player player = server.getPlayer(0);
-        long completedTime = System.currentTimeMillis();
 
-        Assertions.assertTrue(ecoReward.prepare("reward1", completedTime, player, plugin));
+        ((DemoPTT.FakeEcore)plugin.getEconomyCore()).init();
+        ecoRewardData = new EcoRewardData();
+        ecoRewardData.min = 10;
+        ecoRewardData.max = 500;
+        ecoRewardData.ratio = 0.01;
+        ecoRewardData.syncRefCacheTime = 0;
+        results = List.of(
+                DoubleObjectImmutablePair.of(100, true),
+                DoubleObjectImmutablePair.of(99, true),
+                DoubleObjectImmutablePair.of(98.01, true)
+        );
+        testEcoRewardTransferInner(ecoRewardData, 5, results, players);
 
-        Assertions.assertEquals(20, ecoReward.getAmount());
-        Assertions.assertEquals(100 - 20, plugin.getEconomyCore().getPlayerBalance(player0.getUniqueId()));
-
-        Assertions.assertTrue(ecoReward.distribute(player, plugin, outputMessages));
-        Assertions.assertEquals(20, plugin.getEconomyCore().getPlayerBalance(player.getUniqueId()));
+        ((DemoPTT.FakeEcore)plugin.getEconomyCore()).init();
+        ecoRewardData = new EcoRewardData();
+        ecoRewardData.min = 10;
+        ecoRewardData.max = 500;
+        ecoRewardData.ratio = 0.01;
+        ecoRewardData.syncRefCacheTime = 1000;
+        results = List.of(
+                DoubleObjectImmutablePair.of(100, true),
+                DoubleObjectImmutablePair.of(100, true),
+                DoubleObjectImmutablePair.of(98, true)
+        );
+        testEcoRewardTransferInner(ecoRewardData, 800, results, players);
     }
 
     @Test

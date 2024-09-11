@@ -42,18 +42,27 @@ public class PTTListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerJoin(PlayerJoinEvent event) {
-        if (PlayTimeTracker.getInstance() != null) {
-            if (PlayTimeTracker.getInstance().getMissionManager() != null) {
-                PlayTimeTracker.getInstance().getMissionManager().checkPlayerMission(event.getPlayer());
+        var plugin = PlayTimeTracker.getInstance();
+        if (plugin != null) {
+            var missionManager = plugin.getMissionManager();
+            if (missionManager != null) {
+                missionManager.checkPlayerMission(event.getPlayer());
             }
-            if (PlayTimeTracker.getInstance().getTimeRecordManager() != null) {
-                PlayTimeTracker.getInstance().getTimeRecordManager().addPlayer(event.getPlayer());
+            var timeRecordManager = plugin.getTimeRecordManager();
+            if (timeRecordManager != null) {
+                timeRecordManager.addPlayer(event.getPlayer());
             }
-            if (PlayTimeTracker.getInstance().getAfkManager() != null) {
-                PlayTimeTracker.getInstance().getAfkManager().addPlayer(event.getPlayer());
+            var afkManager = plugin.getAfkManager();
+            if (afkManager != null) {
+                afkManager.addPlayer(event.getPlayer());
             }
-            if(PlayTimeTracker.getInstance().getRewardManager() != null){
-                PlayTimeTracker.getInstance().getRewardManager().executeRewardsAutoCheckAsync(event.getPlayer(), 10);
+            var rewardManager = plugin.getRewardManager();
+            if(rewardManager != null){
+                int delay = 10;
+                if(missionManager != null){
+                    delay = missionManager.getMissionConfig().loginCheckDelayTicks;
+                }
+                rewardManager.executeRewardsAutoCheckAsync(event.getPlayer(), delay);
             }
         }
     }

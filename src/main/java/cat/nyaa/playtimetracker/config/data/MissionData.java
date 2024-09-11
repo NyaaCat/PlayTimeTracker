@@ -1,14 +1,12 @@
 package cat.nyaa.playtimetracker.config.data;
 
-import cat.nyaa.nyaacore.configuration.ISerializable;
-import cat.nyaa.nyaacore.utils.ItemStackUtils;
-import org.bukkit.Material;
-import org.bukkit.inventory.ItemStack;
+import cat.nyaa.playtimetracker.config.ISerializableExt;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 public class MissionData implements ISerializableExt {
+
     @Serializable
     public List<String> group = new ArrayList<>();
     @Serializable
@@ -27,6 +25,7 @@ public class MissionData implements ISerializableExt {
 
     {
         rewardList.put("reward1", new EcoRewardData());
+        rewardList.put("reward2", new CommandRewardData());
     }
 
     private @Nullable List<ISerializableExt> sortedRewardList = null;

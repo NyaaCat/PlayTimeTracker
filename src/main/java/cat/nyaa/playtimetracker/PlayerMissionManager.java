@@ -1,5 +1,6 @@
 package cat.nyaa.playtimetracker;
 
+import cat.nyaa.playtimetracker.config.MissionConfig;
 import cat.nyaa.playtimetracker.config.PTTConfiguration;
 import cat.nyaa.playtimetracker.config.data.MissionData;
 import cat.nyaa.playtimetracker.db.connection.CompletedMissionConnection;
@@ -53,83 +54,6 @@ public class PlayerMissionManager {
     public PlayTimeTracker getPlugin() {
         return plugin;
     }
-
-//    public void getMissionReward(Player player, String mission) {
-//        Map<String, MissionData> missionDataMap = getMissionDataMap();
-//        if (!missionDataMap.containsKey(mission)) return;
-//        I18n.send(player, "message.mission.get_reward", mission);
-//        MissionData missionData = missionDataMap.get(mission);
-//        //item
-//
-//        if (missionData.rewardItemBase64List != null && !missionData.rewardItemBase64List.isEmpty()) {
-//            List<ItemStack> items = new ArrayList<>();
-//            missionData.rewardItemBase64List.forEach(s -> {
-//                try {
-//                    if (s != null && !s.isEmpty())
-//                        items.addAll(ItemStackUtils.itemsFromBase64(s));
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                }
-//            });
-//            for (ItemStack item : items) {
-//                if (item == null || item.getType().isAir()) continue;
-//                if (InventoryUtils.hasEnoughSpace(player.getInventory(), item)) {
-//                    InventoryUtils.addItem(player, item);
-//                } else {
-//                    player.getWorld().dropItem(player.getLocation(), item);
-//                }
-//            }
-//        }
-//
-//        //command
-//        if (missionData.rewardCommandList != null)
-//            for (String command : missionData.rewardCommandList) {
-//                if (command != null && !command.isEmpty()) {
-//                    try {
-//                        Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), PlaceholderAPIUtils.setPlaceholders(player, command));
-//                    } catch (Exception e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-//            }
-//    }
-
-//    public boolean completeMission(@NotNull Player player, String mission) {
-//        if (completeMissionNoReward(player.getUniqueId(), mission)) {
-//            getMissionReward(player, mission);
-//            return true;
-//        }
-//        return false;
-//    }
-
-//    public boolean completeMissionNoReward(UUID playerId, String mission) {
-//        boolean write2db = removeAwaitingReward(playerId, mission);
-//
-//        if (write2db) {
-//            completedMissionConnection.WriteMissionCompleted(playerId, mission, TimeUtils.getUnixTimeStampNow());
-//        }
-//        return write2db;
-//    }
-
-//    public Map<String, MissionData> getMissionDataMap() {
-//        Map<String, MissionData> missionDataMap = new HashMap<>();
-//        getMissionDataList().forEach(missionData -> missionDataMap.put(missionData.missionName, missionData));
-//        return missionDataMap;
-//    }
-
-//    public void checkAwaitingRewardList() {
-//        Map<String, MissionData> missionDataMap = getMissionDataMap();
-//        new ArrayList<>(awaitingRewardList).forEach(
-//                awaitingReward -> {
-//                    if (!missionDataMap.containsKey(awaitingReward.mission)) return;
-//                    if (missionDataMap.get(awaitingReward.mission).timeoutMS < 0) return;
-//                    if ((TimeUtils.getUnixTimeStampNow() - awaitingReward.time) >= missionDataMap.get(awaitingReward.mission).timeoutMS) {
-//                        completeMissionNoReward(awaitingReward.playerId, awaitingReward.mission);
-//                    }
-//                }
-//        );
-//    }
-
 
     public void checkPlayerMission(@NotNull Player player) {
         if (!player.isOnline()) return;
@@ -198,69 +122,9 @@ public class PlayerMissionManager {
         );
     }
 
-//    public Set<String> getAwaitingMissionNameSet(Player player) {
-//        return awaitingRewardList.stream()
-//                .filter(awaitingReward -> awaitingReward.playerId == player.getUniqueId())
-//                .map(awaitingReward -> awaitingReward.mission).collect(Collectors.toSet());
-//    }
-
-//    @Nullable
-//    private AwaitingReward getAwaitingReward(Player player, String missionName) {
-//        for (AwaitingReward awaitingReward : awaitingRewardList) {
-//            if (awaitingReward.playerId == player.getUniqueId() && awaitingReward.mission.equals(missionName)) {
-//                return awaitingReward;
-//            }
-//        }
-//        return null;
-//    }
-
-//    private boolean removeAwaitingReward(UUID playerId, String missionName) {
-//        AtomicBoolean result = new AtomicBoolean(false);
-//        awaitingRewardList.removeIf(awaitingReward -> {
-//                    if (awaitingReward.playerId == playerId
-//                            && awaitingReward.mission.equals(missionName)) {
-//                        result.set(true);
-//                        return true;
-//                    }
-//                    return false;
-//                }
-//        );
-//        return result.get();
-//    }
-
-//    public static IReward createReward(ISerializableExt data) {
-//        if(data instanceof EcoRewardData ecoRewardData) {
-//            return new EcoReward(ecoRewardData);
-//        }
-//        return null;
-//    }
-
-//    private void putAwaitingReward(@NotNull Player player, String missionName, List<ISerializableExt> rewardDataList, boolean notify) {
-//        // TODO
-//        //removeAwaitingReward(player.getUniqueId(), missionName);
-//        // TODO
-//        //awaitingRewardList.add(new AwaitingReward(player.getUniqueId(), missionName, TimeUtils.getUnixTimeStampNow(), notify));
-//        // TODO: Add to completed mission
-//        final long timestamp = TimeUtils.getUnixTimeStampNow();
-//        // TODO: async & cache (completedMissionConnection should run in one thread; another in checkPlayerMission)
-//        this.completedMissionConnection.writeMissionCompleted(player.getUniqueId(), missionName, timestamp);
-//
-//        List<IReward> rewardList = new ArrayList<>(rewardDataList.size());
-//        for (ISerializableExt rewardData : rewardDataList) {
-//            IReward reward = createReward(rewardData);
-//            if(reward != null) {
-//                if(reward.prepare(missionName, timestamp, player, this.plugin)) {
-//                    rewardList.add(reward);
-//                } else {
-//                    this.plugin.getSLF4JLogger().error("Failed to prepare reward {} for {} {}", reward.getClass(), player.getUniqueId(), missionName);
-//                }
-//            } else {
-//                this.plugin.getSLF4JLogger().error("Unknown reward data type {} for {} {}", rewardData.getClass(), player.getUniqueId(), missionName);
-//            }
-//        }
-//
-//        this.playerRewardManager.putPlayerRewardAsync(player, missionName, timestamp, rewardList, notify ? this.notifyAcquire : null);
-//    }
+    public MissionConfig getMissionConfig() {
+        return pttConfiguration.missionConfig;
+    }
 
     public Map<String, MissionData> getMissionDataMap() {
         return pttConfiguration.missionConfig.missions;
@@ -273,136 +137,6 @@ public class PlayerMissionManager {
                 TaskUtils.mod64TickToRun(this.tickNum, player.getUniqueId(), () -> checkPlayerMission(player))
         );
     }
-
-//    public void notifyAcquire(Player player, String mission) {
-//        if(!player.isOnline()) return;
-//        String command = PlaceholderAPIUtils.setPlaceholders(player, I18n.format("message.mission.notify.command", mission));
-//        String msg = PlaceholderAPIUtils.setPlaceholders(player, I18n.format("message.mission.notify.msg", mission));
-//        BaseComponent[] commandComponent = new ComponentBuilder()
-//                .append(msg)
-//                .append(command)
-//                .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, command))
-//                .create();
-//        player.spigot().sendMessage(new TextComponent(commandComponent));
-//    }
-
-//    public void notifyAcquire() {
-//        // TODO
-//        awaitingRewardList.forEach(awaitingReward -> {
-//            if (awaitingReward.isNotify) {
-//                Player player = Bukkit.getPlayer(awaitingReward.playerId);
-//                if (player != null) {
-//                    String command = PlaceholderAPIUtils.setPlaceholders(player, I18n.format("message.mission.notify.command", awaitingReward.mission));
-//                    String msg = PlaceholderAPIUtils.setPlaceholders(player, I18n.format("message.mission.notify.msg", awaitingReward.mission));
-//                    BaseComponent[] commandComponent = new ComponentBuilder()
-//                            .append(msg)
-//                            .append(command)
-//                            .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, command))
-//                            .create();
-//                    player.spigot().sendMessage(new TextComponent(commandComponent));
-//                }
-//            }
-//        });
-//    }
-
-//    public void executeAcquire(Player player, String mission) {
-//        final UUID playerId = player.getUniqueId();
-//        final String oldMission = playerAcquiringRewards.putIfAbsent(playerId, mission);
-//        if(oldMission != null) {
-//            // database in operate; lock
-//            I18n.send(player, "command.acquire.err");
-//            return;
-//        }
-//        final var scheduler = plugin.getServer().getScheduler();
-//        final String finalMission = "all".equals(mission) ? null : mission;
-//        scheduler.runTaskAsynchronously(this.plugin, () -> {
-//            final var rewardList = this.rewardsConnection.getRewardsTable().selectRewards(playerId, finalMission);
-//            if(rewardList.isEmpty()) {
-//                scheduler.runTask(this.plugin, () -> {
-//                    I18n.send(player, "command.acquire.empty", mission);
-//                    this.playerAcquiringRewards.remove(playerId);
-//                });
-//            } else {
-//                this.plugin.getSLF4JLogger().info("Player {} is acquiring {} rewards", playerId, rewardList.size());
-//                scheduler.runTask(this.plugin, () -> {
-//                    IntArrayList rewardIdList = new IntArrayList(rewardList.size());
-//                    ObjectArrayList<Component> outputMessages = new ObjectArrayList<>(16);
-//                    for (RewardDbModel reward : rewardList) {
-//                        Boolean distributeRet = reward.getReward().distribute(player, this.plugin, outputMessages);
-//                        if(distributeRet == null) {
-//                            this.plugin.getSLF4JLogger().warn("Player {} blocked acquire reward {}", playerId, reward.getId());
-//                            break;
-//                        } else {
-//                            if (distributeRet) {
-//                                rewardIdList.add(reward.getId());
-//                                I18n.send(player, "command.acquire.success", reward.getRewardName());
-//                            } else {
-//                                I18n.send(player, "command.acquire.failed", reward.getRewardName());
-//                            }
-//                        }
-//                        outputMessages.clear();
-//                    }
-//                    if(!rewardIdList.isEmpty()) {
-//                        scheduler.runTaskAsynchronously(this.plugin, () -> {
-//                            this.rewardsConnection.getRewardsTable().deleteRewardBatch(rewardIdList);
-//                            this.playerAcquiringRewards.remove(playerId);
-//                            this.plugin.getSLF4JLogger().info("Player {} has acquired {} rewards", playerId, rewardIdList.size());
-//                        });
-//                    }
-//                });
-//            }
-//        });
-//    }
-
-//    public void showPlayerRewards(Player player, @Nullable String mission, boolean notifyAcquire) {
-//        final UUID playerId = player.getUniqueId();
-//        final var scheduler = plugin.getServer().getScheduler();
-//        final String finalMission = "all".equals(mission) ? null : mission;
-//        scheduler.runTaskAsynchronously(this.plugin, () -> {
-//            final var rewardListCount = this.rewardsConnection.getRewardsTable().selectRewardsCount(playerId, finalMission);
-//            scheduler.runTaskLater(this.plugin, () -> {
-//                if(rewardListCount == 0) {
-//                    if(notifyAcquire) {
-//
-//                    } else {
-//                        if(finalMission == null) {
-//                            I18n.send(player, "command.listrewards.empty_all");
-//                        } else {
-//                            I18n.send(player, "command.listrewards.empty", finalMission);
-//                        }
-//                    }
-//                } else {
-//                    if(notifyAcquire) {
-//                        String command = PlaceholderAPIUtils.setPlaceholders(
-//                                player,
-//                                I18n.format(
-//                                        "message.mission.notify.command",
-//                                        finalMission == null ? "all" : finalMission
-//                                )
-//                        );
-//                        String msg = PlaceholderAPIUtils.setPlaceholders(
-//                                player,
-//                                finalMission == null ?
-//                                        I18n.format("command.listrewards.show_all", rewardListCount) :
-//                                        I18n.format("command.listrewards.show", rewardListCount, finalMission)
-//                        );
-//                        BaseComponent[] commandComponent = new ComponentBuilder()
-//                                .append(msg)
-//                                .append(command)
-//                                .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, command))
-//                                .create();
-//                        player.spigot().sendMessage(new TextComponent(commandComponent));
-//                    } else {
-//                        if(finalMission == null) {
-//                            I18n.send(player, "command.listrewards.show_all", rewardListCount);
-//                        } else {
-//                            I18n.send(player, "command.listrewards.show", rewardListCount, finalMission);
-//                        }
-//                    }
-//                }
-//            }, notifyAcquire ? 10 : 1);
-//        });
-//    }
 
     public void onDailyReset(UUID playerId) {
         resetMission(true, false, false, playerId);
