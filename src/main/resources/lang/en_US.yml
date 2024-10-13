@@ -52,19 +52,20 @@ command:
     daily_time: 'Online for today: %s'
     err: Query Failed
     invalid_target: Query target %s Invalid
-    last_seen: 'Last updated: %s'
+    last_update: 'Last updated: %s'
     monthly_time: 'Online for this month: %s'
     no_record: No record for %s
     no_view_other_permission: 'Permission required: %s'
     query_title: Player %s (%s) Online data
     total_time: 'Total online: %s'
     weekly_time: 'Online for this week: %s'
+    last_seen: 'Last seen: %s'
 manual:
   acquire:
     description: Acquire rewards
     usage: /ptt acquire <Reward name|all>
   listrewards:
-    description: 查看所有奖励
+    description: Show rewards
     usage: /ptt listrewards <Reward name|all>
   afkstatus:
     description: Check AFK status
@@ -98,7 +99,7 @@ message:
       command: /ptt acquire
       msg: You have %s reward(s) awaiting for acquiring
     eco:
-      success: Economy Reward of %s%s has been added to your account
+      success: Economy Reward of %.2f%s has been added to your account
 time:
   format:
     h: ' hours '

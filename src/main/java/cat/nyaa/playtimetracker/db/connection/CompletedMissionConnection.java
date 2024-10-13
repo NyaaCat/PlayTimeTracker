@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.UUID;
 
-public class CompletedMissionConnection {
+public class CompletedMissionConnection implements IBatchOperate {
     private final CompletedMissionTable completedMissionTable;
 
     public CompletedMissionConnection(HikariDataSource ds, Plugin plugin) {
@@ -19,33 +19,31 @@ public class CompletedMissionConnection {
     }
 
     public void resetPlayerCompletedMission(UUID playerId) {
-        completedMissionTable.delete(playerId);
+        this.completedMissionTable.delete(playerId);
     }
 
     public void resetPlayerCompletedMission(String missionName, UUID playerUniqueId) {
-        completedMissionTable.delete(playerUniqueId, missionName);
+        this.completedMissionTable.delete(playerUniqueId, missionName);
     }
 
     public void writeMissionCompleted(UUID playerUniqueId, String missionName, long lastCompletedTime) {
-        synchronized (CompletedMissionConnection.class) {
-            var rs = completedMissionTable.select(playerUniqueId, missionName);
-            if (rs.isEmpty()) {
-                CompletedMissionDbModel newModel = new CompletedMissionDbModel();
-                newModel.setMissionName(missionName);
-                newModel.setLastCompletedTime(lastCompletedTime);
-                newModel.setPlayerUniqueId(playerUniqueId);
-                completedMissionTable.insert(newModel);
-            } else {
-                var model = rs.getFirst();
-                model.setLastCompletedTime(lastCompletedTime);
-                completedMissionTable.updatePlayer(model, model.getId());
-            }
+        var rs = this.completedMissionTable.select(playerUniqueId, missionName);
+        if (rs.isEmpty()) {
+            CompletedMissionDbModel newModel = new CompletedMissionDbModel();
+            newModel.setMissionName(missionName);
+            newModel.setLastCompletedTime(lastCompletedTime);
+            newModel.setPlayerUniqueId(playerUniqueId);
+            this.completedMissionTable.insert(newModel);
+        } else {
+            var model = rs.getFirst();
+            model.setLastCompletedTime(lastCompletedTime);
+            this.completedMissionTable.updatePlayer(model, model.getId());
         }
     }
 
     @Nullable
     public CompletedMissionDbModel getPlayerCompletedMission(UUID playerUniqueId, String missionName) {
-        var rs = completedMissionTable.select(playerUniqueId, missionName);
+        var rs = this.completedMissionTable.select(playerUniqueId, missionName);
         if (!rs.isEmpty()) {
             return rs.getFirst();
         }
@@ -54,7 +52,17 @@ public class CompletedMissionConnection {
 
     @NotNull
     public List<CompletedMissionDbModel> getPlayerCompletedMissionList(UUID playerUniqueId) {
-        return completedMissionTable.select(playerUniqueId, null);
+        return this.completedMissionTable.select(playerUniqueId, null);
     }
     public void close() {}
+
+    @Override
+    public void beginBatchMode() {
+
+    }
+
+    @Override
+    public void endBatchMode() {
+
+    }
 }

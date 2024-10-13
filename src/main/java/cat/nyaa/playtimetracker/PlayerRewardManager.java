@@ -4,8 +4,6 @@ import cat.nyaa.playtimetracker.config.data.EcoRewardData;
 import cat.nyaa.playtimetracker.config.ISerializableExt;
 import cat.nyaa.playtimetracker.db.connection.RewardsConnection;
 import cat.nyaa.playtimetracker.db.model.RewardDbModel;
-import cat.nyaa.playtimetracker.db.tables.RewardsTable;
-import cat.nyaa.playtimetracker.db.utils.RewardDbModelIterator;
 import cat.nyaa.playtimetracker.reward.EcoReward;
 import cat.nyaa.playtimetracker.reward.IReward;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -27,21 +25,21 @@ import java.util.function.BiConsumer;
 public class PlayerRewardManager {
 
     private final Plugin plugin;
-    private final RewardsTable rewardsTable;
+    private final RewardsConnection rewardsConnection;
     private ConcurrentHashMap<UUID, String> playerAcquiringRewards;
 
     public PlayerRewardManager(Plugin plugin, RewardsConnection rewardsConnection) {
         this.plugin = plugin;
-        this.rewardsTable = rewardsConnection.getRewardsTable();
+        this.rewardsConnection = rewardsConnection;
         this.playerAcquiringRewards = new ConcurrentHashMap<>();
     }
 
     public void putRewardAsync(final Player player, final String missionName, final long completedTime, final Iterable<IReward> rewards, final @Nullable BiConsumer<Player, String> notifyCallback) {
         final var scheduler = this.plugin.getServer().getScheduler();
         final var logger = this.plugin.getLogger();
+        final var playerId = player.getUniqueId();
         scheduler.runTaskAsynchronously(this.plugin, () -> {
-            var it = new RewardDbModelIterator(player.getUniqueId(), missionName, completedTime, rewards.iterator());
-            this.rewardsTable.insertRewardBatch(it);
+            this.rewardsConnection.addRewards(playerId, missionName, rewards, completedTime);
             if (notifyCallback != null) {
                 scheduler.runTask(this.plugin, () -> notifyCallback.accept(player, missionName));
             }
@@ -70,7 +68,7 @@ public class PlayerRewardManager {
         final var scheduler = this.plugin.getServer().getScheduler();
         final var logger = this.plugin.getSLF4JLogger();
         scheduler.runTaskAsynchronously(this.plugin, () -> {
-            final var rewardList = this.rewardsTable.selectRewards(player.getUniqueId(), missionName, true);
+            final var rewardList = this.rewardsConnection.getRewards(player.getUniqueId(), missionName);
             if(rewardList.isEmpty()) {
                 scheduler.runTask(this.plugin, () -> {
                     if(missionName == null) {
@@ -116,7 +114,7 @@ public class PlayerRewardManager {
                         this.playerAcquiringRewards.remove(player.getUniqueId());
                     } else {
                         scheduler.runTaskAsynchronously(this.plugin, () -> {
-                            this.rewardsTable.deleteRewardBatch(rewardIdList);
+                            this.rewardsConnection.removeRewards(rewardIdList);
                             this.playerAcquiringRewards.remove(player.getUniqueId());
                             logger.info("[PlayerRewardManager] Player {} has acquired {} rewards", player.getUniqueId(), rewardIdList.size());
                         });
@@ -131,7 +129,7 @@ public class PlayerRewardManager {
         final var logger = this.plugin.getSLF4JLogger();
         scheduler.runTaskAsynchronously(this.plugin, () -> {
             if(rewardName == null) {
-                Object2IntMap<String> missions = this.rewardsTable.selectRewardsCount(player.getUniqueId());
+                Object2IntMap<String> missions = this.rewardsConnection.countRewards(player.getUniqueId());
                 scheduler.runTask(this.plugin, () -> {
                     if(missions == null) {
                         I18n.send(player, "command.listrewards.err");
@@ -151,7 +149,7 @@ public class PlayerRewardManager {
                     }
                 });
             } else {
-                int count = this.rewardsTable.selectRewardsCount(player.getUniqueId(), rewardName);
+                int count = this.rewardsConnection.countReward(player.getUniqueId(), rewardName);
                 scheduler.runTask(this.plugin, () -> {
                     if(count == 0) {
                         I18n.send(player, "command.listrewards.empty", rewardName);
@@ -167,7 +165,7 @@ public class PlayerRewardManager {
         final var scheduler = this.plugin.getServer().getScheduler();
         final var logger = this.plugin.getSLF4JLogger();
         scheduler.runTaskAsynchronously(this.plugin, () -> {
-            final var rewardList = this.rewardsTable.selectRewardsCount(player.getUniqueId());
+            final var rewardList = this.rewardsConnection.countRewards(player.getUniqueId());
             if (rewardList == null) {
                 logger.error("[PlayerRewardManager] Failed to auto-check rewards count for player {}", player.getUniqueId());
             } else if(rewardList.isEmpty()){

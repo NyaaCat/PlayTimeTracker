@@ -7,6 +7,7 @@ import cat.nyaa.playtimetracker.reward.IReward;
 import cat.nyaa.playtimetracker.utils.Constants;
 import com.zaxxer.hikari.HikariDataSource;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntCollection;
 import it.unimi.dsi.fastutil.ints.IntIterable;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
@@ -15,6 +16,7 @@ import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
+import javax.annotation.concurrent.NotThreadSafe;
 import java.io.*;
 import java.lang.reflect.Constructor;
 import java.nio.charset.StandardCharsets;
@@ -22,9 +24,11 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
+@NotThreadSafe
 public class RewardsTable {
 
     private final static Logger logger = Constants.getPluginLogger();
@@ -103,7 +107,7 @@ public class RewardsTable {
         }
     }
 
-    public void insertRewardBatch(Iterable<RewardDbModel> rewards) {
+    public void insertRewardBatch(Collection<RewardDbModel> rewards) {
         synchronized (DatabaseManager.lock) {
             try (var conn = this.ds.getConnection()) {
                 try (var ps = conn.prepareStatement("INSERT INTO " + TABLE_NAME + " (completedTime, player, rewardName, rewardData) VALUES (?,?,?,?)")) {
@@ -139,7 +143,7 @@ public class RewardsTable {
         }
     }
 
-    public void deleteRewardBatch(IntIterable ids) {
+    public void deleteRewardBatch(IntCollection ids) {
         synchronized (DatabaseManager.lock) {
             try (var conn = this.ds.getConnection()) {
                 deleteRewardBatch0(ids, conn);

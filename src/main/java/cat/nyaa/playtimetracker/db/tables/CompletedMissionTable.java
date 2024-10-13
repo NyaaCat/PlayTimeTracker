@@ -10,11 +10,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
+import javax.annotation.concurrent.NotThreadSafe;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+@NotThreadSafe
 public class CompletedMissionTable {
 
     private static final Logger logger = Constants.getPluginLogger();

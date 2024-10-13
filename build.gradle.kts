@@ -10,7 +10,7 @@ val paperApiName = "1.21.1-R0.1-SNAPSHOT"
 
 // Version used for distribution. Different from maven repo
 group = "cat.nyaa"
-version = "0.10-alpha.3"
+version = "0.10-alpha.4"
 
 java {
     // Configure the java toolchain. This allows gradle to auto-provision JDK 21 on systems that only have JDK 8 installed for example.
@@ -38,11 +38,12 @@ dependencies {
     compileOnly("io.papermc.paper:paper-api:$paperApiName")
     compileOnly("org.jetbrains:annotations:24.1.0")
     // soft dep
-    compileOnly("net.essentialsx:EssentialsX:2.21.0-SNAPSHOT")
+    compileOnly("io.netty:netty-common:4.1.97.Final") // should keep the same version as Minecraft
     compileOnly("me.clip:placeholderapi:2.11.6")
     compileOnly("com.udojava:EvalEx:2.7")
     compileOnly("org.xerial:sqlite-jdbc:3.46.0.0")
     compileOnly("com.zaxxer:HikariCP:5.1.0")
+    compileOnly("net.essentialsx:EssentialsX:2.21.0-SNAPSHOT")
     // other nyaa plugins
     compileOnly("cat.nyaa:nyaacore:9.4")
     compileOnly("cat.nyaa:ecore:0.3.4")  // optional

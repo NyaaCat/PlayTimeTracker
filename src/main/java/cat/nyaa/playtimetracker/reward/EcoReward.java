@@ -159,7 +159,7 @@ public class EcoReward implements IReward {
         if(amount == null) {
             throw new IllegalStateException("prepare() must be called before serialize()");
         }
-        DataOutputStream dos = IReward.fromOutputStream(outputStream);
+        DataOutputStream dos = IReward.wrapOutputStream(outputStream);
         dos.writeDouble(amount);
         dos.writeInt(rollbackFlag);
         if(rollbackFlag == 2 && rollbackPlayerUUID != null) {
@@ -170,7 +170,7 @@ public class EcoReward implements IReward {
 
     @Override
     public void deserialize(InputStream inputStream) throws Exception {
-        DataInputStream dis = IReward.fromInputStream(inputStream);
+        DataInputStream dis = IReward.wrapInputStream(inputStream);
         amount = dis.readDouble();
         rollbackFlag = dis.readInt();
         rollbackPlayerUUID = null;

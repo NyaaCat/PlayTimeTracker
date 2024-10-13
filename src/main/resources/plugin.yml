@@ -14,7 +14,6 @@ commands:
     aliases: [ ptt ]
     permission: ptt.command
     permission-message: You do not have permission node <permission>
-
 permissions:
   ptt.command:
     description: ptt command

@@ -52,13 +52,14 @@ command:
     daily_time: '今日在线: %s'
     err: 查询失败
     invalid_target: '查询目标: %s 无效'
-    last_seen: '上次更新: %s'
+    last_update: '上次更新: %s'
     monthly_time: '本月在线: %s'
     no_record: 没有查询到 %s 的记录
     no_view_other_permission: '查询其他人的数据需要权限: %s'
     query_title: '玩家: %s (%s) 的在线数据'
     total_time: '总在线时长: %s'
     weekly_time: '本周在线: %s'
+    last_seen: '上次在线: %s'
 manual:
   acquire:
     description: 领取奖励
@@ -98,7 +99,7 @@ message:
       command: /ptt acquire
       msg: 您有 %s 个任务奖励可以领取
     eco:
-      success: 经济奖励%s%s已经添加到您的账户
+      success: 经济奖励%.2f%s已经添加到您的账户
 time:
   format:
     h: ' 小时 '

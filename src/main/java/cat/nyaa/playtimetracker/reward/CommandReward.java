@@ -58,7 +58,7 @@ public class CommandReward implements IReward {
             throw new Exception("command is null or empty");
         }
         byte[] bytes = this.cfg.command.getBytes(StandardCharsets.UTF_8);
-        DataOutputStream dos = IReward.fromOutputStream(outputStream);
+        DataOutputStream dos = IReward.wrapOutputStream(outputStream);
         dos.writeInt(bytes.length);
         dos.write(bytes);
         dos.flush();
@@ -66,7 +66,7 @@ public class CommandReward implements IReward {
 
     @Override
     public void deserialize(InputStream inputStream) throws Exception {
-        DataInputStream dis = IReward.fromInputStream(inputStream);
+        DataInputStream dis = IReward.wrapInputStream(inputStream);
         int length = dis.readInt();
         if(length <= 0) {
             throw new Exception("Invalid command length");

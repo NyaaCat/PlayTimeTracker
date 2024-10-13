@@ -74,11 +74,12 @@ public class CommandHandler extends CommandReceiver {
             return;
         }
         I18n.send(sender, "command.view.query_title", targetName, targetUUID.toString());
-        I18n.send(sender, "command.view.last_seen", TimeUtils.dateFormat(timeTrackerDbModel.getLastSeen()));
+        I18n.send(sender, "command.view.last_update", TimeUtils.dateFormat(timeTrackerDbModel.getLastUpdate()));
         I18n.send(sender, "command.view.daily_time", TimeUtils.timeFormat(timeTrackerDbModel.getDailyTime()));
         I18n.send(sender, "command.view.weekly_time", TimeUtils.timeFormat(timeTrackerDbModel.getWeeklyTime()));
         I18n.send(sender, "command.view.monthly_time", TimeUtils.timeFormat(timeTrackerDbModel.getMonthlyTime()));
         I18n.send(sender, "command.view.total_time", TimeUtils.timeFormat(timeTrackerDbModel.getTotalTime()));
+        I18n.send(sender, "command.view.last_seen", TimeUtils.dateFormat(timeTrackerDbModel.getLastSeen()));
     }
 
     @SubCommand(value = "migration", permission = "ptt.command.migration")
@@ -120,11 +121,13 @@ public class CommandHandler extends CommandReceiver {
                 long rec_monthlyTime = sec.getLong("monthly_play_time");
                 long rec_totalTime = sec.getLong("total_play_time");
                 TimeTrackerDbModel trackerDbModel = new TimeTrackerDbModel();
-                trackerDbModel.setLastSeen(rec_lastSeen.toInstant().toEpochMilli());
+                long timestamp = rec_lastSeen.toInstant().toEpochMilli();
+                trackerDbModel.setLastUpdate(timestamp);
                 trackerDbModel.setDailyTime(rec_dailyTime);
                 trackerDbModel.setWeeklyTime(rec_weeklyTime);
                 trackerDbModel.setMonthlyTime(rec_monthlyTime);
                 trackerDbModel.setTotalTime(rec_totalTime);
+                trackerDbModel.setLastSeen(timestamp);
                 trackerDbModel.setPlayerUniqueId(rec_id);
                 timeRecordManager.insertOrResetPlayer(trackerDbModel);
                 timeRecordManager.insertOrResetPlayer(rec_id,TimeUtils.getUnixTimeStampNow());

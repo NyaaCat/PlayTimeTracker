@@ -51,14 +51,14 @@ public interface IReward {
     void deserialize(InputStream inputStream) throws Exception;
 
 
-    static DataOutputStream fromOutputStream(OutputStream outputStream) {
+    static DataOutputStream wrapOutputStream(OutputStream outputStream) {
         if(outputStream instanceof DataOutputStream dataOutputStream) {
             return dataOutputStream;
         }
         return new DataOutputStream(outputStream);
     }
 
-    static DataInputStream fromInputStream(InputStream inputStream) {
+    static DataInputStream wrapInputStream(InputStream inputStream) {
         if(inputStream instanceof DataInputStream dataInputStream) {
             return dataInputStream;
         }

@@ -7,7 +7,7 @@ public class SaveDbTask implements Runnable {
     public void run() {
         if (PlayTimeTracker.getInstance() != null) {
             if (PlayTimeTracker.getInstance().getTimeRecordManager() != null) {
-                PlayTimeTracker.getInstance().getTimeRecordManager().getTimeTrackerConnection().doAsyncUpdate();
+                PlayTimeTracker.getInstance().getTimeRecordManager().getTimeTrackerConnection().doAsyncUpdate(PlayTimeTracker.getInstance());
             }
         }
     }

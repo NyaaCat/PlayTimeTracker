@@ -74,7 +74,7 @@ public class TimeRecordManager {
     public void insertOrResetPlayer(UUID playerId, long timestamp) {
         TimeTrackerDbModel model = timeTrackerConnection.getPlayerTimeTracker(playerId);
         if (model == null) {
-            timeTrackerConnection.insertPlayer(playerId, timestamp);
+            timeTrackerConnection.insertPlayerIfNotPresent(playerId, timestamp);
             return;
         }
         this.updatePlayerTime(playerId, model, timestamp, false);
@@ -93,7 +93,9 @@ public class TimeRecordManager {
         this.tickNum++;
         Set<UUID> onlineSet = Bukkit.getOnlinePlayers().stream().map(Player::getUniqueId).collect(Collectors.toUnmodifiableSet());
         checkHoldPlayers(onlineSet);
+        timeTrackerConnection.beginBatchMode();
         holdPlayers.forEach((uuid) -> TaskUtils.mod64TickToRun(tickNum, uuid, () -> updatePlayerTime(uuid)));
+        timeTrackerConnection.endBatchMode();
     }
 
     @Nullable
@@ -117,7 +119,7 @@ public class TimeRecordManager {
     }
 
     private void updatePlayerTime(UUID playerId, @NotNull TimeTrackerDbModel model, long nowTimestamp, boolean accumulative) {
-        long lastSeenTimestamp = model.getLastSeen();
+        long lastSeenTimestamp = model.getLastUpdate();
         long duration = nowTimestamp - lastSeenTimestamp;
         if (duration <= 0) return;
         if (PlayerAFKManager.isAFK(playerId)) {
@@ -152,7 +154,7 @@ public class TimeRecordManager {
 
         if (accumulative)
             model.setTotalTime(model.getTotalTime() + duration);
-        model.setLastSeen(nowTimestamp);
+        model.setLastUpdate(nowTimestamp);
         timeTrackerConnection.updateDbModel(model);
     }
 
@@ -162,12 +164,14 @@ public class TimeRecordManager {
 
     private void checkHoldPlayers(Set<UUID> onlineSet) {
         if (holdPlayers.equals(onlineSet)) return;
+        this.timeTrackerConnection.beginBatchMode();
         onlineSet.forEach(uuid -> {
             if (!holdPlayers.contains(uuid)) addPlayer(uuid);
         });
         holdPlayers.forEach(uuid -> {
             if (!onlineSet.contains(uuid)) removePlayer(uuid);
         });
+        this.timeTrackerConnection.endBatchMode();
     }
 
 
