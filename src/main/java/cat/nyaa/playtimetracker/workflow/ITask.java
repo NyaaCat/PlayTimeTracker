@@ -1,6 +1,6 @@
-package cat.nyaa.playtimetracker.task;
+package cat.nyaa.playtimetracker.workflow;
 
-public interface IWorkStep {
+public interface ITask {
 
     /**
      * Execute the workflow task once time

@@ -1,5 +1,6 @@
-package cat.nyaa.playtimetracker.task;
+package cat.nyaa.playtimetracker.workflow;
 
+import cat.nyaa.playtimetracker.config.MissionConfig;
 import cat.nyaa.playtimetracker.db.DatabaseManager;
 import cat.nyaa.playtimetracker.db.connection.CompletedMissionConnection;
 import cat.nyaa.playtimetracker.db.connection.RewardsConnection;
@@ -8,6 +9,7 @@ import io.netty.util.Timeout;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.bukkit.plugin.Plugin;
 
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -17,10 +19,10 @@ public class Workflow implements Runnable {
     private final DatabaseManager databaseManager;
     private final long threadIdGameLoop;
     private AtomicBoolean isNextRunInGameLoop;
-    private List<IWorkStep> currentInGameWorkStepList;
-    private List<IWorkStep> currentExternalWorkStepList;
-    private List<IWorkStep> nextInGameWorkStepList;
-    private List<IWorkStep> nextExternalWorkStepList;
+    private List<ITask> currentInGameWorkStepList;
+    private List<ITask> currentExternalWorkStepList;
+    private List<ITask> nextInGameWorkStepList;
+    private List<ITask> nextExternalWorkStepList;
 
 
     public Workflow(Plugin plugin, DatabaseManager databaseManager, long threadIdGameLoop) {
@@ -39,7 +41,7 @@ public class Workflow implements Runnable {
         this.isNextRunInGameLoop.set(true);
     }
 
-    public void addNextWorkStep(IWorkStep workflow, boolean executeInGameLoop) {
+    public void addNextWorkStep(ITask workflow, boolean executeInGameLoop) {
         if (executeInGameLoop) {
             this.nextInGameWorkStepList.add(workflow);
         } else {
@@ -47,12 +49,16 @@ public class Workflow implements Runnable {
         }
     }
 
-    public Timeout scheduleWorkStep(IWorkStep workflow, long time, TimeUnit timeUnit) {
+    public Timeout scheduleWorkStep(ITask workflow, long time, TimeUnit timeUnit) {
         return null;
     }
 
     public Plugin getPlugin() {
         return this.plugin;
+    }
+
+    public @Nullable Plugin getEssentialsPlugin() {
+        return null;
     }
 
     public TimeTrackerConnection getTimeTrackerConnection() {
@@ -64,11 +70,14 @@ public class Workflow implements Runnable {
     }
 
     public RewardsConnection getRewardsConnection() {
-        if (Thread.currentThread().threadId() == this.threadIdGameLoop) {
-            throw new IllegalStateException("cannot access rewards connection in game loop");
-        }
         return this.databaseManager.getRewardsConnection();
     }
+
+    public MissionConfig getMissionConfig() {
+        // TODO: implement this
+        return null;
+    }
+
 
     protected void runInGameLoopStart() {
         var tmp = this.currentInGameWorkStepList;
@@ -104,7 +113,7 @@ public class Workflow implements Runnable {
         var logger = this.plugin.getSLF4JLogger();
         if (threadId == this.threadIdGameLoop) {
             runInGameLoopStart();
-            for (IWorkStep workStep : this.currentInGameWorkStepList) {
+            for (ITask workStep : this.currentInGameWorkStepList) {
                 try {
                     workStep.execute(this, true);
                 } catch (Exception e) {
@@ -114,7 +123,7 @@ public class Workflow implements Runnable {
             runInGameLoopEnd();
         } else {
             runExternallyStart();
-            for (IWorkStep workStep : this.currentExternalWorkStepList) {
+            for (ITask workStep : this.currentExternalWorkStepList) {
                 try {
                     workStep.execute(this, false);
                 } catch (Exception e) {

@@ -1,6 +1,8 @@
 package cat.nyaa.playtimetracker.config.data;
 
+import cat.nyaa.playtimetracker.condition.ICondition;
 import cat.nyaa.playtimetracker.config.ISerializableExt;
+import cat.nyaa.playtimetracker.workflow.LimitedTimeTrackerModel;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -52,5 +54,9 @@ public class MissionData implements ISerializableExt {
 
     public List<ISerializableExt> getSortedRewardList() {
         return sortedRewardList;
+    }
+
+    public ICondition<LimitedTimeTrackerModel> getTimeCondition() {
+        return null;
     }
 }

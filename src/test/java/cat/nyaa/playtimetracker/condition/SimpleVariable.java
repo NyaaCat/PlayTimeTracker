@@ -14,7 +14,7 @@ public class SimpleVariable implements IParametricVariable<Long> {
     }
 
     @Override
-    public long getValue(Long source) {
+    public long getValue(final Long source) {
         return source;
     }
 
