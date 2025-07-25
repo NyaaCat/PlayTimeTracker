@@ -4,7 +4,9 @@ import cat.nyaa.nyaacore.configuration.FileConfigure;
 import cat.nyaa.nyaacore.orm.backends.BackendConfig;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public class DatabaseConfig extends FileConfigure {
+import java.util.List;
+
+public class DatabaseConfig extends FileConfigure implements ISerializableExt {
     private final JavaPlugin plugin;
     @Serializable(name = "backend-config")
     public BackendConfig backendConfig = BackendConfig.sqliteBackend("pluginDatabase.db");
@@ -21,5 +23,10 @@ public class DatabaseConfig extends FileConfigure {
     @Override
     public JavaPlugin getPlugin() {
         return this.plugin;
+    }
+
+    @Override
+    public void validate(IValidationContext context) throws Exception {
+        
     }
 }

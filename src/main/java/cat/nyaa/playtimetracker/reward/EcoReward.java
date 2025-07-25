@@ -3,7 +3,7 @@ package cat.nyaa.playtimetracker.reward;
 import cat.nyaa.ecore.EconomyCore;
 import cat.nyaa.playtimetracker.I18n;
 import cat.nyaa.playtimetracker.config.data.EcoRewardData;
-import cat.nyaa.playtimetracker.utils.Constants;
+import cat.nyaa.playtimetracker.utils.LoggerUtils;
 import it.unimi.dsi.fastutil.longs.LongDoubleMutablePair;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -24,7 +24,7 @@ import java.util.UUID;
 
 public class EcoReward implements IReward {
 
-    private static final Logger logger = Constants.getPluginLogger();
+    private static final Logger logger = LoggerUtils.getPluginLogger();
 
     private static LongDoubleMutablePair cachedSystemBalance = new LongDoubleMutablePair(0L, 0.0);
     private static Map<UUID, LongDoubleMutablePair> cachedPlayerBalances = new HashMap<>();

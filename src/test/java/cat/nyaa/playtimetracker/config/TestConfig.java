@@ -3,6 +3,9 @@ package cat.nyaa.playtimetracker.config;
 import be.seeseemelk.mockbukkit.MockBukkit;
 import be.seeseemelk.mockbukkit.MockPlugin;
 import be.seeseemelk.mockbukkit.ServerMock;
+import cat.nyaa.playtimetracker.condition.ICondition;
+import cat.nyaa.playtimetracker.config.data.MissionData;
+import cat.nyaa.playtimetracker.workflow.LimitedTimeTrackerModel;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -35,7 +38,7 @@ public class TestConfig {
     }
 
     @Test
-    public void testMissionConfig() throws IOException {
+    public void testMissionConfig() throws Exception {
         File cfg = new File(root, "mission.yml");
 
         YamlConfiguration configFile = new YamlConfiguration();
@@ -43,6 +46,10 @@ public class TestConfig {
         MissionConfig missionConfig = new MissionConfig(plugin);
 
         missionConfig.serialize(configFile);
+
+        var ctx = new ValidationContext();
+
+        missionConfig.validate(ctx);
 
         configFile.save(cfg);
 
@@ -52,5 +59,13 @@ public class TestConfig {
         missionConfig2.deserialize(configFile);
 
         Assertions.assertEquals(missionConfig.missions.size(), missionConfig2.missions.size());
+    }
+
+    public static class ValidationContext implements MissionData.IConditionCompiler {
+
+        @Override
+        public ICondition<?> compile(String expression) throws Exception {
+            return LimitedTimeTrackerModel.compileCondition(expression, 1000L);
+        }
     }
 }

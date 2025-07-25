@@ -19,10 +19,10 @@ java {
 
 repositories {
     mavenCentral()
-    maven { url = uri("https://papermc.io/repo/repository/maven-public/") } //paper
+    maven { url = uri("https://repo.papermc.io/repository/maven-public/") } //paper
     maven { url = uri("https://libraries.minecraft.net") } // mojang
-//    maven { url = uri("https://repo.essentialsx.net/releases/") } // essentials
-    maven { url = uri("https://repo.essentialsx.net/snapshots/") } // essentials
+    maven { url = uri("https://repo.essentialsx.net/releases/") } // essentials
+//    maven { url = uri("https://repo.essentialsx.net/snapshots/") } // essentials
     maven { url = uri("https://ci.nyaacat.com/maven/") } // nyaacat
 //    maven {
 //        url = uri("https://maven.pkg.github.com/NyaaCat/NyaaCore")
@@ -43,7 +43,7 @@ dependencies {
     compileOnly("com.udojava:EvalEx:2.7")
     compileOnly("org.xerial:sqlite-jdbc:3.46.0.0")
     compileOnly("com.zaxxer:HikariCP:5.1.0")
-    compileOnly("net.essentialsx:EssentialsX:2.21.0-SNAPSHOT")
+    compileOnly("net.essentialsx:EssentialsX:2.20.1")
     // other nyaa plugins
     compileOnly("cat.nyaa:nyaacore:9.4")
     compileOnly("cat.nyaa:ecore:0.3.4")  // optional

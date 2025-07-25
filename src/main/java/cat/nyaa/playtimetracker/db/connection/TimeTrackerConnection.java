@@ -106,7 +106,7 @@ public final class TimeTrackerConnection implements IBatchOperate {
     }
 
     private void handleCache() {
-        if (this.cache.isEmpty()) {
+        if (this.cache == null || this.cache.isEmpty()) {
             return;
         }
         List<TimeTrackerDbModel> insertList = new ObjectArrayList<>(cache.size());

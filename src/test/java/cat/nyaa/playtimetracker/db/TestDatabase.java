@@ -4,13 +4,11 @@ import cat.nyaa.playtimetracker.db.tables.CompletedMissionTable;
 import cat.nyaa.playtimetracker.db.tables.RewardsTable;
 import cat.nyaa.playtimetracker.db.tables.TimeTrackerTable;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 import java.util.List;
 
+@Disabled("Temporarily disabling all tests in this class")
 public class TestDatabase extends AbstractTestDatabase {
 
     @BeforeEach

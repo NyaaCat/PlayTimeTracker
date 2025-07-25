@@ -38,12 +38,12 @@ public class TestRewardOperate {
         MockBukkit.unmock();
     }
 
-    void testEcoRewardTransferInner(EcoRewardData cfg, long dt, List<DoubleObjectPair<Boolean>> results, List<Player> players) {
+    void testEcoRewardTransferInner(EcoRewardData cfg, long dt, List<DoubleObjectPair<Boolean>> results, List<Player> players) throws Exception {
         var logger = plugin.getSLF4JLogger();
 
         var playerNum = results.size();
         List<String> outputError = new ObjectArrayList<>();
-        Assertions.assertTrue(cfg.validate(outputError));
+        cfg.validate(null);
 
         DoubleSupplier getSrcVault = null;
         if(cfg.isRefVaultSystemVault()) {
@@ -87,7 +87,7 @@ public class TestRewardOperate {
     }
 
     @Test
-    void testEcoReward1() {
+    void testEcoReward1() throws Exception {
         server.setPlayers(4);
         List<Player> players = server.getOnlinePlayers().stream().map((playerMock -> (Player)playerMock)).toList();
 
@@ -135,7 +135,7 @@ public class TestRewardOperate {
     }
 
     @Test
-    void testEcoReward2() {
+    void testEcoReward2() throws Exception {
 
         server.setPlayers(4);
         List<Player> players = server.getOnlinePlayers().stream().map((playerMock -> (Player)playerMock)).toList();
@@ -183,13 +183,13 @@ public class TestRewardOperate {
     }
 
     @Test
-    void testEcoReward4() {
+    void testEcoReward4() throws Exception {
         server.setPlayers(2);
         List<String> outputError = new ObjectArrayList<>();
         EcoRewardData ecoRewardData = new EcoRewardData();
         ecoRewardData.type = EcoRewardData.RewardType.ADD;
         ecoRewardData.amount = 45;
-        Assertions.assertTrue(ecoRewardData.validate(outputError));
+        ecoRewardData.validate(null);
 
         EcoReward ecoReward = new EcoReward(ecoRewardData);
 

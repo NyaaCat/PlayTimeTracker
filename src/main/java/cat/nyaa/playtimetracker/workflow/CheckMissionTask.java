@@ -1,98 +1,100 @@
 package cat.nyaa.playtimetracker.workflow;
 
+import cat.nyaa.playtimetracker.condition.Range;
 import cat.nyaa.playtimetracker.config.data.MissionData;
-import cat.nyaa.playtimetracker.db.model.TimeTrackerDbModel;
-import cat.nyaa.playtimetracker.utils.PiecewiseTimeInfo;
-import com.earth2me.essentials.User;
-import net.ess3.api.IEssentials;
-import org.bukkit.entity.Player;
-import org.bukkit.plugin.Plugin;
-import org.jetbrains.annotations.Nullable;
+import cat.nyaa.playtimetracker.executor.IFinalTrigger;
+import cat.nyaa.playtimetracker.executor.ITask;
+import cat.nyaa.playtimetracker.utils.LoggerUtils;
+import org.slf4j.Logger;
+
+import java.time.Duration;
 
 public class CheckMissionTask implements ITask {
 
-    private final PlayerRelatedCache playerData;
+    private final static Logger logger = LoggerUtils.getPluginLogger();
+
+    private final Context context;
+    private final PlayerContext playerContext;
     private final String missionName;
     private final MissionData missionData;
-    private final PiecewiseTimeInfo time;
-    private final TimeTrackerDbModel tracker;
-    private final IWaitTimeCollection wait;
+    private final LimitedTimeTrackerModel tracker;
+    private final IScheduler scheduler;
     private int step;
 
-    public CheckMissionTask(PlayerRelatedCache playerData, String missionName, MissionData missionData, PiecewiseTimeInfo time, TimeTrackerDbModel tracker, IWaitTimeCollection wait) {
-        this.playerData = playerData;
+    public CheckMissionTask(Context context, PlayerContext playerContext, LimitedTimeTrackerModel tracker, String missionName, MissionData missionData, IScheduler scheduler) {
+        this.context = context;
+        this.playerContext = playerContext;
         this.missionName = missionName;
         this.missionData = missionData;
-        this.time = time;
         this.tracker = tracker;
-        this.wait = wait;
+        this.scheduler = scheduler;
         this.step = 0;
+        this.scheduler.retain();
     }
 
     @Override
-    public int execute(Workflow workflow, boolean executeInGameLoop) throws Exception {
-        switch (this.step) {
-            case 0 -> {
-                if (!executeInGameLoop) {
-                    return -1;
-                }
-                // step 1: filter in game-loop
-
-                if (!this.checkInGroup(workflow)) {
-                    this.step = 0xFF;
-                    return 0;
-                }
-
-                workflow.addNextWorkStep(this, false);
-                this.step = 1;
-                return 0;
+    public void execute(Long tick) {
+        try {
+            logger.trace("CheckMissionTask execute@{} START; step:{} player={},mission={}", tick, this.step, this.playerContext.getUUID(), this.missionName);
+            switch (this.step) {
+                case 0 -> this.step = this.syncHandleStep1(tick);
+                case 1 -> this.step = this.asyncHandleStep2();
+                default -> throw new IllegalStateException();
             }
-            case 1 -> {
-                if (executeInGameLoop) {
-                    return -1;
-                }
-                // step 2: check asynchronously
-
-                if (!this.checkUncompleted(workflow)) {
-                    this.step = 0xFF;
-                    return 0;
-                }
-
-                Long waitTime = this.checkMissionTimeCondition();
-                if (waitTime == null) {
-                    // impossible to complete
-                    this.step = 0xFF;
-                    return 0;
-                }
-
-                if (waitTime > 0) {
-                    // wait for the time condition
-                    this.wait.waitFor(waitTime);
-                    this.step = 0xFF;
-                    return 0;
-                }
-
-                // push reward and notify
-                var once = new NotifyRewardsTask.Once();
-                for (var e : this.missionData.rewardList.entrySet()) {
-                    var rewardTask = new DistributeRewardTask(this.playerData.player,  this.missionName, e.getValue(), this.time, once);
-                    if (rewardTask.isRewardValid()) {
-                        workflow.addNextWorkStep(rewardTask, true);
-                    }
-                }
-
-                this.step = 0xFF;
-                return 0;
-            }
-            default -> {
-                return -2;
+            logger.trace("CheckMissionTask execute END; next:{}", this.step);
+        } finally {
+            if (this.step == 0xFF){
+                // step 0xFF means the task is finished
+                this.scheduler.release();
             }
         }
     }
 
-    private boolean checkInGroup(Workflow workflow) {
+    private int syncHandleStep1(long tick) {
+        // step 1: filter in game-loop
+
+        if (!this.checkInGroup(tick)) {
+            return 0xFF;
+        }
+
+        this.context.getExecutor().async(this);
+        return 1;
+    }
+
+    private int asyncHandleStep2() {
+        // step 2: check asynchronously
+
+        if (!this.checkUncompleted()) {
+            return 0xFF;
+        }
+
+        var waitTime = this.checkMissionTimeCondition();
+        logger.trace("CheckMissionTask wait {}ms to complete", waitTime);
+        if (waitTime == null) {
+            // impossible to complete
+            return 0xFF;
+        }
+
+        if (waitTime.isPositive()) {
+            // wait for the time condition
+            this.scheduler.record(this.missionName, waitTime);
+            return 0xFF;
+        }
+
+        // push reward and notify
+        var notifyRewardsTask = this.missionData.notify ? new NotifyRewardTask(this.context, this.playerContext, this.missionName) : null;
+        for (var e : this.missionData.getSortedRewardList()) {
+            var rewardTask = new DistributeRewardTask(this.context, this.playerContext, this.missionName, e, this.tracker.time, notifyRewardsTask);
+            if (rewardTask.isRewardValid()) {
+                this.context.getExecutor().sync(rewardTask);
+            }
+        }
+        return 0xFF;
+    }
+
+    private boolean checkInGroup(long tick) {
         if (this.missionData.group != null && !this.missionData.group.isEmpty()) {
-            var essUser = this.playerData.getEssUser();
+            var essUser = this.playerContext.getEssUser(tick);
             if (essUser == null) {
                 return false;
             }
@@ -105,57 +107,46 @@ public class CheckMissionTask implements ITask {
         return true;
     }
 
-    private boolean checkUncompleted(Workflow workflow) {
-        var model = workflow.getCompletedMissionConnection().getPlayerCompletedMission(this.playerData.player.getUniqueId(), this.missionName);
+    private boolean checkUncompleted() {
+        var model = this.context.getCompletedMissionConnection().getPlayerCompletedMission(this.playerContext.getUUID(), this.missionName);
         return model == null;
     }
 
     // @return the time to wait; None if impossible to complete; 0 if already completed
-    private Long checkMissionTimeCondition() {
-        var condition = this.missionData.getTimeCondition();
-        var source = new LimitedTimeTrackerModel(this.tracker, this.time);
+    private Duration checkMissionTimeCondition() {
+        var condition = this.context.buildMissionTimeCondition(this.missionData);
+        var source = this.tracker;
         if(condition.test(source)) {
-            return 0L;
+            logger.trace("CheckMissionTask checkMissionTimeCondition condition.test: passed");
+            return Duration.ZERO;
         }
         var result = condition.resolve(source);
+        if (logger.isTraceEnabled()) {
+            logger.trace("CheckMissionTask checkMissionTimeCondition condition.resolve: result={}", fmtRanges(result));
+        }
         if (result.isEmpty()) {
             return null;
         }
-        long left = Long.MAX_VALUE;
-        for(var r : result) {
-            if (r.getLow() > 0 && r.getLow() < left) {
-                left = r.getLow();
-            }
-        }
-        return left == Long.MAX_VALUE ? null : left;
+
+        return source.analyzeResolved(result);
     }
 
-    public static final class PlayerRelatedCache {
-
-        public final Player player;
-        private final @Nullable IEssentials ess;
-        private @Nullable User essUser;
-
-        public PlayerRelatedCache(Player player, @Nullable Plugin essentialsPlugin) {
-            this.player = player;
-            if (essentialsPlugin instanceof IEssentials ess) {
-                this.ess = ess;
+    private static String fmtRanges(Iterable<Range> ranges) {
+        StringBuilder sb = new StringBuilder();
+        boolean first = true;
+        for (var r : ranges) {
+            if (first) {
+                first = false;
             } else {
-                this.ess = null;
+                sb.append(',');
             }
+            sb.append('[').append(r.getLow()).append(',').append(r.getHigh()).append(']');
         }
-
-        // can only be called from game-loop thread
-        public @Nullable User getEssUser() {
-            if (this.essUser == null && this.ess != null) {
-                this.essUser = this.ess.getUser(this.player);
-            }
-            return this.essUser;
-        }
+        return sb.toString();
     }
 
-    public interface IWaitTimeCollection {
+    public interface IScheduler extends IFinalTrigger {
 
-        void waitFor(long timeout);
+        void record(String mission, Duration waitTime);
     }
 }

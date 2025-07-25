@@ -19,6 +19,10 @@ public class TimeUtils {
         return System.currentTimeMillis();
     }
 
+    public static Instant getInstantNow() {
+        return Instant.now();
+    }
+
     public static LocalDate getLocalDate() {
         return LocalDate.now(getZoneId());
     }

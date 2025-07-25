@@ -15,8 +15,9 @@ public interface ICondition<T> {
     /**
      * Resolve the condition equation
      *
-     * @param source the binding parameters
-     * @return a list of ranges FOLLOW THE ORDER OF NUMBERS, or empty list if the condition equation is unsolvable
+     * @param source the binding parameters; source is related to parametric variables [t]
+     * @return a list of ranges of parametric variables [t] FOLLOW THE ORDER OF NUMBERS,
+     *          or empty list if the condition equation is unsolvable
      */
     List<Range> resolve(T source);
 }

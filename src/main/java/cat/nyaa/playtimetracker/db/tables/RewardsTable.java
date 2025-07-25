@@ -4,7 +4,7 @@ import cat.nyaa.playtimetracker.db.DatabaseManager;
 import cat.nyaa.playtimetracker.db.model.RewardDbModel;
 import cat.nyaa.playtimetracker.db.utils.DatabaseUtils;
 import cat.nyaa.playtimetracker.reward.IReward;
-import cat.nyaa.playtimetracker.utils.Constants;
+import cat.nyaa.playtimetracker.utils.LoggerUtils;
 import com.zaxxer.hikari.HikariDataSource;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntCollection;
@@ -31,7 +31,7 @@ import java.util.UUID;
 @NotThreadSafe
 public class RewardsTable {
 
-    private final static Logger logger = Constants.getPluginLogger();
+    private final static Logger logger = LoggerUtils.getPluginLogger();
 
     public static final String TABLE_NAME = "rewards";
 

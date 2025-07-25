@@ -11,6 +11,13 @@ public class Condition<T> implements ICondition<T> {
 
     private final IParametricVariable<T> variable;
     private final long value;
+
+    /**
+     * precision of right-constant in calculation;
+     * for example, if precision is 1000, a > 17356 will be calculated as a > floor(17356 / 1000) * 1000
+     *                                     a < 17356 will be calculated as a < ceil(17356 / 1000) * 1000
+     */
+
     private final long precision;
 
     public Condition(ComparisonOperator operator, IParametricVariable<T> variable, long value, long precision) {

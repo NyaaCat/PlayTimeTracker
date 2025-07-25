@@ -20,13 +20,22 @@ public class PiecewiseTimeInfo {
     public PiecewiseTimeInfo(Instant time, ZoneId zone, DayOfWeek dayOfWeek) {
         this.zone = zone;
         this.dayOfWeek = dayOfWeek;
-        this.cachedNextDayStart = 0;
-        this.cachedNextWeekStart = 0;
-        this.cachedNextMonthStart = 0;
         this.updateTime(time);
     }
 
-    public void updateTime(final Instant time) {
+    public PiecewiseTimeInfo(PiecewiseTimeInfo other) {
+        this.zone = other.zone;
+        this.dayOfWeek = other.dayOfWeek;
+        this.time = other.time;
+        this.cachedSameDayStart = other.cachedSameDayStart;
+        this.cachedNextDayStart = other.cachedNextDayStart;
+        this.cachedSameWeekStart = other.cachedSameWeekStart;
+        this.cachedNextWeekStart = other.cachedNextWeekStart;
+        this.cachedSameMonthStart = other.cachedSameMonthStart;
+        this.cachedNextMonthStart = other.cachedNextMonthStart;
+    }
+
+    public void updateTime(Instant time) {
         this.time = time.toEpochMilli();
         ZonedDateTime dateTime = null;
         if (this.time >= this.cachedNextDayStart) {
@@ -84,5 +93,27 @@ public class PiecewiseTimeInfo {
 
     public long getNextMonthStart() {
         return this.cachedNextMonthStart;
+    }
+
+
+
+    public static class Builder {
+
+        public final ZoneId zone;
+
+        public final DayOfWeek dayOfWeek;
+
+        public Builder(ZoneId zone, DayOfWeek dayOfWeek) {
+            this.zone = zone;
+            this.dayOfWeek = dayOfWeek;
+        }
+
+        public PiecewiseTimeInfo build(Instant time) {
+            return new PiecewiseTimeInfo(time, this.zone, this.dayOfWeek);
+        }
+
+        public static Builder extract(PiecewiseTimeInfo time) {
+            return new Builder(time.zone, time.dayOfWeek);
+        }
     }
 }

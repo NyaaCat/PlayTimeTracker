@@ -1,16 +1,26 @@
 package cat.nyaa.playtimetracker.workflow;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
-public record TriggerEvent(TriggerType source, @Nullable String player, @Nullable String mission) {
+import java.util.UUID;
 
-    public enum TriggerType {
-        ENABLE,
-        DISABLE,
-        LOGIN,
-        LOGOUT,
-        RESET,
-        MISSION,
-        ;
+public enum TriggerEvent {
+    ENABLE,
+    DISABLE,
+    LOGIN,
+    LOGOUT,
+    RESET,
+    MISSION,
+    AFK_START,
+    AFK_END,
+    UPDATE,
+    ;
+
+    public boolean isBeginEvent() {
+        return this == ENABLE || this == LOGIN || this == AFK_END;
+    }
+
+    public boolean isEndEvent() {
+        return this == DISABLE || this == LOGOUT || this == AFK_START;
     }
 }

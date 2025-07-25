@@ -36,30 +36,12 @@ public class MissionConfig extends FileConfigure implements ISerializableExt {
     }
 
     @Override
-    public boolean validate(List<String> outputError) {
+    public void validate(IValidationContext context) throws Exception {
         for (var mission : missions.entrySet()) {
-            if(!mission.getValue().validate(outputError)) {
-                outputError.add("Invalid mission data: " + mission.getKey());
-                return false;
-            }
+            mission.getValue().validate(context);
         }
         if(loginCheckDelayTicks < 0) {
-            outputError.add("Invalid login-check-delay-ticks (should be positive): " + loginCheckDelayTicks);
-            return false;
-        }
-        return true;
-    }
-
-    @Override
-    public void load() {
-        super.load();
-        List<String> outputError = new ObjectArrayList<>(4);
-        if(!validate(outputError)) {
-            StringBuilder sb = new StringBuilder("Parse error in MissionConfig: ");
-            for (int i = outputError.size() - 1; i >= 0; i--) {
-                sb.append("\r\n\t").append(outputError.get(i));
-            }
-            throw new RuntimeException(sb.toString());
+            throw new IllegalArgumentException("loginCheckDelayTicks must be non-negative");
         }
     }
 }

@@ -2,15 +2,15 @@ package cat.nyaa.playtimetracker.config;
 
 import cat.nyaa.nyaacore.configuration.ISerializable;
 
-import java.util.List;
-
 public interface ISerializableExt extends ISerializable {
+
+
 
     /**
      * Validate the data in the object. may modify un-serilizable fields.
-     * @param outputError a list to store the error message.
-     *                    will be read from end to start.
-     * @return true if the data is valid, false otherwise.
+     * This method should be called after deserialization to ensure the object is in a valid state.
+     * throws Exception if validation fails.
+     * @param context validation context, can be used to access other configurations or services.
      */
-    boolean validate(List<String> outputError);
+    void validate(IValidationContext context) throws Exception;
 }

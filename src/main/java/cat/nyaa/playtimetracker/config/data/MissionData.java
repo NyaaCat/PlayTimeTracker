@@ -2,7 +2,7 @@ package cat.nyaa.playtimetracker.config.data;
 
 import cat.nyaa.playtimetracker.condition.ICondition;
 import cat.nyaa.playtimetracker.config.ISerializableExt;
-import cat.nyaa.playtimetracker.workflow.LimitedTimeTrackerModel;
+import cat.nyaa.playtimetracker.config.IValidationContext;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -31,32 +31,45 @@ public class MissionData implements ISerializableExt {
     }
 
     private @Nullable List<ISerializableExt> sortedRewardList = null;
+    private @Nullable ICondition<?> compiledCondition = null;
 
     public MissionData() {
     }
 
     @Override
-    public boolean validate(List<String> outputError) {
+    public void validate(IValidationContext context) throws Exception {
+        if (expression == null || expression.isBlank()) {
+            throw new IllegalArgumentException("Expression cannot be null or empty");
+        }
+        if (context instanceof IConditionCompiler conditionCompiler) {
+            compiledCondition = conditionCompiler.compile(expression);
+        }
         List<ISerializableExt> sortedList = new ArrayList<>(rewardList.size());
         var keys = rewardList.keySet().stream().sorted().iterator();
         while (keys.hasNext()) {
             var key = keys.next();
             var reward = rewardList.get(key);
-            if(reward == null || !reward.validate(outputError)) {
-                outputError.add("Invalid reward: " + key);
-                return false;
+            if (reward == null) {
+                throw new IllegalArgumentException("Reward for key '" + key + "' is null");
             }
+            reward.validate(context);
             sortedList.add(reward);
         }
         sortedRewardList = sortedList;
-        return true;
     }
 
     public List<ISerializableExt> getSortedRewardList() {
+        assert sortedRewardList != null : "Sorted reward list is not initialized. Call validate() first.";
         return sortedRewardList;
     }
 
-    public ICondition<LimitedTimeTrackerModel> getTimeCondition() {
-        return null;
+    public ICondition<?> getTimeCondition() {
+        assert compiledCondition != null : "Compiled condition is not initialized. Call validate() first.";
+        return compiledCondition;
+    }
+
+    public interface IConditionCompiler extends IValidationContext {
+
+        ICondition<?> compile(String expression) throws Exception;
     }
 }

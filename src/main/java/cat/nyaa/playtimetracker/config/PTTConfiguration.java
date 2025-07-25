@@ -4,8 +4,9 @@ import cat.nyaa.nyaacore.configuration.PluginConfigure;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.time.ZoneId;
+import java.util.List;
 
-public class PTTConfiguration extends PluginConfigure {
+public class PTTConfiguration extends PluginConfigure implements ISerializableExt {
 
     @StandaloneConfig
     public final DatabaseConfig databaseConfig;
@@ -36,5 +37,12 @@ public class PTTConfiguration extends PluginConfigure {
     @Override
     protected JavaPlugin getPlugin() {
         return plugin;
+    }
+
+    @Override
+    public void validate(IValidationContext context) throws Exception {
+        // TODO: validate this
+        databaseConfig.validate(context);
+        missionConfig.validate(context);
     }
 }

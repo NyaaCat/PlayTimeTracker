@@ -1,6 +1,7 @@
 package cat.nyaa.playtimetracker.config.data;
 
 import cat.nyaa.playtimetracker.config.ISerializableExt;
+import cat.nyaa.playtimetracker.config.IValidationContext;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -34,36 +35,22 @@ public class EcoRewardData implements ISerializableExt {
     }
 
     @Override
-    public boolean validate(List<String> outputError) {
+    public void validate(IValidationContext context) throws Exception {
         if(!isRefVaultSystemVault()) {
-            try {
-                refVaultUUID = UUID.fromString(refVault);
-            } catch (IllegalArgumentException e) {
-                outputError.add("Invalid ref-vault (should be UUID or \"$system\"): " + refVault);
-                return false;
-            }
+            refVaultUUID = UUID.fromString(refVault);
         }
         if(ratio < 0.0 || ratio > 1.0) {
-            outputError.add("Invalid ratio (should be in [0.0, 1.0]): " + ratio);
-            return false;
+            throw new IllegalArgumentException("Invalid ratio (should be in [0.0, 1.0]): " + ratio);
         }
         if(min < 0.0 || max < 0.0 || min > max) {
-            outputError.add("Invalid min/max: " + min + "/" + max);
-            return false;
+            throw new IllegalArgumentException("Invalid min/max (should be non-negative and min <= max): " + min + "/" + max);
         }
         if(amount < 0.0) {
-            outputError.add("Invalid amount (should be non-negative): " + amount);
-            return false;
+            throw new IllegalArgumentException("Invalid amount (should be non-negative): " + amount);
         }
         if(!isVaultSystemVault()) {
-            try {
-                vaultUUID = UUID.fromString(vault);
-            } catch (IllegalArgumentException e) {
-                outputError.add("Invalid vault (should be UUID or \"$system\"): " + vault);
-                return false;
-            }
+            vaultUUID = UUID.fromString(vault);
         }
-        return true;
     }
 
     public boolean isRefVaultSystemVault() {

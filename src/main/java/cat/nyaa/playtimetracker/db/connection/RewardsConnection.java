@@ -8,13 +8,12 @@ import it.unimi.dsi.fastutil.ints.IntCollection;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.bukkit.plugin.Plugin;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
-import javax.annotation.concurrent.NotThreadSafe;
 import java.util.List;
 import java.util.UUID;
 
-@NotThreadSafe
+// NotThreadSafe
 public class RewardsConnection implements IBatchOperate {
     private final RewardsTable rewardsTable;
 

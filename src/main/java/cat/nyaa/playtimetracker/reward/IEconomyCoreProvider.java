@@ -5,6 +5,5 @@ import org.jetbrains.annotations.Nullable;
 
 public interface IEconomyCoreProvider {
 
-    @Nullable
-    EconomyCore getEconomyCore();
+    @Nullable EconomyCore getEconomyCore();
 }

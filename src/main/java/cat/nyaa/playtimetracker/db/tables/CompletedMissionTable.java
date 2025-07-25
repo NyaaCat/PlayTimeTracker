@@ -3,7 +3,7 @@ package cat.nyaa.playtimetracker.db.tables;
 import cat.nyaa.playtimetracker.db.DatabaseManager;
 import cat.nyaa.playtimetracker.db.model.CompletedMissionDbModel;
 import cat.nyaa.playtimetracker.db.utils.DatabaseUtils;
-import cat.nyaa.playtimetracker.utils.Constants;
+import cat.nyaa.playtimetracker.utils.LoggerUtils;
 import com.zaxxer.hikari.HikariDataSource;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +19,7 @@ import java.util.UUID;
 @NotThreadSafe
 public class CompletedMissionTable {
 
-    private static final Logger logger = Constants.getPluginLogger();
+    private static final Logger logger = LoggerUtils.getPluginLogger();
     public static final String TABLE_NAME = "completed";
     private final HikariDataSource ds;
 

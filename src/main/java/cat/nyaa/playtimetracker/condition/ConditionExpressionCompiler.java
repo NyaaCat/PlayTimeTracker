@@ -35,7 +35,7 @@ public class ConditionExpressionCompiler<T> {
         this.precision = precision;
     }
 
-    public ConditionNode<T> compile(ConditionTokenizer.Reader reader) throws CompileException {
+    public ICondition<T> compile(ConditionTokenizer.Reader reader) throws CompileException {
         List<Pair<Token, OperatorProperty>> stackOperators = new ObjectArrayList<>();
         List<Object> stack = new ObjectArrayList<>(); // ToLongFunction: variable, Long: constant, ConditionNode: node
         while (reader.hasNext()) {
@@ -60,10 +60,10 @@ public class ConditionExpressionCompiler<T> {
                         throw new CompileException("unexpected end of expression: stack size = " + stack.size());
                     }
                     Object result = stack.removeLast();
-                    if (!(result instanceof ConditionNode)) {
+                    if (!(result instanceof ICondition<?>)) {
                         throw new CompileException("unexpected result type: " + result.getClass());
                     }
-                    return (ConditionNode<T>) result;
+                    return (ICondition<T>) result;
                 }
                 case TOKEN_VARIABLE -> {
                     stack.addLast(resolveVariable(token));
@@ -112,7 +112,10 @@ public class ConditionExpressionCompiler<T> {
                 Object left = stack.removeLast();
                 if (property.cmp != null) {
                     ComparisonOperator cmp = property.cmp;
-                    if(left instanceof Long) {
+                    if(left instanceof Long leftValue) {
+                        if (right instanceof Long rightValue) {
+                            return ConstantNode.calculate(cmp, leftValue, rightValue);
+                        }
                         var tmp = left;
                         left = right;
                         right = tmp;
@@ -122,6 +125,28 @@ public class ConditionExpressionCompiler<T> {
                     return condition;
                 }
                 if (property.logic != null) {
+                    if (right instanceof ConstantNode<?> rightNode) {
+                        // short-circuit evaluation for constant right side
+                        switch (property.logic) {
+                            case AND -> {
+                                return rightNode.value ? (ICondition<T>) left : new ConstantNode<>(false);
+                            }
+                            case OR -> {
+                                return rightNode.value ? new ConstantNode<>(true) : (ICondition<T>) left;
+                            }
+                        }
+                    }
+                    if (left instanceof ConstantNode<?> leftNode) {
+                        // short-circuit evaluation for constant left side
+                        switch (property.logic) {
+                            case AND -> {
+                                return leftNode.value ? (ICondition<T>) right : new ConstantNode<>(false);
+                            }
+                            case OR -> {
+                                return leftNode.value ? new ConstantNode<>(true) : (ICondition<T>) right;
+                            }
+                        }
+                    }
                     return new ConditionNode<>(property.logic, (ICondition<T>) left, (ICondition<T>) right);
                 }
             } catch (RuntimeException e) {

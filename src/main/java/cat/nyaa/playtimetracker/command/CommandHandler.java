@@ -7,7 +7,7 @@ import cat.nyaa.playtimetracker.*;
 import cat.nyaa.playtimetracker.command.sub.ResetCommand;
 import cat.nyaa.playtimetracker.db.model.TimeTrackerDbModel;
 import cat.nyaa.playtimetracker.utils.CommandUtils;
-import cat.nyaa.playtimetracker.utils.Constants;
+import cat.nyaa.playtimetracker.utils.LoggerUtils;
 import cat.nyaa.playtimetracker.utils.TimeUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -23,7 +23,7 @@ import java.util.UUID;
 
 public class CommandHandler extends CommandReceiver {
 
-    private static final Logger logger = Constants.getPluginLogger();
+    private static final Logger logger = LoggerUtils.getPluginLogger();
 
     private final I18n i18n;
     private final PlayTimeTracker plugin;
@@ -201,7 +201,7 @@ public class CommandHandler extends CommandReceiver {
                 PlayTimeTracker.getInstance().onReload();
             } catch (Exception e) {
                 e.printStackTrace();
-                PlayTimeTracker.getInstance().getPluginLoader().disablePlugin(PlayTimeTracker.getInstance());
+                //PlayTimeTracker.getInstance().getPluginLoader().disablePlugin(PlayTimeTracker.getInstance());
                 I18n.send(sender, "command.reload.err");
             }
         } else {
