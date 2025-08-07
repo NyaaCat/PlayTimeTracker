@@ -98,7 +98,7 @@ message:
       command: /ptt acquire
       msg: You have %s reward(s) awaiting for acquiring
     eco:
-      success: Economy Reward of %s%s has been added to your account
+      success: Economy Reward of %.2f%s has been added to your account
 time:
   format:
     h: ' hours '

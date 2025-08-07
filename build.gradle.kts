@@ -6,11 +6,11 @@ plugins {
 // = = =
 
 val pluginName = "PlayerTimeTracker"
-val paperApiName = "1.21.1-R0.1-SNAPSHOT"
+val paperApiName = "1.21.8-R0.1-SNAPSHOT"
 
 // Version used for distribution. Different from maven repo
 group = "cat.nyaa"
-version = "0.10-alpha.3"
+version = "0.10.4"
 
 java {
     // Configure the java toolchain. This allows gradle to auto-provision JDK 21 on systems that only have JDK 8 installed for example.
@@ -19,10 +19,10 @@ java {
 
 repositories {
     mavenCentral()
-    maven { url = uri("https://papermc.io/repo/repository/maven-public/") } //paper
+    maven { url = uri("https://repo.papermc.io/repository/maven-public/") } //paper
     maven { url = uri("https://libraries.minecraft.net") } // mojang
-//    maven { url = uri("https://repo.essentialsx.net/releases/") } // essentials
-    maven { url = uri("https://repo.essentialsx.net/snapshots/") } // essentials
+    maven { url = uri("https://repo.essentialsx.net/releases/") } // essentials
+//    maven { url = uri("https://repo.essentialsx.net/snapshots/") } // essentials
     maven { url = uri("https://ci.nyaacat.com/maven/") } // nyaacat
 //    maven {
 //        url = uri("https://maven.pkg.github.com/NyaaCat/NyaaCore")
@@ -38,14 +38,16 @@ dependencies {
     compileOnly("io.papermc.paper:paper-api:$paperApiName")
     compileOnly("org.jetbrains:annotations:24.1.0")
     // soft dep
-    compileOnly("net.essentialsx:EssentialsX:2.21.0-SNAPSHOT")
+    compileOnly("net.essentialsx:EssentialsX:2.21.2") {
+        exclude(group = "org.spigotmc", module = "spigot-api")
+    }
     compileOnly("me.clip:placeholderapi:2.11.6")
     compileOnly("com.udojava:EvalEx:2.7")
     compileOnly("org.xerial:sqlite-jdbc:3.46.0.0")
     compileOnly("com.zaxxer:HikariCP:5.1.0")
     // other nyaa plugins
-    compileOnly("cat.nyaa:nyaacore:9.4")
-    compileOnly("cat.nyaa:ecore:0.3.4")  // optional
+    compileOnly("cat.nyaa:nyaacore:9.10")
+    compileOnly("cat.nyaa:ecore:0.3.5")  // optional
 
     // test
     testImplementation(platform("org.junit:junit-bom:5.10.3"))
@@ -54,8 +56,8 @@ dependencies {
     testImplementation("com.github.seeseemelk:MockBukkit-v1.21:3.107.0")
     testImplementation("org.xerial:sqlite-jdbc:3.46.0.0")
     testImplementation("com.zaxxer:HikariCP:5.1.0")
-    testImplementation("cat.nyaa:nyaacore:9.4")
-    testImplementation("cat.nyaa:ecore:0.3.4")
+    testImplementation("cat.nyaa:nyaacore:9.10")
+    testImplementation("cat.nyaa:ecore:0.3.5")
 }
 
 publishing {

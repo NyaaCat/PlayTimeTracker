@@ -98,7 +98,7 @@ message:
       command: /ptt acquire
       msg: 您有 %s 个任务奖励可以领取
     eco:
-      success: 经济奖励%s%s已经添加到您的账户
+      success: 经济奖励%.2f%s已经添加到您的账户
 time:
   format:
     h: ' 小时 '
