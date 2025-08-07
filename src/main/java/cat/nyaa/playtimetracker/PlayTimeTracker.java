@@ -6,9 +6,10 @@ import cat.nyaa.playtimetracker.condition.ICondition;
 import cat.nyaa.playtimetracker.config.PTTConfiguration;
 import cat.nyaa.playtimetracker.config.data.MissionData;
 import cat.nyaa.playtimetracker.db.DatabaseManager;
-import cat.nyaa.playtimetracker.executor.ITaskExecutor;
 import cat.nyaa.playtimetracker.executor.TaskExecutor;
+import cat.nyaa.playtimetracker.listener.EssAfkListener;
 import cat.nyaa.playtimetracker.listener.ListenerManager;
+import cat.nyaa.playtimetracker.listener.PlayTimeTrackerListener;
 import cat.nyaa.playtimetracker.reward.IEconomyCoreProvider;
 import cat.nyaa.playtimetracker.task.PTTTaskManager;
 import cat.nyaa.playtimetracker.utils.LoggerUtils;
@@ -24,11 +25,14 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.time.DayOfWeek;
 import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
-public final class PlayTimeTracker extends JavaPlugin implements IEconomyCoreProvider, IEssentialsAPIProvider {
+public final class PlayTimeTracker extends JavaPlugin implements IEconomyCoreProvider, IEssentialsAPIProvider, IPlayTimeTracker {
     @Nullable
     private static PlayTimeTracker instance;
     @Nullable
@@ -59,7 +63,7 @@ public final class PlayTimeTracker extends JavaPlugin implements IEconomyCorePro
 
     private TaskExecutor taskExecutor;
     private PlayTimeTrackerController controller;
-    private Listener listener;
+    private Collection<Listener> listeners;
 
 
     @Nullable
@@ -115,6 +119,21 @@ public final class PlayTimeTracker extends JavaPlugin implements IEconomyCorePro
             this.economyCore = economyProvider.getProvider();
         }
 
+        taskExecutor = new TaskExecutor(this, 10, 1, TimeUnit.SECONDS);
+        var timeBuilder = new PiecewiseTimeInfo.Builder(timezone, DayOfWeek.MONDAY);
+        controller = new PlayTimeTrackerController(this, taskExecutor, pttConfiguration.missionConfig, databaseManager, timeBuilder);
+        taskExecutor.start();
+        listeners = new ArrayList<>();
+        listeners.add(new PlayTimeTrackerListener(this));
+        var ess = this.getEssentialsAPI();
+        if (ess != null) {
+            listeners.add(new EssAfkListener(this));
+        }
+        var pluginManager = getServer().getPluginManager();
+        for (Listener listener : listeners) {
+            pluginManager.registerEvents(listener, this);
+        }
+
         //command
         this.commandHandler = new CommandHandler(this, i18n);
         PluginCommand mainCommand = getCommand("playtimetracker");
@@ -125,19 +144,13 @@ public final class PlayTimeTracker extends JavaPlugin implements IEconomyCorePro
             throw new RuntimeException("Command registration failed");
         }
 
-        taskExecutor = new TaskExecutor(this, 10, 1, TimeUnit.SECONDS);
-        var timeBuilder = new PiecewiseTimeInfo.Builder(timezone, DayOfWeek.MONDAY);
-        controller = new PlayTimeTrackerController(this, taskExecutor, pttConfiguration.missionConfig, databaseManager, timeBuilder);
-        taskExecutor.start();
-        listener = new PlayTimeTrackerController.PTTListener(controller);
-        getServer().getPluginManager().registerEvents(listener, this);
-
         //listener
         //this.listenerManager = new ListenerManager(this);
         //task
         //this.taskManager = new PTTTaskManager(this, pttConfiguration);
         //afk
-        this.afkManager = new PlayerAFKManager(this);
+        this.afkManager = new PlayerAFKManager(this.getPttConfiguration(), this.getEssentialsAPI());
+        PlayerAFKManager.setInstance(this.afkManager);
         //record
         //this.timeRecordManager = new TimeRecordManager(this, databaseManager.getTimeTrackerConnection());
         //reward
@@ -181,6 +194,22 @@ public final class PlayTimeTracker extends JavaPlugin implements IEconomyCorePro
         return missionManager;
     }
 
+    @Override
+    @Nullable
+    public PlayTimeTrackerController getController() {
+        return this.controller;
+    }
+
+    @Override
+    public @Nullable PlayerAFKManager getPlayerAFKManager() {
+        return this.afkManager;
+    }
+
+    @Override
+    public File getFileInDataFolder(String fileName) {
+        return new File(this.getDataFolder(), fileName);
+    }
+
     @Nullable
     public PTTConfiguration getPttConfiguration() {
         return pttConfiguration;
@@ -211,9 +240,11 @@ public final class PlayTimeTracker extends JavaPlugin implements IEconomyCorePro
     @Override
     public void onDisable() {
 
-        if (listener != null) {
-            HandlerList.unregisterAll(listener);
-            listener = null;
+        if (listeners != null) {
+            for (var listener : listeners) {
+                HandlerList.unregisterAll(listener);
+            }
+            listeners = null;
         }
 
         if (this.listenerManager != null) {

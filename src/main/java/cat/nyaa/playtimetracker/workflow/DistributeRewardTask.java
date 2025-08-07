@@ -12,6 +12,7 @@ import cat.nyaa.playtimetracker.utils.PiecewiseTimeInfo;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
+/// sync task (first step)
 public class DistributeRewardTask implements ITask {
 
     private final static Logger logger = LoggerUtils.getPluginLogger();
@@ -39,36 +40,37 @@ public class DistributeRewardTask implements ITask {
     }
 
     @Override
-    public void execute(Long tick) {
-        logger.trace("DistributeRewardTask execute@{} START; step:{} player={},mission={} reward={}", tick, this.step, this.playerContext.getUUID(), this.mission, this.reward);
+    public void execute(@Nullable Long tick) {
+        logger.trace("DistributeRewardTask execute START; step:{} player={},mission={} reward={}", this.step, this.playerContext.getUUID(), this.mission, this.reward);
         switch (this.step) {
-            case 0 -> this.step = this.syncHandleStep1(tick);
-            case 1 -> this.step = this.asyncHandleStep2();
+            case 0 -> this.syncHandleStep1(tick);
+            case 1 -> this.asyncHandleStep2();
             default -> throw new IllegalStateException();
         }
         logger.trace("DistributeRewardTask execute END; next:{}", this.step);
     }
 
-    private int syncHandleStep1(long tick) {
+    private void syncHandleStep1(long tick) {
         // step 1: prepare reward in game-loop
         boolean prepared = this.reward.prepare(this.mission, this.time.getTimestamp(), this.playerContext.getPlayer(tick), this.context.getPlugin());
         if (!prepared) {
             logger.warn("DistributeRewardTask execute Failed to prepare reward for player={}, mission={}, reward={} time={}", this.playerContext.getUUID(), this.mission, this.reward, this.time.getTimestamp());
-            return 0xFF;
+            this.step = 0xFF; // cancel the task
+            return;
         }
 
+        this.step = 1; // proceed to next step
         this.context.getExecutor().async(this);
-        return 1;
     }
 
-    private int asyncHandleStep2() {
+    private void asyncHandleStep2() {
         // step 2: push reward asynchronously
         var rewardsConnection = context.getRewardsConnection();
         rewardsConnection.addReward(this.playerContext.getUUID(), this.mission, this.reward, this.time.getTimestamp());
         if (this.groupOp != null) {
-            this.groupOp.trigger();
+            this.groupOp.trigger(null);
         }
-        return 0xFF;
+        this.step = 0xFF; // task finished
     }
 
     private @Nullable IReward createReward(String mission, Object rewardData) {

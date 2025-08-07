@@ -24,9 +24,8 @@ public class RepeatedlyTask implements ITask {
         this.callbacks = callbacks;
         var currentTime = TimeUtils.getInstantNow();
         this.time = timeBuilder.build(currentTime);
-        var wait = this.time.getNextDayStart() - this.time.getTimestamp();
-        this.handle = this.executor.scheduleAsync(this, wait, TimeUnit.MILLISECONDS);
         logger.info("RepeatedlyTask start");
+        nextWait();
     }
 
     @Override
@@ -72,8 +71,13 @@ public class RepeatedlyTask implements ITask {
                 this.executor.sync(this.callbacks.onMonthStartSync);
             }
         }
+        nextWait();
+    }
+
+    private void nextWait() {
         var wait = this.time.getNextDayStart() - this.time.getTimestamp();
         this.handle = this.executor.scheduleAsync(this, wait, TimeUnit.MILLISECONDS);
+        logger.info("RepeatedlyTask next wait for {}ms", wait);
     }
 
     public boolean cancel() {
@@ -88,12 +92,29 @@ public class RepeatedlyTask implements ITask {
         return false;
     }
 
-    public record Callbacks(@Nullable ITask onDayStartAsync,
-                            @Nullable ITask onWeekStartAsync,
-                            @Nullable ITask onMonthStartAsync,
-                            @Nullable ITask onDayStartSync,
-                            @Nullable ITask onWeekStartSync,
-                            @Nullable ITask onMonthStartSync) {
+    public static class Callbacks {
+        @Nullable public ITask onDayStartAsync;
+        @Nullable public ITask onWeekStartAsync;
+        @Nullable public ITask onMonthStartAsync;
+        @Nullable public ITask onDayStartSync;
+        @Nullable public ITask onWeekStartSync;
+        @Nullable public ITask onMonthStartSync;
 
+        public Callbacks() {
+        }
+
+        public Callbacks(@Nullable ITask onDayStartAsync,
+                         @Nullable ITask onWeekStartAsync,
+                         @Nullable ITask onMonthStartAsync,
+                         @Nullable ITask onDayStartSync,
+                         @Nullable ITask onWeekStartSync,
+                         @Nullable ITask onMonthStartSync) {
+            this.onDayStartAsync = onDayStartAsync;
+            this.onWeekStartAsync = onWeekStartAsync;
+            this.onMonthStartAsync = onMonthStartAsync;
+            this.onDayStartSync = onDayStartSync;
+            this.onWeekStartSync = onWeekStartSync;
+            this.onMonthStartSync = onMonthStartSync;
+        }
     }
 }

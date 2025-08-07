@@ -12,25 +12,27 @@ import java.util.List;
 import java.util.UUID;
 
 public class CommandUtils {
-    @Nullable
-    public static UUID getPlayerUUIDByStr(String string, CommandSender sender) {
+
+    public static @Nullable UUID getPlayerUUIDByStr(String string, CommandSender sender) {
+        try {
+            return UUID.fromString(string);
+        } catch (IllegalArgumentException ignored) {
+            var player = getPlayerByStr(string, sender);
+            return player != null ? player.getUniqueId() : null;
+        }
+    }
+
+    public static @Nullable OfflinePlayer getPlayerByStr(String string, CommandSender sender) {
         if (string.startsWith("@")) {
             List<Entity> entities = Bukkit.selectEntities(sender, string);
             if (entities.size() != 1) return null;
-            return entities.get(0) instanceof Player ? entities.get(0).getUniqueId() : null;
+            return entities.getFirst() instanceof Player player ? player : null;
         }
         Player onlinePlayer = Bukkit.getPlayer(string);
-        if (onlinePlayer != null) return onlinePlayer.getUniqueId();
-
-        UUID StrUuid = null;
-        try {
-            StrUuid = UUID.fromString(string);
-        } catch (IllegalArgumentException ignored) {
+        if (onlinePlayer != null) {
+            return onlinePlayer;
         }
-        if (StrUuid != null) return StrUuid;
 
-        OfflinePlayer offlinePlayer = OfflinePlayerUtils.lookupPlayer(string);
-        if (offlinePlayer != null) return offlinePlayer.getUniqueId();
-        return null;
+        return OfflinePlayerUtils.lookupPlayer(string);
     }
 }

@@ -1,5 +1,7 @@
 package cat.nyaa.playtimetracker.executor;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class AbstractFinalTrigger implements IFinalTrigger {
@@ -11,7 +13,7 @@ public abstract class AbstractFinalTrigger implements IFinalTrigger {
     }
 
     @Override
-    public void retain() {
+    public void retain(@Nullable Long tick) {
         if (this.refCount.getAndIncrement() < 0) {
             this.refCount.set(-1);
             throw new IllegalStateException("AbstractFinalTrigger retain called after released");
@@ -19,12 +21,12 @@ public abstract class AbstractFinalTrigger implements IFinalTrigger {
     }
 
     @Override
-    public void release() {
+    public void release(@Nullable Long tick) {
         if (this.refCount.decrementAndGet() <= 0) {
             this.refCount.set(-1);
-            this.handle();
+            this.handle(tick);
         }
     }
 
-    protected abstract void handle();
+    protected abstract void handle(@Nullable Long tick);
 }

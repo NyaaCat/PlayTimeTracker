@@ -12,12 +12,12 @@ public abstract class AbstractOnceTrigger implements IOnceTrigger {
         this.triggered = new AtomicBoolean(false);
     }
 
-    protected abstract void handle();
+    protected abstract void handle(@Nullable Long tick);
 
     @Override
-    public void trigger() {
+    public void trigger(@Nullable Long tick) {
         if (this.triggered.compareAndSet(false, true)) {
-            this.handle();
+            this.handle(tick);
         }
     }
 }

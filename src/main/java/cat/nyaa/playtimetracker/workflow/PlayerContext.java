@@ -2,6 +2,7 @@ package cat.nyaa.playtimetracker.workflow;
 
 import cat.nyaa.playtimetracker.utils.LoggerUtils;
 import com.earth2me.essentials.User;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +26,15 @@ public class PlayerContext {
     public PlayerContext(UUID playerUUID, Plugin plugin) {
         this.plugin = plugin;
         this.playerUUID = playerUUID;
+    }
+
+    public PlayerContext(OfflinePlayer player, Plugin plugin) {
+        this.plugin = plugin;
+        this.playerUUID = player.getUniqueId();
+        if (player instanceof Player onlinePlayer) {
+            this.player = onlinePlayer;
+            this.playerInitialized = true;
+        }
     }
 
     public UUID getUUID() {

@@ -9,8 +9,10 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
+/// sync task
 public class NotifyRewardTask extends AbstractOnceTrigger implements ITask {
 
     private final static Logger logger = LoggerUtils.getPluginLogger();
@@ -26,8 +28,8 @@ public class NotifyRewardTask extends AbstractOnceTrigger implements ITask {
     }
 
     @Override
-    public void execute(Long tick) {
-        logger.trace("NotifyRewardsTask execute@{} START player={}, mission={}", tick, this.playerContext.getUUID(), this.mission);
+    public void execute(@Nullable Long tick) {
+        logger.trace("NotifyRewardsTask execute START player={}, mission={}", this.playerContext.getUUID(), this.mission);
         final Player player = this.playerContext.getPlayer(tick);
         if (player == null || !player.isOnline()) {
             logger.warn("NotifyRewardsTask execute@{} player={} is offline, mission={}", tick, this.playerContext.getUUID(), this.mission);
@@ -52,7 +54,7 @@ public class NotifyRewardTask extends AbstractOnceTrigger implements ITask {
     }
 
     @Override
-    protected void handle() {
+    protected void handle(@Nullable Long tick) {
         this.context.getExecutor().sync(this);
         logger.info("NotifyRewardsTask added to executor for player={}, mission={}", this.playerContext.getUUID(), this.mission);
     }

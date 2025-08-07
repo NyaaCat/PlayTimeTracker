@@ -15,6 +15,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 import org.slf4j.Logger;
 
 import java.io.File;
@@ -25,75 +26,80 @@ public class CommandHandler extends CommandReceiver {
 
     private static final Logger logger = LoggerUtils.getPluginLogger();
 
-    private final I18n i18n;
-    private final PlayTimeTracker plugin;
+    private final IPlayTimeTracker plugin;
 
 
     @SubCommand(value = "reset", permission = "ptt.command.reset")
     public ResetCommand resetCommand;
 
-    /**
-     * @param plugin for logging purpose only
-     * @param _i18n  i18n
-     */
-    public CommandHandler(PlayTimeTracker plugin, I18n _i18n) {
+    public CommandHandler(Plugin plugin, I18n _i18n) {
         super(plugin, _i18n);
-        this.i18n = _i18n;
-        this.plugin = plugin;
+        if (plugin instanceof IPlayTimeTracker instance) {
+            this.plugin = instance;
+        } else {
+            throw new IllegalArgumentException("Plugin must implement IPlayTimeTracker");
+        }
     }
 
     @SubCommand(value = "view", permission = "ptt.command.view", isDefaultCommand = true)
     public void view(CommandSender sender, Arguments args) {
-        if (PlayTimeTracker.getInstance() == null || PlayTimeTracker.getInstance().getTimeRecordManager() == null) {
+        var controller = this.plugin.getController();
+        if (controller == null) {
             I18n.send(sender, "command.view.err");
             return;
         }
         String targetName = args.next();
-        UUID targetUUID = null;
         if (targetName != null) {
             String otherPermission = "ptt.command.view.other";
             if (!sender.hasPermission(otherPermission)) {
                 I18n.send(sender, "command.view.no_view_other_permission", otherPermission);
                 return;
             }
-            targetUUID = CommandUtils.getPlayerUUIDByStr(targetName, sender);
-        } else {
-            if (sender instanceof Player) {
-                targetUUID = ((Player) sender).getUniqueId();
-                targetName = sender.getName();
+            try {
+                UUID targetUUID = UUID.fromString(targetName);
+                if (!controller.viewPlayTime(targetUUID, targetName, sender)) {
+                    I18n.send(sender, "command.view.err");
+                    return;
+                }
+                return;
+            } catch (IllegalArgumentException e) {
+                // Not a valid UUID, continue to find player by name
+                var player = CommandUtils.getPlayerByStr(targetName, sender);
+                if (player != null) {
+                    if (!controller.viewPlayTime(player, sender)) {
+                        I18n.send(sender, "command.view.err");
+                        return;
+                    }
+                    return;
+                }
+            }
+        } else if (sender instanceof Player player) {
+            if (!controller.viewPlayTime(player, sender)) {
+                I18n.send(sender, "command.view.err");
+                return;
             }
         }
-        if (targetUUID == null) {
-            I18n.send(sender, "command.view.invalid_target", targetName);
-            return;
-        }
-
-        TimeTrackerDbModel timeTrackerDbModel = PlayTimeTracker.getInstance().getTimeRecordManager().getPlayerTimeTrackerDbModel(targetUUID);
-        if (timeTrackerDbModel == null) {
-            I18n.send(sender, "command.view.no_record", targetName);
-            return;
-        }
-        I18n.send(sender, "command.view.query_title", targetName, targetUUID.toString());
-        I18n.send(sender, "command.view.last_update", TimeUtils.dateFormat(timeTrackerDbModel.getLastUpdate()));
-        I18n.send(sender, "command.view.daily_time", TimeUtils.timeFormat(timeTrackerDbModel.getDailyTime()));
-        I18n.send(sender, "command.view.weekly_time", TimeUtils.timeFormat(timeTrackerDbModel.getWeeklyTime()));
-        I18n.send(sender, "command.view.monthly_time", TimeUtils.timeFormat(timeTrackerDbModel.getMonthlyTime()));
-        I18n.send(sender, "command.view.total_time", TimeUtils.timeFormat(timeTrackerDbModel.getTotalTime()));
-        I18n.send(sender, "command.view.last_seen", TimeUtils.dateFormat(timeTrackerDbModel.getLastSeen()));
+        I18n.send(sender, "command.view.invalid_target", targetName);
     }
 
     @SubCommand(value = "migration", permission = "ptt.command.migration")
     public void migration(CommandSender sender, Arguments args) {
+
         if (!args.nextString("").equals("confirm")) {
             I18n.send(sender, "command.migration.confirm");
             return;
         }
-        TimeRecordManager timeRecordManager = plugin.getTimeRecordManager();
-        if (timeRecordManager == null) {
+        var controller = this.plugin.getController();
+        if (controller == null) {
             I18n.send(sender, "command.migration.err");
             return;
         }
-        File dbFile = new File(getPlugin().getDataFolder(), "database.yml");
+        var conn = controller.getTimeTrackerConnection();
+        if (conn == null) {
+            I18n.send(sender, "command.migration.err");
+            return;
+        }
+        File dbFile = this.plugin.getFileInDataFolder("database.yml");
 
 
         if (!dbFile.canRead()) {
@@ -129,8 +135,7 @@ public class CommandHandler extends CommandReceiver {
                 trackerDbModel.setTotalTime(rec_totalTime);
                 trackerDbModel.setLastSeen(timestamp);
                 trackerDbModel.setPlayerUniqueId(rec_id);
-                timeRecordManager.insertOrResetPlayer(trackerDbModel);
-                timeRecordManager.insertOrResetPlayer(rec_id,TimeUtils.getUnixTimeStampNow());
+                conn.insertPlayer(trackerDbModel);
                 OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(rec_id);
                 var playerName = offlinePlayer.getName();
                 I18n.send(sender, "command.migration.insert", playerName == null ? "{" + rec_id + "}" : playerName);
@@ -140,6 +145,8 @@ public class CommandHandler extends CommandReceiver {
             }
             I18n.send(sender, "command.migration.finish");
         }
+
+
     }
 
     @SubCommand(value = "afkstatus", permission = "ptt.command.afkstatus")
@@ -159,38 +166,48 @@ public class CommandHandler extends CommandReceiver {
             return;
         }
         long afkTime = PlayTimeTracker.getInstance().getAfkManager().getAfkTime(player.getUniqueId());
-        long lastActivity = PlayTimeTracker.getInstance().getAfkManager().getlastActivity(player.getUniqueId());
+        long lastActivity = PlayTimeTracker.getInstance().getAfkManager().getLastActivity(player.getUniqueId());
         I18n.send(sender, "command.afkstatus.info", player.getName(), TimeUtils.dateFormat(lastActivity), TimeUtils.timeFormat(afkTime));
     }
 
     @SubCommand(value = "listrewards", alias = {"lsr"}, permission = "ptt.command.listrewards")
     public void listRewards(CommandSender sender, Arguments args) {
+        var controller = this.plugin.getController();
+        if (controller == null) {
+            I18n.send(sender, "command.listrewards.err");
+            return;
+        }
         String missionName = args.nextString("all");
         if (!(sender instanceof Player player)) {
             I18n.send(sender, "command.only-player-can-do");
             return;
         }
-        PlayerRewardManager missionManager = plugin.getRewardManager();
-        if (missionManager == null) {
-            I18n.send(sender, "command.acquire.err");
-            return;
+        if ("all".equals(missionName)) {
+            missionName = null; // null means list all rewards
         }
-        missionManager.executeListRewardsAsync(player, "all".equals(missionName) ? null : missionName);
+        if (!controller.listReward(player, missionName)) {
+            I18n.send(sender, "command.listrewards.err");
+        }
     }
 
     @SubCommand(value = "acquire", alias = {"ac"}, permission = "ptt.command.acquire")
     public void acquire(CommandSender sender, Arguments args) {
+        var controller = this.plugin.getController();
+        if (controller == null) {
+            I18n.send(sender, "command.acquire.err");
+            return;
+        }
         String missionName = args.nextString("all");
         if (!(sender instanceof Player player)) {
             I18n.send(sender, "command.only-player-can-do");
             return;
         }
-        PlayerRewardManager rewardManager = plugin.getRewardManager();
-        if (rewardManager == null) {
-            I18n.send(sender, "command.acquire.err");
-            return;
+        if ("all".equals(missionName)) {
+            missionName = null; // null means list all rewards
         }
-        rewardManager.executeDistributeRewardsAsync(player, "all".equals(missionName) ? null : missionName);
+        if (!controller.acquireReward(player, missionName)) {
+            I18n.send(sender, "command.acquire.err");
+        }
     }
 
     @SubCommand(value = "reload", permission = "ptt.command.reload")
@@ -210,18 +227,8 @@ public class CommandHandler extends CommandReceiver {
         I18n.send(sender, "command.reload.finish");
     }
 
-    public I18n getI18n() {
-        return i18n;
-    }
-
     @Override
     public String getHelpPrefix() {
         return "";
     }
-
-    public PlayTimeTracker getPlugin() {
-        return plugin;
-    }
-
-
 }

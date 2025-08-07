@@ -10,30 +10,25 @@ import cat.nyaa.playtimetracker.db.connection.TimeTrackerConnection;
 import cat.nyaa.playtimetracker.executor.ITask;
 import cat.nyaa.playtimetracker.executor.ITaskExecutor;
 import cat.nyaa.playtimetracker.utils.LoggerUtils;
-import it.unimi.dsi.fastutil.Pair;
 import org.bukkit.plugin.Plugin;
 import org.slf4j.Logger;
 
-import java.time.DayOfWeek;
 import java.time.Duration;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.util.Iterator;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Context implements AutoCloseable {
 
-    protected static final Logger logger = LoggerUtils.getPluginLogger();
+    public static final Logger logger = LoggerUtils.getPluginLogger();
 
-    private final Plugin plugin;
-    private final ITaskExecutor executor;
-    private final MissionConfig missionConfig;
-    private final DatabaseManager databaseManager;
-    private final ConcurrentMap<UUID, Object> playerTasks;
+    protected final Plugin plugin;
+    protected final ITaskExecutor executor;
+    protected final MissionConfig missionConfig;
+    protected final DatabaseManager databaseManager;
+    private final Map<UUID, Object> playerTasks;
     private final AtomicBoolean running;
     protected Duration maxWaitTime;
 
@@ -82,7 +77,7 @@ public class Context implements AutoCloseable {
         }
         if (this.running.get()) {
             TimeUnit unit = TimeUnit.SECONDS;
-            var delayValue = delay.getSeconds() + delay.getNano() > 0 ? 1L : 0L;
+            var delayValue = delay.getSeconds() + (delay.getNano() > 0 ? 1L : 0L);
             var handle = this.executor.scheduleAsync(task, delayValue, unit);
             if (handle != null) {
                 var legacyHandle = this.playerTasks.put(playerUUID, handle);
@@ -133,10 +128,6 @@ public class Context implements AutoCloseable {
         if (handle != null) {
             this.executor.cancelTask(handle);
         }
-    }
-
-    public PlayerContext buildPlayerContext(UUID playerUUID) {
-        return new PlayerContext(playerUUID, this.plugin);
     }
 
     public boolean isRunning() {

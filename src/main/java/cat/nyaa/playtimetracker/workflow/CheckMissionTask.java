@@ -5,10 +5,12 @@ import cat.nyaa.playtimetracker.config.data.MissionData;
 import cat.nyaa.playtimetracker.executor.IFinalTrigger;
 import cat.nyaa.playtimetracker.executor.ITask;
 import cat.nyaa.playtimetracker.utils.LoggerUtils;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
 import java.time.Duration;
 
+/// async task (first step)
 public class CheckMissionTask implements ITask {
 
     private final static Logger logger = LoggerUtils.getPluginLogger();
@@ -29,57 +31,63 @@ public class CheckMissionTask implements ITask {
         this.tracker = tracker;
         this.scheduler = scheduler;
         this.step = 0;
-        this.scheduler.retain();
+        this.scheduler.retain(null);
     }
 
     @Override
-    public void execute(Long tick) {
+    public void execute(@Nullable Long tick) {
         try {
-            logger.trace("CheckMissionTask execute@{} START; step:{} player={},mission={}", tick, this.step, this.playerContext.getUUID(), this.missionName);
+            logger.trace("CheckMissionTask execute START; step:{} player={},mission={}", this.step, this.playerContext.getUUID(), this.missionName);
             switch (this.step) {
-                case 0 -> this.step = this.syncHandleStep1(tick);
-                case 1 -> this.step = this.asyncHandleStep2();
+                case 0 -> this.syncHandleStep1(tick);
+                case 1 -> this.asyncHandleStep2();
                 default -> throw new IllegalStateException();
             }
             logger.trace("CheckMissionTask execute END; next:{}", this.step);
         } finally {
             if (this.step == 0xFF){
                 // step 0xFF means the task is finished
-                this.scheduler.release();
+                this.scheduler.release(tick);
             }
         }
     }
 
-    private int syncHandleStep1(long tick) {
+    private void syncHandleStep1(long tick) {
         // step 1: filter in game-loop
 
         if (!this.checkInGroup(tick)) {
-            return 0xFF;
+            this.step = 0xFF;
+            return;
         }
 
+        this.step = 1; // proceed to next step
         this.context.getExecutor().async(this);
-        return 1;
     }
 
-    private int asyncHandleStep2() {
+    private void asyncHandleStep2() {
         // step 2: check asynchronously
 
         if (!this.checkUncompleted()) {
-            return 0xFF;
+            this.step = 0xFF; // already completed
+            return;
         }
 
         var waitTime = this.checkMissionTimeCondition();
         logger.trace("CheckMissionTask wait {}ms to complete", waitTime);
         if (waitTime == null) {
             // impossible to complete
-            return 0xFF;
+            this.step = 0xFF;
+            return;
         }
 
         if (waitTime.isPositive()) {
             // wait for the time condition
             this.scheduler.record(this.missionName, waitTime);
-            return 0xFF;
+            this.step = 0xFF;
+            return;
         }
+
+        this.markCompleted();
 
         // push reward and notify
         var notifyRewardsTask = this.missionData.notify ? new NotifyRewardTask(this.context, this.playerContext, this.missionName) : null;
@@ -89,7 +97,8 @@ public class CheckMissionTask implements ITask {
                 this.context.getExecutor().sync(rewardTask);
             }
         }
-        return 0xFF;
+
+        this.step = 0xFF; // task finished
     }
 
     private boolean checkInGroup(long tick) {
@@ -109,7 +118,24 @@ public class CheckMissionTask implements ITask {
 
     private boolean checkUncompleted() {
         var model = this.context.getCompletedMissionConnection().getPlayerCompletedMission(this.playerContext.getUUID(), this.missionName);
-        return model == null;
+        if (model == null) {
+            return true;
+        }
+        var time = this.tracker.time;
+        if (model.lastCompletedTime < time.getSameDayStart() && this.missionData.resetDaily) {
+            return true;
+        }
+        if (model.lastCompletedTime < time.getSameWeekStart() && !this.missionData.resetWeekly) {
+            return true;
+        }
+        if (model.lastCompletedTime < time.getSameMonthStart() && !this.missionData.resetMonthly) {
+            return true;
+        }
+        return false;
+    }
+
+    private void markCompleted() {
+        this.context.getCompletedMissionConnection().writeMissionCompleted(this.playerContext.getUUID(), this.missionName, this.tracker.time.getTimestamp());
     }
 
     // @return the time to wait; None if impossible to complete; 0 if already completed
