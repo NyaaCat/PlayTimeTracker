@@ -9,6 +9,7 @@ import cat.nyaa.playtimetracker.db.model.TimeTrackerDbModel;
 import cat.nyaa.playtimetracker.utils.CommandUtils;
 import cat.nyaa.playtimetracker.utils.LoggerUtils;
 import cat.nyaa.playtimetracker.utils.TimeUtils;
+import cat.nyaa.playtimetracker.workflow.DisplayNextMissionMode;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
@@ -26,19 +27,14 @@ public class CommandHandler extends CommandReceiver {
 
     private static final Logger logger = LoggerUtils.getPluginLogger();
 
-    private final IPlayTimeTracker plugin;
-
+    private final PlayTimeTracker plugin;
 
     @SubCommand(value = "reset", permission = "ptt.command.reset")
     public ResetCommand resetCommand;
 
     public CommandHandler(Plugin plugin, I18n _i18n) {
         super(plugin, _i18n);
-        if (plugin instanceof IPlayTimeTracker instance) {
-            this.plugin = instance;
-        } else {
-            throw new IllegalArgumentException("Plugin must implement IPlayTimeTracker");
-        }
+        this.plugin = (PlayTimeTracker) plugin;
     }
 
     @SubCommand(value = "view", permission = "ptt.command.view", isDefaultCommand = true)
@@ -49,37 +45,50 @@ public class CommandHandler extends CommandReceiver {
             return;
         }
         String targetName = args.next();
+        DisplayNextMissionMode mode = DisplayNextMissionMode.First;
+        if ("full".equals(targetName)) {
+            targetName = args.next();
+            mode = DisplayNextMissionMode.All;
+        }
         if (targetName != null) {
             String otherPermission = "ptt.command.view.other";
             if (!sender.hasPermission(otherPermission)) {
                 I18n.send(sender, "command.view.no_view_other_permission", otherPermission);
                 return;
             }
-            try {
-                UUID targetUUID = UUID.fromString(targetName);
-                if (!controller.viewPlayTime(targetUUID, targetName, sender)) {
-                    I18n.send(sender, "command.view.err");
-                    return;
-                }
-                return;
-            } catch (IllegalArgumentException e) {
-                // Not a valid UUID, continue to find player by name
-                var player = CommandUtils.getPlayerByStr(targetName, sender);
-                if (player != null) {
-                    if (!controller.viewPlayTime(player, sender)) {
+            var obj = CommandUtils.getPlayerByStr(targetName, sender);
+            switch (obj) {
+                case Player player -> {
+                    if (mode != DisplayNextMissionMode.All) {
+                        var nextArgs = args.next();
+                        if ("full".equals(nextArgs)) {
+                            mode = DisplayNextMissionMode.All;
+                        }
+                    }
+                    if (!controller.isRunning()) {
                         I18n.send(sender, "command.view.err");
                         return;
                     }
-                    return;
+                    controller.viewOnlinePlayTime(player, sender, mode);
                 }
+                case UUID uuid -> {
+                    if (!controller.isRunning()) {
+                        I18n.send(sender, "command.view.err");
+                        return;
+                    }
+                    controller.viewOfflinePlayTime(uuid, targetName, sender);
+                }
+                case null, default -> I18n.send(sender, "command.view.invalid_target", targetName);
             }
         } else if (sender instanceof Player player) {
-            if (!controller.viewPlayTime(player, sender)) {
+            if (!controller.isRunning()) {
                 I18n.send(sender, "command.view.err");
                 return;
             }
+            controller.viewOnlinePlayTime(player, sender, mode);
+        } else {
+            I18n.send(sender, "command.view.invalid_target", targetName);
         }
-        I18n.send(sender, "command.view.invalid_target", targetName);
     }
 
     @SubCommand(value = "migration", permission = "ptt.command.migration")
@@ -185,9 +194,10 @@ public class CommandHandler extends CommandReceiver {
         if ("all".equals(missionName)) {
             missionName = null; // null means list all rewards
         }
-        if (!controller.listReward(player, missionName)) {
+        if (!controller.isRunning()) {
             I18n.send(sender, "command.listrewards.err");
         }
+        controller.listReward(player, missionName);
     }
 
     @SubCommand(value = "acquire", alias = {"ac"}, permission = "ptt.command.acquire")
@@ -205,17 +215,18 @@ public class CommandHandler extends CommandReceiver {
         if ("all".equals(missionName)) {
             missionName = null; // null means list all rewards
         }
-        if (!controller.acquireReward(player, missionName)) {
+        if (!controller.isRunning()) {
             I18n.send(sender, "command.acquire.err");
         }
+        controller.acquireReward(player, missionName);
     }
 
     @SubCommand(value = "reload", permission = "ptt.command.reload")
     public void reload(CommandSender sender, Arguments args) {
         I18n.send(sender, "command.reload.start");
-        if (PlayTimeTracker.getInstance() != null) {
+        if (this.plugin != null) {
             try {
-                PlayTimeTracker.getInstance().onReload();
+                this.plugin.onReload();
             } catch (Exception e) {
                 e.printStackTrace();
                 //PlayTimeTracker.getInstance().getPluginLoader().disablePlugin(PlayTimeTracker.getInstance());

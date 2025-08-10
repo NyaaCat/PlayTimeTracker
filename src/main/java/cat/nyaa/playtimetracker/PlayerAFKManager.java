@@ -46,6 +46,13 @@ public class PlayerAFKManager {
         return false;
     }
 
+    public boolean getSelfHostedAfkState(UUID playerId) {
+        if (this.configuration == null) {
+            return false;
+        }
+        return this.getAfkTime(playerId) > this.configuration.afkTimeMS;
+    }
+
     public boolean getAFKState(UUID playerId) {
         if (this.configuration == null) {
             return false;

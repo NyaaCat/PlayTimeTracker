@@ -36,6 +36,11 @@ public class AcquireRewardTask implements ITask {
 
     @Override
     public void execute(@Nullable Long tick) {
+        if (this.step == 0 && tick != null) {
+            // ensure step 0 is executed in async thread
+            this.context.getExecutor().async(this);
+            return;
+        }
         logger.trace("AcquireRewardTask execute START; step:{} player={},mission={}", this.step, this.playerContext.getUUID(), this.mission);
         switch (this.step) {
             case 0 -> this.asyncHandleStep1();

@@ -34,6 +34,11 @@ public class ListRewardTask implements ITask {
 
     @Override
     public void execute(@Nullable Long tick) {
+        if (this.step == 0 && tick != null) {
+            // ensure step 0 is executed in async thread
+            this.context.getExecutor().async(this);
+            return;
+        }
         logger.trace("ListRewardTask execute START; step:{} player={}, mission={}", this.step, this.playerContext.getUUID(), this.mission);
         switch (this.step) {
             case 0 -> this.asyncHandleStep1();
@@ -78,8 +83,10 @@ public class ListRewardTask implements ITask {
         }
         if (this.mission == null) {
             // list all rewards
-            if(this.rewardsCount.isEmpty() && this.notifyEmpty) {
-                I18n.send(player, "command.listrewards.empty_all");
+            if(this.rewardsCount.isEmpty()) {
+                if (this.notifyEmpty) {
+                    I18n.send(player, "command.listrewards.empty_all");
+                }
             } else {
                 String header = I18n.format("command.listrewards.show_all", this.rewardCount);
                 var builder = Component.text();
@@ -93,8 +100,10 @@ public class ListRewardTask implements ITask {
             }
         } else {
             // list rewards for a specific mission
-            if (this.rewardCount == 0 && this.notifyEmpty) {
-                I18n.send(player, "command.listrewards.empty", this.mission);
+            if (this.rewardCount == 0) {
+                if (this.notifyEmpty) {
+                    I18n.send(player, "command.listrewards.empty", this.mission);
+                }
             } else {
                 I18n.send(player, "command.listrewards.show", this.rewardCount, this.mission);
             }

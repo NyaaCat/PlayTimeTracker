@@ -2,7 +2,6 @@ package cat.nyaa.playtimetracker;
 
 import cat.nyaa.ecore.EconomyCore;
 import cat.nyaa.playtimetracker.command.CommandHandler;
-import cat.nyaa.playtimetracker.condition.ICondition;
 import cat.nyaa.playtimetracker.config.PTTConfiguration;
 import cat.nyaa.playtimetracker.config.data.MissionData;
 import cat.nyaa.playtimetracker.db.DatabaseManager;
@@ -30,9 +29,11 @@ import java.time.DayOfWeek;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
-public final class PlayTimeTracker extends JavaPlugin implements IEconomyCoreProvider, IEssentialsAPIProvider, IPlayTimeTracker {
+public final class PlayTimeTracker extends JavaPlugin implements IEconomyCoreProvider, IEssentialsAPIProvider {
     @Nullable
     private static PlayTimeTracker instance;
     @Nullable
@@ -65,7 +66,6 @@ public final class PlayTimeTracker extends JavaPlugin implements IEconomyCorePro
     private PlayTimeTrackerController controller;
     private Collection<Listener> listeners;
 
-
     @Nullable
     public static PlayTimeTracker getInstance() {
         return instance;
@@ -81,18 +81,13 @@ public final class PlayTimeTracker extends JavaPlugin implements IEconomyCorePro
         pttConfiguration.load();
         try {
             final long precision = 1000;
-            var validationContext = new MissionData.IConditionCompiler() {
-
-                @Override
-                public ICondition<?> compile(String expression) throws Exception {
-                    return LimitedTimeTrackerModel.compileCondition(expression, precision);
-                }
-            };
+            MissionData.IConditionCompiler validationContext = (String expression) -> LimitedTimeTrackerModel.compileCondition(expression, precision);
             pttConfiguration.validate(validationContext);
         } catch (Exception e) {
             getSLF4JLogger().error("Failed to compile mission conditions", e);
             return;
         }
+        pttConfiguration.save();
 
         this.timezone = ZoneId.of(pttConfiguration.timezone);
         this.i18n = new I18n(this, pttConfiguration.language);
@@ -119,21 +114,6 @@ public final class PlayTimeTracker extends JavaPlugin implements IEconomyCorePro
             this.economyCore = economyProvider.getProvider();
         }
 
-        taskExecutor = new TaskExecutor(this, 10, 1, TimeUnit.SECONDS);
-        var timeBuilder = new PiecewiseTimeInfo.Builder(timezone, DayOfWeek.MONDAY);
-        controller = new PlayTimeTrackerController(this, taskExecutor, pttConfiguration.missionConfig, databaseManager, timeBuilder);
-        taskExecutor.start();
-        listeners = new ArrayList<>();
-        listeners.add(new PlayTimeTrackerListener(this));
-        var ess = this.getEssentialsAPI();
-        if (ess != null) {
-            listeners.add(new EssAfkListener(this));
-        }
-        var pluginManager = getServer().getPluginManager();
-        for (Listener listener : listeners) {
-            pluginManager.registerEvents(listener, this);
-        }
-
         //command
         this.commandHandler = new CommandHandler(this, i18n);
         PluginCommand mainCommand = getCommand("playtimetracker");
@@ -157,6 +137,43 @@ public final class PlayTimeTracker extends JavaPlugin implements IEconomyCorePro
         //this.rewardManager = new PlayerRewardManager(this, databaseManager.getRewardsConnection());
         //Mission
         //this.missionManager = new PlayerMissionManager(this, pttConfiguration, timeRecordManager, rewardManager, databaseManager.getCompletedMissionConnection());
+
+        taskExecutor = new TaskExecutor(this, pttConfiguration.syncIntervalTick, pttConfiguration.timerIntervalMS, TimeUnit.MILLISECONDS);
+        var timeBuilder = new PiecewiseTimeInfo.Builder(timezone, DayOfWeek.MONDAY);
+        controller = new PlayTimeTrackerController(
+                this,
+                taskExecutor,
+                pttConfiguration.missionConfig,
+                databaseManager,
+                timeBuilder,
+                useEssentialsAFK() ? this::checkAFKEss : afkManager::getSelfHostedAfkState
+        );
+        taskExecutor.start();
+
+        Supplier<@Nullable PlayTimeTrackerController> supplier = this::getController;
+        listeners = new ArrayList<>();
+        listeners.add(new PlayTimeTrackerListener(supplier));
+        var ess = this.getEssentialsAPI();
+        if (ess != null) {
+            listeners.add(new EssAfkListener(supplier));
+        }
+        var pluginManager = getServer().getPluginManager();
+        for (Listener listener : listeners) {
+            pluginManager.registerEvents(listener, this);
+        }
+    }
+
+    private boolean useEssentialsAFK() {
+        if (this.pttConfiguration == null) {
+            return false;
+        }
+        return this.pttConfiguration.useEssAfkStatus && this.essentialsPlugin != null;
+    }
+
+    private boolean checkAFKEss(UUID playerId) {
+        var ess = this.getEssentialsAPI();
+        assert ess != null;
+        return ess.getUser(playerId).isAfk();
     }
 
     @Nullable
@@ -194,18 +211,16 @@ public final class PlayTimeTracker extends JavaPlugin implements IEconomyCorePro
         return missionManager;
     }
 
-    @Override
     @Nullable
     public PlayTimeTrackerController getController() {
         return this.controller;
     }
 
-    @Override
-    public @Nullable PlayerAFKManager getPlayerAFKManager() {
+    @Nullable
+    public PlayerAFKManager getPlayerAFKManager() {
         return this.afkManager;
     }
 
-    @Override
     public File getFileInDataFolder(String fileName) {
         return new File(this.getDataFolder(), fileName);
     }

@@ -29,6 +29,11 @@ public class NotifyRewardTask extends AbstractOnceTrigger implements ITask {
 
     @Override
     public void execute(@Nullable Long tick) {
+        if (tick == null) {
+            // ensure be executed in sync thread
+            this.context.getExecutor().sync(this);
+            return;
+        }
         logger.trace("NotifyRewardsTask execute START player={}, mission={}", this.playerContext.getUUID(), this.mission);
         final Player player = this.playerContext.getPlayer(tick);
         if (player == null || !player.isOnline()) {

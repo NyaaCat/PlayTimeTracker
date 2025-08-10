@@ -76,8 +76,9 @@ public class Context implements AutoCloseable {
             return false;
         }
         if (this.running.get()) {
-            TimeUnit unit = TimeUnit.SECONDS;
-            var delayValue = delay.getSeconds() + (delay.getNano() > 0 ? 1L : 0L);
+            var timerPrecision = this.executor.getTimerPrecision();
+            TimeUnit unit = timerPrecision.right();
+            var delayValue = unit.convert(delay) + timerPrecision.leftLong();
             var handle = this.executor.scheduleAsync(task, delayValue, unit);
             if (handle != null) {
                 var legacyHandle = this.playerTasks.put(playerUUID, handle);

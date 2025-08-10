@@ -4,7 +4,6 @@ import cat.nyaa.playtimetracker.config.ISerializableExt;
 import cat.nyaa.playtimetracker.config.IValidationContext;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.UUID;
 
 public class EcoRewardData implements ISerializableExt {

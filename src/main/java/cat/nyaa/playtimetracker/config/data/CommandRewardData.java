@@ -3,8 +3,6 @@ package cat.nyaa.playtimetracker.config.data;
 import cat.nyaa.playtimetracker.config.ISerializableExt;
 import cat.nyaa.playtimetracker.config.IValidationContext;
 
-import java.util.List;
-
 public class CommandRewardData implements ISerializableExt {
 
     @Serializable(name = "pre-command")

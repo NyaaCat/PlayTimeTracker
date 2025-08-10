@@ -1,9 +1,8 @@
 package cat.nyaa.playtimetracker.executor;
 
-import org.jetbrains.annotations.Nullable;
+import it.unimi.dsi.fastutil.longs.LongObjectImmutablePair;
 
 import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
 
 public interface ITaskExecutor {
 
@@ -38,4 +37,12 @@ public interface ITaskExecutor {
      * @return true if the task was successfully cancelled, false otherwise
      */
     boolean cancelTask(Object handle);
+
+    /**
+     * Gets the precision of the timer used by this executor.
+     * This is used to determine how often the timer ticks.
+     *
+     * @return the precision of the timer, [amount, TimeUnit]
+     */
+    LongObjectImmutablePair<TimeUnit> getTimerPrecision();
 }

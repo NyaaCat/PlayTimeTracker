@@ -41,6 +41,11 @@ public class DistributeRewardTask implements ITask {
 
     @Override
     public void execute(@Nullable Long tick) {
+        if (this.step == 0 && tick == null) {
+            // ensure step 0 is executed in sync thread
+            this.context.getExecutor().sync(this);
+            return;
+        }
         logger.trace("DistributeRewardTask execute START; step:{} player={},mission={} reward={}", this.step, this.playerContext.getUUID(), this.mission, this.reward);
         switch (this.step) {
             case 0 -> this.syncHandleStep1(tick);

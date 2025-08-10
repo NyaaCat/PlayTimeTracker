@@ -15,13 +15,13 @@ public class RepeatedlyTask implements ITask {
     public final static Logger logger = LoggerUtils.getPluginLogger();
 
     protected final ITaskExecutor executor;
-    private final Callbacks callbacks;
+    private final ITask callback;
     private final PiecewiseTimeInfo time;
     private Object handle;
 
-    public RepeatedlyTask(ITaskExecutor executor, Callbacks callbacks, PiecewiseTimeInfo.Builder timeBuilder) {
+    public RepeatedlyTask(ITaskExecutor executor, ITask callback, PiecewiseTimeInfo.Builder timeBuilder) {
         this.executor = executor;
-        this.callbacks = callbacks;
+        this.callback = callback;
         var currentTime = TimeUtils.getInstantNow();
         this.time = timeBuilder.build(currentTime);
         logger.info("RepeatedlyTask start");
@@ -35,47 +35,34 @@ public class RepeatedlyTask implements ITask {
         var nextMonthStart = this.time.getNextMonthStart();
         var currentTime = TimeUtils.getInstantNow();
         this.time.updateTime(currentTime);
-        if (nextDayStart <= this.time.getTimestamp()) {
-            if (this.callbacks.onDayStartAsync != null) {
-                try {
-                    this.callbacks.onDayStartAsync.execute(null);
-                } catch (Exception e) {
-                    logger.error("RepeatedlyTask error running next day task", e);
-                }
-            }
-            if (this.callbacks.onDayStartSync != null) {
-                this.executor.sync(this.callbacks.onDayStartSync);
-            }
-        }
-        if (nextWeekStart <= this.time.getTimestamp()) {
-            if (this.callbacks.onWeekStartAsync != null) {
-                try {
-                    this.callbacks.onWeekStartAsync.execute(null);
-                } catch (Exception e) {
-                    logger.error("RepeatedlyTask error running next week task", e);
-                }
-            }
-            if (this.callbacks.onWeekStartSync != null) {
-                this.executor.sync(this.callbacks.onWeekStartSync);
-            }
-        }
-        if (nextMonthStart <= this.time.getTimestamp()) {
-            if (this.callbacks.onMonthStartAsync != null) {
-                try {
-                    this.callbacks.onMonthStartAsync.execute(null);
-                } catch (Exception e) {
-                    logger.error("RepeatedlyTask error running next month task", e);
-                }
-            }
-            if (this.callbacks.onMonthStartSync != null) {
-                this.executor.sync(this.callbacks.onMonthStartSync);
-            }
-        }
+        var currentTimestamp = this.time.getTimestamp();
+        var isNextDay = nextDayStart <= currentTimestamp;
+        var isNextWeek = nextWeekStart <= currentTimestamp;
+        var isNextMonth = nextMonthStart <= currentTimestamp;
+        logger.trace("RepeatedlyTask execute current time: {}, next day start: {}, next week start: {}, next month start: {}", currentTime, isNextDay, isNextWeek, isNextMonth);
         nextWait();
+        if (isNextDay || isNextWeek || isNextMonth) {
+            this.callback.execute(tick);
+        }
     }
 
     private void nextWait() {
-        var wait = this.time.getNextDayStart() - this.time.getTimestamp();
+        var wait = Long.MAX_VALUE;
+        var waitDay = this.time.getNextDayStart() - this.time.getTimestamp();
+        if (waitDay > 0 && waitDay < wait) {
+            wait = waitDay;
+        }
+        var waitWeek = this.time.getNextWeekStart() - this.time.getTimestamp();
+        if (waitWeek > 0 && waitWeek < wait) {
+            wait = waitWeek;
+        }
+        var waitMonth = this.time.getNextMonthStart() - this.time.getTimestamp();
+        if (waitMonth > 0 && waitMonth < wait) {
+            wait = waitMonth;
+        }
+        var timerPrecision = this.executor.getTimerPrecision();
+        var offset = timerPrecision.right().toMillis(timerPrecision.leftLong());
+        wait += offset;
         this.handle = this.executor.scheduleAsync(this, wait, TimeUnit.MILLISECONDS);
         logger.info("RepeatedlyTask next wait for {}ms", wait);
     }
@@ -90,31 +77,5 @@ public class RepeatedlyTask implements ITask {
             return result;
         }
         return false;
-    }
-
-    public static class Callbacks {
-        @Nullable public ITask onDayStartAsync;
-        @Nullable public ITask onWeekStartAsync;
-        @Nullable public ITask onMonthStartAsync;
-        @Nullable public ITask onDayStartSync;
-        @Nullable public ITask onWeekStartSync;
-        @Nullable public ITask onMonthStartSync;
-
-        public Callbacks() {
-        }
-
-        public Callbacks(@Nullable ITask onDayStartAsync,
-                         @Nullable ITask onWeekStartAsync,
-                         @Nullable ITask onMonthStartAsync,
-                         @Nullable ITask onDayStartSync,
-                         @Nullable ITask onWeekStartSync,
-                         @Nullable ITask onMonthStartSync) {
-            this.onDayStartAsync = onDayStartAsync;
-            this.onWeekStartAsync = onWeekStartAsync;
-            this.onMonthStartAsync = onMonthStartAsync;
-            this.onDayStartSync = onDayStartSync;
-            this.onWeekStartSync = onWeekStartSync;
-            this.onMonthStartSync = onMonthStartSync;
-        }
     }
 }

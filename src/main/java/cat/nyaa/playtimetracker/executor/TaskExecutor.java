@@ -3,9 +3,8 @@ package cat.nyaa.playtimetracker.executor;
 import cat.nyaa.playtimetracker.utils.LoggerUtils;
 import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timeout;
-import io.netty.util.TimerTask;
+import it.unimi.dsi.fastutil.longs.LongObjectImmutablePair;
 import org.bukkit.plugin.Plugin;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
 import java.util.Queue;
@@ -13,16 +12,13 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Supplier;
 
 public class TaskExecutor implements ITaskExecutor {
 
     private static final Logger logger = LoggerUtils.getPluginLogger();
     private final Plugin plugin;
     private final long syncInterval;
-    private final long timerInterval;
-    private final TimeUnit timerIntervalUnit;
+    private final LongObjectImmutablePair<TimeUnit> timerPrecision;
 
     private long syncTick;
     private Executor asyncExecutor;
@@ -33,8 +29,7 @@ public class TaskExecutor implements ITaskExecutor {
     public TaskExecutor(Plugin plugin, long syncInterval, long timerInterval, TimeUnit timerIntervalUnit) {
         this.plugin = plugin;
         this.syncInterval = syncInterval;
-        this.timerInterval = timerInterval;
-        this.timerIntervalUnit = timerIntervalUnit;
+        this.timerPrecision = LongObjectImmutablePair.of(timerInterval, timerIntervalUnit);
 
         this.syncTick = 0;
         this.asyncExecutor = null;
@@ -92,6 +87,11 @@ public class TaskExecutor implements ITaskExecutor {
         return false;
     }
 
+    @Override
+    public LongObjectImmutablePair<TimeUnit> getTimerPrecision() {
+        return this.timerPrecision;
+    }
+
 
     private void runSync() {
         var syncTick = this.syncTick++;
@@ -110,7 +110,7 @@ public class TaskExecutor implements ITaskExecutor {
         var maxPendingTimeouts = server.getMaxPlayers() + 16;
         var threadFactory = Executors.defaultThreadFactory();
         this.asyncExecutor = Executors.newSingleThreadExecutor(threadFactory);
-        this.timer = new HashedWheelTimer(threadFactory, this.timerInterval, this.timerIntervalUnit, 512, true, maxPendingTimeouts, this.asyncExecutor);
+        this.timer = new HashedWheelTimer(threadFactory, this.timerPrecision.leftLong(), this.timerPrecision.right(), 512, true, maxPendingTimeouts, this.asyncExecutor);
         this.timer.start();
         var scheduler = server.getScheduler();
         this.syncHandle = scheduler.scheduleSyncRepeatingTask(this.plugin, this::runSync, this.syncInterval, this.syncInterval);

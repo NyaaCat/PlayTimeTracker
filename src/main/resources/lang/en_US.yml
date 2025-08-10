@@ -49,17 +49,21 @@ command:
       success: Successfully deleted player %s time data
       target_not_found: Target %s Not Found
   view:
-    daily_time: 'Online for today: %s'
     err: Query Failed
     invalid_target: Query target %s Invalid
-    last_update: 'Last updated: %s'
-    monthly_time: 'Online for this month: %s'
     no_record: No record for %s
     no_view_other_permission: 'Permission required: %s'
     query_title: Player %s (%s) Online data
-    total_time: 'Total online: %s'
+    last_update: 'Last updated: %s'
+    daily_time: 'Online for today: %s'
     weekly_time: 'Online for this week: %s'
+    monthly_time: 'Online for this month: %s'
+    total_time: 'Total online: %s'
     last_seen: 'Last seen: %s'
+    next_mission_first: 'Next mission: %s will be achieved after %s'
+    next_mission_empty: 'No next mission available'
+    next_mission_title: 'Achievable Missions'
+    next_mission_item: '- %s: after %s'
 manual:
   acquire:
     description: Acquire rewards
@@ -87,7 +91,7 @@ manual:
     usage: /ptt reset <subCommand>
   view:
     description: View player online statistics
-    usage: /ptt view [player]
+    usage: /ptt view [player] [full]
 message:
   mission:
     get_reward: Acquired reward for mission %s

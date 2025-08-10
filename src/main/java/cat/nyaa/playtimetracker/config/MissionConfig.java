@@ -2,11 +2,9 @@ package cat.nyaa.playtimetracker.config;
 
 import cat.nyaa.nyaacore.configuration.FileConfigure;
 import cat.nyaa.playtimetracker.config.data.MissionData;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 public class MissionConfig extends FileConfigure implements ISerializableExt {

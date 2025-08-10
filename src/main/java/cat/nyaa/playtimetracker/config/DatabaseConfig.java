@@ -4,8 +4,6 @@ import cat.nyaa.nyaacore.configuration.FileConfigure;
 import cat.nyaa.nyaacore.orm.backends.BackendConfig;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.List;
-
 public class DatabaseConfig extends FileConfigure implements ISerializableExt {
     private final JavaPlugin plugin;
     @Serializable(name = "backend-config")

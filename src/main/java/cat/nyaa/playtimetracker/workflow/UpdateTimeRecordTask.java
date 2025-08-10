@@ -62,6 +62,12 @@ public class UpdateTimeRecordTask implements ITask, IPostCheckCallback {
 
     @Override
     public void execute(@Nullable Long tick) {
+        if (tick != null) {
+            // ensure step 0 is executed in async thread
+            this.context.getExecutor().async(this);
+            return;
+        }
+
         logger.trace("UpdateTimeRecordTask execute Start player={}", this.playerContext.getUUID());
 
         if (this.time == null) {

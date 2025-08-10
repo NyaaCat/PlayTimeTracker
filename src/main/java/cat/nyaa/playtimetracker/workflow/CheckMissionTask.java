@@ -36,6 +36,11 @@ public class CheckMissionTask implements ITask {
 
     @Override
     public void execute(@Nullable Long tick) {
+        if (this.step == 0 && tick == null) {
+            // ensure step 0 is executed in sync thread
+            this.context.getExecutor().sync(this);
+            return;
+        }
         try {
             logger.trace("CheckMissionTask execute START; step:{} player={},mission={}", this.step, this.playerContext.getUUID(), this.missionName);
             switch (this.step) {

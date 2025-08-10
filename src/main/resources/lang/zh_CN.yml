@@ -49,17 +49,21 @@ command:
       success: 成功删除了 %s 的时间记录
       target_not_found: 目标:%s 不存在
   view:
-    daily_time: '今日在线: %s'
     err: 查询失败
     invalid_target: '查询目标: %s 无效'
-    last_update: '上次更新: %s'
-    monthly_time: '本月在线: %s'
     no_record: 没有查询到 %s 的记录
     no_view_other_permission: '查询其他人的数据需要权限: %s'
     query_title: '玩家: %s (%s) 的在线数据'
-    total_time: '总在线时长: %s'
+    last_update: '上次更新: %s'
+    daily_time: '今日在线: %s'
     weekly_time: '本周在线: %s'
+    monthly_time: '本月在线: %s'
+    total_time: '总在线时长: %s'
     last_seen: '上次在线: %s'
+    next_mission_first: '下一个任务: %s 将于 %s 达成'
+    next_mission_empty: '没有可完成的任务'
+    next_mission_title: '可完成的任务列表'
+    next_mission_item: '- %s: 还需要 %s'
 manual:
   acquire:
     description: 领取奖励
@@ -87,7 +91,7 @@ manual:
     usage: /ptt reset <subCommand>
   view:
     description: 查看玩家在线时间数据
-    usage: /ptt view [player]
+    usage: /ptt view [player] [full]
 message:
   mission:
     get_reward: 获得 %s 的任务奖励
