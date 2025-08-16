@@ -108,7 +108,7 @@ public class CommandHandler extends CommandReceiver {
             I18n.send(sender, "command.migration.err");
             return;
         }
-        File dbFile = this.plugin.getFileInDataFolder("database.yml");
+        File dbFile = new File(this.plugin.getDataFolder(), "database.yml");
 
 
         if (!dbFile.canRead()) {

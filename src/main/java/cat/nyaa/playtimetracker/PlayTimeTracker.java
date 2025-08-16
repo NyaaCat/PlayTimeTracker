@@ -18,6 +18,7 @@ import cat.nyaa.playtimetracker.workflow.IEssentialsAPIProvider;
 import cat.nyaa.playtimetracker.workflow.LimitedTimeTrackerModel;
 import net.ess3.api.IEssentials;
 import org.bukkit.command.PluginCommand;
+import org.bukkit.entity.Player;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
@@ -32,6 +33,7 @@ import java.util.Collection;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+import java.util.logging.Level;
 
 public final class PlayTimeTracker extends JavaPlugin implements IEconomyCoreProvider, IEssentialsAPIProvider {
     @Nullable
@@ -130,6 +132,10 @@ public final class PlayTimeTracker extends JavaPlugin implements IEconomyCorePro
         //this.taskManager = new PTTTaskManager(this, pttConfiguration);
         //afk
         this.afkManager = new PlayerAFKManager(this.getPttConfiguration(), this.getEssentialsAPI());
+        this.afkManager.registerCheckTask(this);
+        if (!useEssentialsAFK()) {
+            this.afkManager.setAFKStateChangeCallback(this::onAFKStateChange);
+        }
         PlayerAFKManager.setInstance(this.afkManager);
         //record
         //this.timeRecordManager = new TimeRecordManager(this, databaseManager.getTimeTrackerConnection());
@@ -174,6 +180,18 @@ public final class PlayTimeTracker extends JavaPlugin implements IEconomyCorePro
         var ess = this.getEssentialsAPI();
         assert ess != null;
         return ess.getUser(playerId).isAfk();
+    }
+
+    private void onAFKStateChange(Player player, boolean isAFK) {
+        if (this.controller != null) {
+            if (isAFK) {
+                this.getLogger().log(Level.INFO,"Player {0} is now AFK", player.getName());
+                this.controller.awayFromKeyboard(player);
+            } else {
+                this.getLogger().log(Level.INFO, "Player {0} is no longer AFK", player.getName());
+                this.controller.backToKeyboard(player);
+            }
+        }
     }
 
     @Nullable
@@ -221,10 +239,6 @@ public final class PlayTimeTracker extends JavaPlugin implements IEconomyCorePro
         return this.afkManager;
     }
 
-    public File getFileInDataFolder(String fileName) {
-        return new File(this.getDataFolder(), fileName);
-    }
-
     @Nullable
     public PTTConfiguration getPttConfiguration() {
         return pttConfiguration;
@@ -242,7 +256,8 @@ public final class PlayTimeTracker extends JavaPlugin implements IEconomyCorePro
     }
 
     @Override
-    public @Nullable IEssentials getEssentialsAPI() {
+    @Nullable
+    public IEssentials getEssentialsAPI() {
         // can ensure that essentialsPlugin is IEssentials
         return (IEssentials) essentialsPlugin;
     }
@@ -288,6 +303,12 @@ public final class PlayTimeTracker extends JavaPlugin implements IEconomyCorePro
             taskExecutor.stop();
             taskExecutor = null;
         }
+
+        if (this.afkManager != null) {
+            this.afkManager.unregisterCheckTask();
+            this.afkManager = null;
+        }
+        PlayerAFKManager.setInstance(null);
     }
 
     public void onReload() {

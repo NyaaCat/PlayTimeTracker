@@ -9,7 +9,7 @@ import cat.nyaa.playtimetracker.db.model.TimeTrackerDbModel;
 import cat.nyaa.playtimetracker.utils.PlaceholderAPIUtils;
 import cat.nyaa.playtimetracker.utils.TaskUtils;
 import cat.nyaa.playtimetracker.utils.TimeUtils;
-import com.udojava.evalex.Expression;
+//import com.udojava.evalex.Expression;
 import net.ess3.api.IEssentials;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -91,22 +91,23 @@ public class PlayerMissionManager {
                     BigDecimal weeklyTime = new BigDecimal(trackerDbModel.getWeeklyTime());
                     BigDecimal monthlyTime = new BigDecimal(trackerDbModel.getMonthlyTime());
                     BigDecimal totalTime = new BigDecimal(trackerDbModel.getTotalTime());
-                    BigDecimal result;
-                    try {
-                        result = new com.udojava.evalex.Expression(missionData.expression)
-                                .with("lastSeen", lastSeen)
-                                .with("dailyTime", dailyTime)
-                                .with("weeklyTime", weeklyTime)
-                                .with("monthlyTime", monthlyTime)
-                                .with("totalTime", totalTime)
-                                .eval();
-                    } catch (Expression.ExpressionException e) {
-                        this.plugin.getSLF4JLogger().error("[PlayerMissionManager] Failed to evaluate expression {} for {} {}", missionData.expression, player.getUniqueId(), missionName);
+                    BigDecimal result = null;
+//                    try {
+//                        result = new com.udojava.evalex.Expression(missionData.expression)
+//                                .with("lastSeen", lastSeen)
+//                                .with("dailyTime", dailyTime)
+//                                .with("weeklyTime", weeklyTime)
+//                                .with("monthlyTime", monthlyTime)
+//                                .with("totalTime", totalTime)
+//                                .eval();
+//                    } catch (Expression.ExpressionException e) {
+//                        this.plugin.getSLF4JLogger().error("[PlayerMissionManager] Failed to evaluate expression {} for {} {}", missionData.expression, player.getUniqueId(), missionName);
+//                        return;
+//                    }
+                    if (result == null || result.doubleValue() <= 0) {
                         return;
                     }
-                    if (result.doubleValue() <= 0) {
-                        return;
-                    }
+
 
                     final long timestamp = TimeUtils.getUnixTimeStampNow();
 

@@ -10,7 +10,7 @@ val paperApiName = "1.21.1-R0.1-SNAPSHOT"
 
 // Version used for distribution. Different from maven repo
 group = "cat.nyaa"
-version = "1.0.0-alpha.1"
+version = "1.0.0-alpha.2"
 
 java {
     // Configure the java toolchain. This allows gradle to auto-provision JDK 21 on systems that only have JDK 8 installed for example.
@@ -40,7 +40,6 @@ dependencies {
     // soft dep
     compileOnly("io.netty:netty-common:4.1.97.Final") // should keep the same version as Minecraft
     compileOnly("me.clip:placeholderapi:2.11.6")
-    compileOnly("com.udojava:EvalEx:2.7")
     compileOnly("org.xerial:sqlite-jdbc:3.46.0.0")
     compileOnly("com.zaxxer:HikariCP:5.1.0")
     compileOnly("net.essentialsx:EssentialsX:2.20.1")
