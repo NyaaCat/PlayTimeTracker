@@ -61,6 +61,6 @@ public class NotifyRewardTask extends AbstractOnceTrigger implements ITask {
     @Override
     protected void handle(@Nullable Long tick) {
         this.context.getExecutor().sync(this);
-        logger.info("NotifyRewardsTask added to executor for player={}, mission={}", this.playerContext.getUUID(), this.mission);
+        logger.trace("NotifyRewardsTask added to executor for player={}, mission={}", this.playerContext.getUUID(), this.mission);
     }
 }

@@ -18,21 +18,20 @@ public class DistributeRewardTask implements ITask {
     private final static Logger logger = LoggerUtils.getPluginLogger();
     
     private final Context context;
-    private final PlayerContext playerContext;
     private final String mission;
     private final IReward reward;
-    private final PiecewiseTimeInfo time;
+    private final UpdateWorkflow workflow;
     private final @Nullable IOnceTrigger groupOp;
     private int step;
 
-    public DistributeRewardTask(Context context, PlayerContext playerContext, String mission, Object rewardData, PiecewiseTimeInfo time, @Nullable IOnceTrigger groupOp) {
+    public DistributeRewardTask(Context context, UpdateWorkflow workflow, String mission, Object rewardData, @Nullable IOnceTrigger groupOp) {
         this.context = context;
-        this.playerContext = playerContext;
+        this.workflow = workflow;
         this.mission = mission;
-        this.time = time;
         this.reward = createReward(mission, rewardData);
         this.groupOp = groupOp;
         this.step = 0;
+        this.workflow.retain();
     }
 
     boolean isRewardValid() {
@@ -46,20 +45,27 @@ public class DistributeRewardTask implements ITask {
             this.context.getExecutor().sync(this);
             return;
         }
-        logger.trace("DistributeRewardTask execute START; step:{} player={},mission={} reward={}", this.step, this.playerContext.getUUID(), this.mission, this.reward);
-        switch (this.step) {
-            case 0 -> this.syncHandleStep1(tick);
-            case 1 -> this.asyncHandleStep2();
-            default -> throw new IllegalStateException();
+        try {
+            logger.trace("DistributeRewardTask execute START; step:{} player={},mission={} reward={}", this.step, this.workflow.getPlayerContext().getUUID(), this.mission, this.reward);
+            switch (this.step) {
+                case 0 -> this.syncHandleStep1(tick);
+                case 1 -> this.asyncHandleStep2();
+                default -> throw new IllegalStateException();
+            }
+            logger.trace("DistributeRewardTask execute END; next:{}", this.step);
+        } finally {
+            if (this.step == 0xFF){
+                // step 0xFF means the task is finished
+                this.workflow.release(tick);
+            }
         }
-        logger.trace("DistributeRewardTask execute END; next:{}", this.step);
     }
 
     private void syncHandleStep1(long tick) {
         // step 1: prepare reward in game-loop
-        boolean prepared = this.reward.prepare(this.mission, this.time.getTimestamp(), this.playerContext.getPlayer(tick), this.context.getPlugin());
+        boolean prepared = this.reward.prepare(this.mission, this.workflow.getTime().getTimestamp(), this.workflow.getPlayerContext().getPlayer(tick), this.context.getPlugin());
         if (!prepared) {
-            logger.warn("DistributeRewardTask execute Failed to prepare reward for player={}, mission={}, reward={} time={}", this.playerContext.getUUID(), this.mission, this.reward, this.time.getTimestamp());
+            logger.warn("DistributeRewardTask execute Failed to prepare reward for player={}, mission={}, reward={} time={}", this.workflow.getPlayerContext().getUUID(), this.mission, this.reward, this.workflow.getTime().getTimestamp());
             this.step = 0xFF; // cancel the task
             return;
         }
@@ -71,7 +77,7 @@ public class DistributeRewardTask implements ITask {
     private void asyncHandleStep2() {
         // step 2: push reward asynchronously
         var rewardsConnection = context.getRewardsConnection();
-        rewardsConnection.addReward(this.playerContext.getUUID(), this.mission, this.reward, this.time.getTimestamp());
+        rewardsConnection.addReward(this.workflow.getPlayerContext().getUUID(), this.mission, this.reward, this.workflow.getTime().getTimestamp());
         if (this.groupOp != null) {
             this.groupOp.trigger(null);
         }

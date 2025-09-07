@@ -28,6 +28,16 @@ public interface ITaskExecutor {
      * @param unit the time unit of the delay
      * @return a handle for the scheduled task
      */
+    Object scheduleSync(ITask task, long delay, TimeUnit unit);
+
+    /**
+     * Schedules a task to be executed after a specified delay.
+     *
+     * @param task the task to be scheduled
+     * @param delay the delay before execution
+     * @param unit the time unit of the delay
+     * @return a handle for the scheduled task
+     */
     Object scheduleAsync(ITask task, long delay, TimeUnit unit);
 
     /**

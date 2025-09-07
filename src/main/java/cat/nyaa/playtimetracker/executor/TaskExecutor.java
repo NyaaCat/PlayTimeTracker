@@ -3,8 +3,10 @@ package cat.nyaa.playtimetracker.executor;
 import cat.nyaa.playtimetracker.utils.LoggerUtils;
 import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timeout;
+import io.netty.util.TimerTask;
 import it.unimi.dsi.fastutil.longs.LongObjectImmutablePair;
 import org.bukkit.plugin.Plugin;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
 import java.util.Queue;
@@ -65,18 +67,21 @@ public class TaskExecutor implements ITaskExecutor {
     }
 
     @Override
+    public Object scheduleSync(ITask task, long delay, TimeUnit unit) {
+        var timer = this.timer;
+        if (timer == null) {
+            return null; // Timer not initialized, cannot schedule task
+        }
+        return timer.newTimeout(new Scheduled(task, true), delay, unit);
+    }
+
+    @Override
     public Object scheduleAsync(ITask task, long delay, TimeUnit unit) {
         var timer = this.timer;
         if (timer == null) {
             return null; // Timer not initialized, cannot schedule task
         }
-        return timer.newTimeout((timeout) -> {
-            try {
-                task.execute(null);
-            } catch (Exception e) {
-                logger.error("TaskExecutor scheduled async task execution failed for task: {}", task, e);
-            }
-        }, delay, unit);
+        return timer.newTimeout(new Scheduled(task, false), delay, unit);
     }
 
     @Override
@@ -131,6 +136,48 @@ public class TaskExecutor implements ITaskExecutor {
             var scheduler = server.getScheduler();
             scheduler.cancelTask(this.syncHandle);
             this.syncHandle = -1;
+        }
+    }
+
+    private class Scheduled implements ITask, TimerTask {
+
+        final ITask inner;
+        final boolean sync;
+        Timeout timeout;
+
+        Scheduled(ITask inner, boolean sync) {
+            this.inner = inner;
+            this.sync = sync;
+        }
+
+        @Override
+        public void execute(@Nullable Long tick) {
+            assert this.timeout != null;
+            if (this.timeout.isCancelled()) {
+                return;
+            }
+            try {
+                this.inner.execute(tick);
+            } catch (Exception e) {
+                logger.error("TaskExecutor scheduled sync task execution failed for task: {}", this.inner, e);
+            }
+        }
+
+        @Override
+        public void run(Timeout timeout) throws Exception {
+            if (timeout.isCancelled()) {
+                return;
+            }
+            if (this.sync) {
+                this.timeout = timeout;
+                TaskExecutor.this.syncTasks.add(this);
+            } else {
+                try {
+                    this.inner.execute(null);
+                } catch (Exception e) {
+                    logger.error("TaskExecutor scheduled async task execution failed for task: {}", this.inner, e);
+                }
+            }
         }
     }
 }

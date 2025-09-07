@@ -98,12 +98,12 @@ public class CommandHandler extends CommandReceiver {
             I18n.send(sender, "command.migration.confirm");
             return;
         }
-        var controller = this.plugin.getController();
-        if (controller == null) {
+        var context = this.plugin.getContext();
+        if (context == null) {
             I18n.send(sender, "command.migration.err");
             return;
         }
-        var conn = controller.getTimeTrackerConnection();
+        var conn = context.getTimeTrackerConnection();
         if (conn == null) {
             I18n.send(sender, "command.migration.err");
             return;

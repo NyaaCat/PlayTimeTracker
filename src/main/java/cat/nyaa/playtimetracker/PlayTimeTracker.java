@@ -14,6 +14,7 @@ import cat.nyaa.playtimetracker.task.PTTTaskManager;
 import cat.nyaa.playtimetracker.utils.LoggerUtils;
 import cat.nyaa.playtimetracker.utils.PiecewiseTimeInfo;
 import cat.nyaa.playtimetracker.utils.PlaceholderAPIUtils;
+import cat.nyaa.playtimetracker.workflow.Context;
 import cat.nyaa.playtimetracker.workflow.IEssentialsAPIProvider;
 import cat.nyaa.playtimetracker.workflow.LimitedTimeTrackerModel;
 import net.ess3.api.IEssentials;
@@ -65,6 +66,7 @@ public final class PlayTimeTracker extends JavaPlugin implements IEconomyCorePro
     private ZoneId timezone;
 
     private TaskExecutor taskExecutor;
+    private Context context;
     private PlayTimeTrackerController controller;
     private Collection<Listener> listeners;
 
@@ -145,22 +147,19 @@ public final class PlayTimeTracker extends JavaPlugin implements IEconomyCorePro
         //this.missionManager = new PlayerMissionManager(this, pttConfiguration, timeRecordManager, rewardManager, databaseManager.getCompletedMissionConnection());
 
         taskExecutor = new TaskExecutor(this, pttConfiguration.syncIntervalTick, pttConfiguration.timerIntervalMS, TimeUnit.MILLISECONDS);
+        taskExecutor.start();
         var timeBuilder = new PiecewiseTimeInfo.Builder(timezone, DayOfWeek.MONDAY);
+        context = new Context(this, taskExecutor, pttConfiguration.missionConfig, databaseManager);
         controller = new PlayTimeTrackerController(
-                this,
-                taskExecutor,
-                pttConfiguration.missionConfig,
-                databaseManager,
+                context,
                 timeBuilder,
                 useEssentialsAFK() ? this::checkAFKEss : afkManager::getSelfHostedAfkState
         );
-        taskExecutor.start();
 
         Supplier<@Nullable PlayTimeTrackerController> supplier = this::getController;
         listeners = new ArrayList<>();
         listeners.add(new PlayTimeTrackerListener(supplier));
-        var ess = this.getEssentialsAPI();
-        if (ess != null) {
+        if (useEssentialsAFK()) {
             listeners.add(new EssAfkListener(supplier));
         }
         var pluginManager = getServer().getPluginManager();
@@ -234,6 +233,10 @@ public final class PlayTimeTracker extends JavaPlugin implements IEconomyCorePro
         return this.controller;
     }
 
+    public Context getContext() {
+        return this.context;
+    }
+
     @Nullable
     public PlayerAFKManager getPlayerAFKManager() {
         return this.afkManager;
@@ -298,6 +301,9 @@ public final class PlayTimeTracker extends JavaPlugin implements IEconomyCorePro
                 throw new RuntimeException(e);
             }
             controller = null;
+        }
+        if (context != null) {
+            context = null;
         }
         if (taskExecutor != null) {
             taskExecutor.stop();
