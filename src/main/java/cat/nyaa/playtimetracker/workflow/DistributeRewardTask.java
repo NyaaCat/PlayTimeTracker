@@ -8,7 +8,6 @@ import cat.nyaa.playtimetracker.reward.CommandReward;
 import cat.nyaa.playtimetracker.reward.EcoReward;
 import cat.nyaa.playtimetracker.reward.IReward;
 import cat.nyaa.playtimetracker.utils.LoggerUtils;
-import cat.nyaa.playtimetracker.utils.PiecewiseTimeInfo;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 

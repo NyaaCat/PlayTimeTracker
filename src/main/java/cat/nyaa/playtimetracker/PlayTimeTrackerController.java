@@ -1,6 +1,7 @@
 package cat.nyaa.playtimetracker;
 
 import cat.nyaa.playtimetracker.executor.ITask;
+import cat.nyaa.playtimetracker.executor.ITaskExecutor;
 import cat.nyaa.playtimetracker.utils.PiecewiseTimeInfo;
 import cat.nyaa.playtimetracker.utils.TimeUtils;
 import cat.nyaa.playtimetracker.workflow.*;
@@ -21,11 +22,20 @@ public class PlayTimeTrackerController extends TaskChainController {
     private final RepeatedlyTask loopTask;
 
     public PlayTimeTrackerController(Context context, PiecewiseTimeInfo.Builder timeBuilder, Predicate<UUID> playerAfkState) {
-        super(context.getExecutor(), Duration.ofDays(1));
+        super(Duration.ofDays(1));
         this.context = context;
         this.timeBuilder = timeBuilder;
         this.playerAfkState = playerAfkState;
         this.loopTask = new RepeatedlyTask(context.getExecutor(), this::doLoopUpdate, this.timeBuilder);
+    }
+
+    @Override
+    public ITaskExecutor getExecutor() {
+        return this.context.getExecutor();
+    }
+
+    public Context getContext() {
+        return this.context;
     }
 
     public void login(Player player) {

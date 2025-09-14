@@ -1,7 +1,6 @@
 package cat.nyaa.playtimetracker.workflow;
 
 import cat.nyaa.playtimetracker.db.model.TimeTrackerDbModel;
-import cat.nyaa.playtimetracker.executor.ITask;
 import cat.nyaa.playtimetracker.utils.PiecewiseTimeInfo;
 import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;

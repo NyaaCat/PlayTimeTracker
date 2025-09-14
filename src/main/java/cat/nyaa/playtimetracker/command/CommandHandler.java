@@ -16,7 +16,6 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.Plugin;
 import org.slf4j.Logger;
 
 import java.io.File;
@@ -27,23 +26,18 @@ public class CommandHandler extends CommandReceiver {
 
     private static final Logger logger = LoggerUtils.getPluginLogger();
 
-    private final PlayTimeTracker plugin;
+    private final PlayTimeTrackerController controller;
 
     @SubCommand(value = "reset", permission = "ptt.command.reset")
     public ResetCommand resetCommand;
 
-    public CommandHandler(Plugin plugin, I18n _i18n) {
-        super(plugin, _i18n);
-        this.plugin = (PlayTimeTracker) plugin;
+    public CommandHandler(PlayTimeTrackerController controller, I18n _i18n) {
+        super(controller.getContext().getPlugin(), _i18n);
+        this.controller = controller;
     }
 
     @SubCommand(value = "view", permission = "ptt.command.view", isDefaultCommand = true)
     public void view(CommandSender sender, Arguments args) {
-        var controller = this.plugin.getController();
-        if (controller == null) {
-            I18n.send(sender, "command.view.err");
-            return;
-        }
         String targetName = args.next();
         DisplayNextMissionMode mode = DisplayNextMissionMode.First;
         if ("full".equals(targetName)) {
@@ -98,7 +92,7 @@ public class CommandHandler extends CommandReceiver {
             I18n.send(sender, "command.migration.confirm");
             return;
         }
-        var context = this.plugin.getContext();
+        var context = this.controller.getContext();
         if (context == null) {
             I18n.send(sender, "command.migration.err");
             return;
@@ -108,7 +102,7 @@ public class CommandHandler extends CommandReceiver {
             I18n.send(sender, "command.migration.err");
             return;
         }
-        File dbFile = new File(this.plugin.getDataFolder(), "database.yml");
+        File dbFile = new File(context.getPlugin().getDataFolder(), "database.yml");
 
 
         if (!dbFile.canRead()) {
@@ -181,11 +175,6 @@ public class CommandHandler extends CommandReceiver {
 
     @SubCommand(value = "listrewards", alias = {"lsr"}, permission = "ptt.command.listrewards")
     public void listRewards(CommandSender sender, Arguments args) {
-        var controller = this.plugin.getController();
-        if (controller == null) {
-            I18n.send(sender, "command.listrewards.err");
-            return;
-        }
         String missionName = args.nextString("all");
         if (!(sender instanceof Player player)) {
             I18n.send(sender, "command.only-player-can-do");
@@ -202,11 +191,6 @@ public class CommandHandler extends CommandReceiver {
 
     @SubCommand(value = "acquire", alias = {"ac"}, permission = "ptt.command.acquire")
     public void acquire(CommandSender sender, Arguments args) {
-        var controller = this.plugin.getController();
-        if (controller == null) {
-            I18n.send(sender, "command.acquire.err");
-            return;
-        }
         String missionName = args.nextString("all");
         if (!(sender instanceof Player player)) {
             I18n.send(sender, "command.only-player-can-do");
@@ -224,12 +208,12 @@ public class CommandHandler extends CommandReceiver {
     @SubCommand(value = "reload", permission = "ptt.command.reload")
     public void reload(CommandSender sender, Arguments args) {
         I18n.send(sender, "command.reload.start");
-        if (this.plugin != null) {
+        var plugin = controller.getContext().getPlugin();
+        if (plugin instanceof PlayTimeTracker playTimeTracker) {
             try {
-                this.plugin.onReload();
+                playTimeTracker.onReload();
             } catch (Exception e) {
                 e.printStackTrace();
-                //PlayTimeTracker.getInstance().getPluginLoader().disablePlugin(PlayTimeTracker.getInstance());
                 I18n.send(sender, "command.reload.err");
             }
         } else {

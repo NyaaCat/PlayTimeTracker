@@ -5,16 +5,13 @@ import net.ess3.api.events.AfkStatusChangeEvent;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.jspecify.annotations.Nullable;
-
-import java.util.function.Supplier;
 
 public class EssAfkListener implements Listener {
 
-    private final Supplier<@Nullable PlayTimeTrackerController> provider;
+    private final PlayTimeTrackerController controller;
 
-    public EssAfkListener(Supplier<@Nullable PlayTimeTrackerController> provider) {
-        this.provider = provider;
+    public EssAfkListener(PlayTimeTrackerController controller) {
+        this.controller = controller;
     }
 
     @EventHandler(priority = EventPriority.NORMAL)
@@ -22,13 +19,10 @@ public class EssAfkListener implements Listener {
         var user = event.getAffected();
         var status = event.getValue();
         var player = user.getBase();
-        var controller = this.provider.get();
-        if (controller != null && player.isConnected()) {
-            if (status) {
-                controller.awayFromKeyboard(player);
-            } else {
-                controller.backToKeyboard(player);
-            }
+        if (status) {
+            this.controller.awayFromKeyboard(player);
+        } else {
+            this.controller.backToKeyboard(player);
         }
     }
 }

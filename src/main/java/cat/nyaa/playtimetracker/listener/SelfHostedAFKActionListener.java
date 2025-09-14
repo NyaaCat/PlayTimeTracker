@@ -1,6 +1,5 @@
 package cat.nyaa.playtimetracker.listener;
 
-import cat.nyaa.playtimetracker.PlayTimeTracker;
 import cat.nyaa.playtimetracker.PlayerAFKManager;
 import org.bukkit.Location;
 import org.bukkit.event.EventHandler;
@@ -9,9 +8,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.jspecify.annotations.Nullable;
-
-import java.util.function.Supplier;
 
 public class SelfHostedAFKActionListener implements Listener {
 

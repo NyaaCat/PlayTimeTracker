@@ -7,18 +7,8 @@ import cat.nyaa.playtimetracker.db.DatabaseManager;
 import cat.nyaa.playtimetracker.db.connection.CompletedMissionConnection;
 import cat.nyaa.playtimetracker.db.connection.RewardsConnection;
 import cat.nyaa.playtimetracker.db.connection.TimeTrackerConnection;
-import cat.nyaa.playtimetracker.executor.ITask;
 import cat.nyaa.playtimetracker.executor.ITaskExecutor;
-import cat.nyaa.playtimetracker.utils.LoggerUtils;
 import org.bukkit.plugin.Plugin;
-import org.slf4j.Logger;
-
-import java.time.Duration;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Context {
 

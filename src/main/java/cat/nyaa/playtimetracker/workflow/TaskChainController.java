@@ -4,7 +4,6 @@ import cat.nyaa.playtimetracker.executor.ITask;
 import cat.nyaa.playtimetracker.executor.ITaskExecutor;
 import cat.nyaa.playtimetracker.utils.LoggerUtils;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
@@ -14,33 +13,33 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
-public class TaskChainController implements AutoCloseable {
+public abstract class TaskChainController implements AutoCloseable {
 
     public static final Logger logger = LoggerUtils.getPluginLogger();
 
-    protected final ITaskExecutor executor;
     private volatile boolean running;
     private final Map<UUID, Chain> playerTasks;
     private final Duration maxWaitTime;
 
-    public TaskChainController(ITaskExecutor executor, Duration maxWaitTime) {
-        this.executor = executor;
+    public TaskChainController(Duration maxWaitTime) {
         this.maxWaitTime = maxWaitTime;
         this.running = true;
         this.playerTasks = new Object2ObjectOpenHashMap<>();
     }
+
+    public abstract ITaskExecutor getExecutor();
 
     public void scheduleWorkflowTask(UUID playerUUID, Duration delay, ITask task, boolean sync, boolean removeIfEmpty) {
         if (!delay.isPositive() || delay.compareTo(this.maxWaitTime) > 0) {
             logger.warn("Controller.scheduleWorkflowTask called with invalid delay: {} for player={}; skip", delay, playerUUID);
             return;
         }
-        var timerPrecision = this.executor.getTimerPrecision();
+        var timerPrecision = this.getExecutor().getTimerPrecision();
         TimeUnit unit = timerPrecision.right();
         var delayValue = unit.convert(delay) + timerPrecision.leftLong();
         var handle = sync ?
-                this.executor.scheduleSync(task, delayValue, unit) :
-                this.executor.scheduleAsync(task, delayValue, unit);
+                this.getExecutor().scheduleSync(task, delayValue, unit) :
+                this.getExecutor().scheduleAsync(task, delayValue, unit);
         if (handle != null) {
             Object legacyHandle;
             synchronized (this.playerTasks) {
@@ -50,7 +49,7 @@ public class TaskChainController implements AutoCloseable {
                 chain.removeIfEmpty = removeIfEmpty;
             }
             if (legacyHandle != null) {
-                var success = this.executor.cancelTask(legacyHandle);
+                var success = this.getExecutor().cancelTask(legacyHandle);
                 logger.debug("Controller.scheduleWorkflowTask cancelled previous task for player={}: success={}", playerUUID, success);
             }
         }
@@ -77,7 +76,7 @@ public class TaskChainController implements AutoCloseable {
             logger.debug("Controller.cancelScheduledWorkflowTask removed empty chain for player={}", playerUUID);
         }
         if (legacyHandle != null) {
-            var success = this.executor.cancelTask(legacyHandle);
+            var success = this.getExecutor().cancelTask(legacyHandle);
             logger.debug("Controller.cancelScheduledWorkflowTask cancelled previous task for player={}: success={}", playerUUID, success);
         }
     }
@@ -97,11 +96,11 @@ public class TaskChainController implements AutoCloseable {
             }
         }
         if (legacyHandle != null) {
-            var success = this.executor.cancelTask(legacyHandle);
+            var success = this.getExecutor().cancelTask(legacyHandle);
             logger.debug("Controller.pushWorkflowTask cancelled previous task for player={}: success={}", playerUUID, success);
         }
         if (toRun != null) {
-            this.executor.async(toRun.task);
+            this.getExecutor().async(toRun.task);
         }
     }
 
@@ -130,12 +129,12 @@ public class TaskChainController implements AutoCloseable {
         for (int i = 0; i < size; i++) {
             var legacyHandle = legacyHandles[i];
             if (legacyHandle != null) {
-                var success = this.executor.cancelTask(legacyHandle);
+                var success = this.getExecutor().cancelTask(legacyHandle);
                 logger.debug("Controller.pushWorkflowTaskBatch cancelled previous task for player={}: success={}", playerUUIDs[i], success);
             }
             var toRun = toRuns[i];
             if (toRun != null) {
-                this.executor.async(toRun.task);
+                this.getExecutor().async(toRun.task);
                 count++;
             }
         }
@@ -159,7 +158,7 @@ public class TaskChainController implements AutoCloseable {
             }
         }
         if (toRun != null) {
-            this.executor.async(toRun.task);
+            this.getExecutor().async(toRun.task);
         } else if (removed) {
             logger.debug("Controller.triggerNextWorkflowTask removed empty chain for player={}", playerUUID);
         }
@@ -177,7 +176,7 @@ public class TaskChainController implements AutoCloseable {
             onClose = new OnClose(this.playerTasks.size());
             this.playerTasks.forEach(onClose);
         }
-        onClose.cancelScheduledTasks(this.executor);
+        onClose.cancelScheduledTasks(this.getExecutor());
     }
 
     private static class Node {

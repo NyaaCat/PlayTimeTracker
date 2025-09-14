@@ -8,7 +8,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
-import java.util.function.ToLongFunction;
 
 import static cat.nyaa.playtimetracker.condition.ConditionTokenizer.*;
 

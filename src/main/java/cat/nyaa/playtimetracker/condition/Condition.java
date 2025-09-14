@@ -1,8 +1,6 @@
 package cat.nyaa.playtimetracker.condition;
 
-import java.time.Instant;
 import java.util.List;
-import java.util.function.ToLongFunction;
 
 public class Condition<T> implements ICondition<T> {
 

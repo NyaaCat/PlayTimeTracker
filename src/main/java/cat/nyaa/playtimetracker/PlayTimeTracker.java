@@ -26,14 +26,13 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.time.DayOfWeek;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
+import java.util.function.Predicate;
 import java.util.logging.Level;
 
 public final class PlayTimeTracker extends JavaPlugin implements IEconomyCoreProvider, IEssentialsAPIProvider {
@@ -66,7 +65,6 @@ public final class PlayTimeTracker extends JavaPlugin implements IEconomyCorePro
     private ZoneId timezone;
 
     private TaskExecutor taskExecutor;
-    private Context context;
     private PlayTimeTrackerController controller;
     private Collection<Listener> listeners;
 
@@ -82,20 +80,19 @@ public final class PlayTimeTracker extends JavaPlugin implements IEconomyCorePro
 
         instance = this;
         this.pttConfiguration = new PTTConfiguration(this);
-        pttConfiguration.load();
+        this.pttConfiguration.load();
         try {
             final long precision = 1000;
             MissionData.IConditionCompiler validationContext = (String expression) -> LimitedTimeTrackerModel.compileCondition(expression, precision);
-            pttConfiguration.validate(validationContext);
+            this.pttConfiguration.validate(validationContext);
         } catch (Exception e) {
-            getSLF4JLogger().error("Failed to compile mission conditions", e);
-            return;
+            throw new RuntimeException("failed to validate configuration", e);
         }
-        pttConfiguration.save();
+        this.pttConfiguration.save();
 
-        this.timezone = ZoneId.of(pttConfiguration.timezone);
-        this.i18n = new I18n(this, pttConfiguration.language);
-        i18n.load();
+        this.timezone = ZoneId.of(this.pttConfiguration.timezone);
+        this.i18n = new I18n(this, this.pttConfiguration.language);
+        this.i18n.load();
 
         //db
         this.databaseManager = new DatabaseManager(pttConfiguration.databaseConfig);
@@ -118,27 +115,26 @@ public final class PlayTimeTracker extends JavaPlugin implements IEconomyCorePro
             this.economyCore = economyProvider.getProvider();
         }
 
-        //command
-        this.commandHandler = new CommandHandler(this, i18n);
-        PluginCommand mainCommand = getCommand("playtimetracker");
-        if (mainCommand != null) {
-            mainCommand.setExecutor(commandHandler);
-            mainCommand.setTabCompleter(commandHandler);
-        } else {
-            throw new RuntimeException("Command registration failed");
-        }
-
         //listener
         //this.listenerManager = new ListenerManager(this);
         //task
         //this.taskManager = new PTTTaskManager(this, pttConfiguration);
+
         //afk
+        Predicate<UUID> afkChecker = (UUID playerId) -> false;
         this.afkManager = new PlayerAFKManager(this.getPttConfiguration(), this.getEssentialsAPI());
-        this.afkManager.registerCheckTask(this);
-        if (!useEssentialsAFK()) {
-            this.afkManager.setAFKStateChangeCallback(this::onAFKStateChange);
-        }
         PlayerAFKManager.setInstance(this.afkManager);
+        if (this.useAFK()) {
+            if (!this.useEssentialsAFK()) {
+                this.afkManager.setAFKStateChangeCallback(this::onAFKStateChange);
+                this.afkManager.registerCheckTask(this);
+                afkChecker = this.afkManager::getSelfHostedAfkState;
+            } else {
+                afkChecker = this::checkAFKEss;
+            }
+        }
+
+
         //record
         //this.timeRecordManager = new TimeRecordManager(this, databaseManager.getTimeTrackerConnection());
         //reward
@@ -146,32 +142,42 @@ public final class PlayTimeTracker extends JavaPlugin implements IEconomyCorePro
         //Mission
         //this.missionManager = new PlayerMissionManager(this, pttConfiguration, timeRecordManager, rewardManager, databaseManager.getCompletedMissionConnection());
 
-        taskExecutor = new TaskExecutor(this, pttConfiguration.syncIntervalTick, pttConfiguration.timerIntervalMS, TimeUnit.MILLISECONDS);
-        taskExecutor.start();
+        // controller
+        this.taskExecutor = new TaskExecutor(this, this.pttConfiguration.syncIntervalTick, pttConfiguration.timerIntervalMS, TimeUnit.MILLISECONDS);
+        this.taskExecutor.start();
         var timeBuilder = new PiecewiseTimeInfo.Builder(timezone, DayOfWeek.MONDAY);
-        context = new Context(this, taskExecutor, pttConfiguration.missionConfig, databaseManager);
-        controller = new PlayTimeTrackerController(
-                context,
-                timeBuilder,
-                useEssentialsAFK() ? this::checkAFKEss : afkManager::getSelfHostedAfkState
-        );
+        var context = new Context(this, taskExecutor, pttConfiguration.missionConfig, databaseManager);
+        this.controller = new PlayTimeTrackerController(context, timeBuilder, afkChecker);
 
-        Supplier<@Nullable PlayTimeTrackerController> supplier = this::getController;
-        listeners = new ArrayList<>();
-        listeners.add(new PlayTimeTrackerListener(supplier));
+        // listeners
+        this.listeners = new ArrayList<>();
+        this.listeners.add(new PlayTimeTrackerListener(this.controller));
         if (useEssentialsAFK()) {
-            listeners.add(new EssAfkListener(supplier));
+            this.listeners.add(new EssAfkListener(this.controller));
         }
         var pluginManager = getServer().getPluginManager();
-        for (Listener listener : listeners) {
+        for (var listener : this.listeners) {
             pluginManager.registerEvents(listener, this);
+        }
+
+        //command
+        this.commandHandler = new CommandHandler(this.controller, this.i18n);
+        PluginCommand mainCommand = getCommand("playtimetracker");
+        if (mainCommand != null) {
+            mainCommand.setExecutor(this.commandHandler);
+            mainCommand.setTabCompleter(this.commandHandler);
+        } else {
+            throw new RuntimeException("Command registration failed");
         }
     }
 
+    private boolean useAFK() {
+        assert this.pttConfiguration != null;
+        return this.pttConfiguration.checkAfk;
+    }
+
     private boolean useEssentialsAFK() {
-        if (this.pttConfiguration == null) {
-            return false;
-        }
+        assert this.pttConfiguration != null;
         return this.pttConfiguration.useEssAfkStatus && this.essentialsPlugin != null;
     }
 
@@ -233,10 +239,6 @@ public final class PlayTimeTracker extends JavaPlugin implements IEconomyCorePro
         return this.controller;
     }
 
-    public Context getContext() {
-        return this.context;
-    }
-
     @Nullable
     public PlayerAFKManager getPlayerAFKManager() {
         return this.afkManager;
@@ -273,6 +275,11 @@ public final class PlayTimeTracker extends JavaPlugin implements IEconomyCorePro
     @Override
     public void onDisable() {
 
+        if (this.commandHandler != null) {
+            // TODO: unregister command
+            this.commandHandler = null;
+        }
+
         if (listeners != null) {
             for (var listener : listeners) {
                 HandlerList.unregisterAll(listener);
@@ -298,12 +305,9 @@ public final class PlayTimeTracker extends JavaPlugin implements IEconomyCorePro
             try {
                 controller.close();
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                getLogger().log(Level.SEVERE, "Failed to close controller", e);
             }
             controller = null;
-        }
-        if (context != null) {
-            context = null;
         }
         if (taskExecutor != null) {
             taskExecutor.stop();
