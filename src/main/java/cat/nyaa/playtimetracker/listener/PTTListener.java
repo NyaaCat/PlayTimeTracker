@@ -70,6 +70,9 @@ public class PTTListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerQuit(PlayerQuitEvent event) {
         if (PlayTimeTracker.getInstance() != null) {
+            if (PlayTimeTracker.getInstance().getMissionManager() != null) {
+                PlayTimeTracker.getInstance().getMissionManager().unloadPlayerCache(event.getPlayer().getUniqueId());
+            }
             if (PlayTimeTracker.getInstance().getTimeRecordManager() != null) {
                 PlayTimeTracker.getInstance().getTimeRecordManager().removePlayer(event.getPlayer());
             }

@@ -44,6 +44,7 @@ public class PlayerMissionManager {
         this.playerRewardManager = playerRewardManager;
         this.notifyAcquire = new NotifyPlayerMissionComplete();
         this.tickNum = 0;
+        Bukkit.getOnlinePlayers().forEach(player -> this.completedMissionConnection.warmupPlayerCache(player.getUniqueId()));
     }
 
     @Nullable
@@ -57,12 +58,17 @@ public class PlayerMissionManager {
 
     public void checkPlayerMission(@NotNull Player player) {
         if (!player.isOnline()) return;
+        UUID playerId = player.getUniqueId();
+        if (!completedMissionConnection.isCacheLoaded(playerId)) {
+            completedMissionConnection.warmupPlayerCache(playerId);
+            return;
+        }
         TimeTrackerDbModel trackerDbModel = timeRecordManager.getPlayerTimeTrackerDbModel(player);
         if (trackerDbModel == null) return;
         //this.checkAndResetPlayerCompletedMission(player);
         getMissionDataMap().forEach(
                 (missionName, missionData) -> {
-                    CompletedMissionDbModel completedMissionDbModel = this.getPlayerCompletedMission(player.getUniqueId(), missionName);
+                    CompletedMissionDbModel completedMissionDbModel = this.completedMissionConnection.getCachedPlayerCompletedMission(playerId, missionName);
                     if (completedMissionDbModel != null) {
                         return;
                     }
@@ -112,7 +118,7 @@ public class PlayerMissionManager {
 
                     this.playerRewardManager.putRewardAsync(player, missionName, timestamp, missionData.getSortedRewardList(), missionData.notify ? this.notifyAcquire : null);
 
-                    // TODO: async & cache (completedMissionConnection should run in one thread; another in checkPlayerMission)
+                    // Persist async; cache is updated inside CompletedMissionConnection.
                     this.completedMissionConnection.writeMissionCompleted(player.getUniqueId(), missionName, timestamp);
 //                    this.putAwaitingReward(player, missionName, missionData.getSortedRewardList(), missionData.notify);
 //                    if (missionData.autoGive) {
@@ -136,6 +142,14 @@ public class PlayerMissionManager {
         Bukkit.getOnlinePlayers().forEach(player ->
                 TaskUtils.mod64TickToRun(this.tickNum, player.getUniqueId(), () -> checkPlayerMission(player))
         );
+    }
+
+    public void warmupPlayerCache(@NotNull UUID playerId) {
+        completedMissionConnection.warmupPlayerCache(playerId);
+    }
+
+    public void unloadPlayerCache(@NotNull UUID playerId) {
+        completedMissionConnection.unloadPlayerCache(playerId);
     }
 
     public void onDailyReset(UUID playerId) {
