@@ -1,23 +1,48 @@
 package cat.nyaa.playtimetracker;
 
 import be.seeseemelk.mockbukkit.MockPlugin;
+import cat.nyaa.ecore.EconomyCore;
 import cat.nyaa.ecore.ServiceFeePreference;
 import cat.nyaa.ecore.TransactionResult;
+import cat.nyaa.playtimetracker.config.PTTConfiguration;
+import cat.nyaa.playtimetracker.reward.IBalanceCache;
 import cat.nyaa.playtimetracker.reward.IEconomyCoreProvider;
-import cat.nyaa.ecore.EconomyCore;
+import it.unimi.dsi.fastutil.longs.LongDoubleMutablePair;
 import it.unimi.dsi.fastutil.objects.Object2DoubleAVLTreeMap;
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
-public class DemoPTT extends MockPlugin implements IEconomyCoreProvider {
+public class DemoPTT extends MockPlugin implements IEconomyCoreProvider, IBalanceCache {
 
     FakeEcore ecore = new FakeEcore();
+    private PTTConfiguration pttConfiguration;
+    
+    // Balance cache fields
+    private LongDoubleMutablePair cachedSystemBalance = new LongDoubleMutablePair(0L, 0.0);
+    private Map<UUID, LongDoubleMutablePair> cachedPlayerBalances = new HashMap<>();
 
     @Override
     public EconomyCore getEconomyCore() {
         return ecore;
+    }
+    
+    public PTTConfiguration getPttConfiguration() {
+        if(pttConfiguration == null) {
+            pttConfiguration = new PTTConfiguration(this);
+        }
+        return pttConfiguration;
+    }
+    
+    @Override
+    public double getBalance(@Nullable UUID uuid, long timestamp, EconomyCore ecore) {
+        PTTConfiguration config = getPttConfiguration();
+        long cacheKeep = config.missionConfig.syncRefCacheTime;
+        return PlayTimeTracker.getBalanceWithCache(uuid, timestamp, cacheKeep, ecore, cachedSystemBalance, cachedPlayerBalances);
     }
 
 

@@ -4,7 +4,6 @@ import cat.nyaa.ecore.EconomyCore;
 import cat.nyaa.playtimetracker.I18n;
 import cat.nyaa.playtimetracker.config.data.EcoRewardData;
 import cat.nyaa.playtimetracker.utils.LoggerUtils;
-import it.unimi.dsi.fastutil.longs.LongDoubleMutablePair;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
@@ -17,45 +16,12 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 public class EcoReward implements IReward {
 
     private static final Logger logger = LoggerUtils.getPluginLogger();
-
-    private static LongDoubleMutablePair cachedSystemBalance = new LongDoubleMutablePair(0L, 0.0);
-    private static Map<UUID, LongDoubleMutablePair> cachedPlayerBalances = new HashMap<>();
-
-    static double getBalance(@Nullable UUID uuid, long timestamp, long cacheKeep, EconomyCore ecore) {
-        if(uuid == null) {
-            if(cacheKeep <= 0) {
-                return ecore.getSystemBalance();
-            }
-            if(timestamp - cachedSystemBalance.leftLong() > cacheKeep) {
-                double balance = ecore.getSystemBalance();
-                cachedSystemBalance.right(balance);
-                cachedSystemBalance.left(timestamp);
-                return balance;
-            }
-            return cachedSystemBalance.rightDouble();
-        } else {
-            if(cacheKeep <= 0) {
-                return ecore.getPlayerBalance(uuid);
-            }
-            LongDoubleMutablePair pair = cachedPlayerBalances.compute(uuid, (k, v) -> {
-               if(v == null || timestamp - v.leftLong() > cacheKeep) {
-                   double balance = ecore.getPlayerBalance(uuid);
-                   return new LongDoubleMutablePair(timestamp, balance);
-               } else {
-                   return v;
-               }
-            });
-            return pair.rightDouble();
-        }
-    }
 
     private final @Nullable EcoRewardData cfg;
 
@@ -77,8 +43,12 @@ public class EcoReward implements IReward {
     @Override
     public boolean prepare(String rewardName, long completedTime, Player player, Plugin plugin) {
         EconomyCore ecore = null;
+        IBalanceCache balanceCache = null;
         if(plugin instanceof IEconomyCoreProvider provider) {
             ecore = provider.getEconomyCore();
+        }
+        if(plugin instanceof IBalanceCache cache) {
+            balanceCache = cache;
         }
         if(cfg == null || ecore == null) {
             return false;
@@ -86,7 +56,14 @@ public class EcoReward implements IReward {
         try {
             switch (cfg.type) {
                 case TRANSFER -> {
-                    double balance = getBalance(cfg.isRefVaultSystemVault() ? null : cfg.getRefVaultAsUUID(), completedTime, cfg.syncRefCacheTime, ecore);
+                    double balance;
+                    if(balanceCache != null) {
+                        balance = balanceCache.getBalance(cfg.isRefVaultSystemVault() ? null : cfg.getRefVaultAsUUID(), completedTime, ecore);
+                    } else {
+                        // Fallback: no caching if IBalanceCache is not available
+                        UUID refVaultUUID = cfg.isRefVaultSystemVault() ? null : cfg.getRefVaultAsUUID();
+                        balance = refVaultUUID == null ? ecore.getSystemBalance() : ecore.getPlayerBalance(refVaultUUID);
+                    }
                     double expect = balance * cfg.ratio;
                     amount = Math.max(Math.min(cfg.max, expect), cfg.min);
                     boolean success = false;

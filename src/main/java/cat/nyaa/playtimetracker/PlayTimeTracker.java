@@ -9,8 +9,10 @@ import cat.nyaa.playtimetracker.executor.TaskExecutor;
 import cat.nyaa.playtimetracker.listener.EssAfkListener;
 import cat.nyaa.playtimetracker.listener.ListenerManager;
 import cat.nyaa.playtimetracker.listener.PlayTimeTrackerListener;
+import cat.nyaa.playtimetracker.reward.IBalanceCache;
 import cat.nyaa.playtimetracker.reward.IEconomyCoreProvider;
 import cat.nyaa.playtimetracker.task.PTTTaskManager;
+import it.unimi.dsi.fastutil.longs.LongDoubleMutablePair;
 import cat.nyaa.playtimetracker.utils.LoggerUtils;
 import cat.nyaa.playtimetracker.utils.PiecewiseTimeInfo;
 import cat.nyaa.playtimetracker.utils.PlaceholderAPIUtils;
@@ -30,12 +32,14 @@ import java.time.DayOfWeek;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.logging.Level;
 
-public final class PlayTimeTracker extends JavaPlugin implements IEconomyCoreProvider, IEssentialsAPIProvider {
+public final class PlayTimeTracker extends JavaPlugin implements IEconomyCoreProvider, IEssentialsAPIProvider, IBalanceCache {
     @Nullable
     private static PlayTimeTracker instance;
     @Nullable
@@ -63,6 +67,10 @@ public final class PlayTimeTracker extends JavaPlugin implements IEconomyCorePro
     @Nullable
     private EconomyCore economyCore;
     private ZoneId timezone;
+
+    // Balance cache fields
+    private LongDoubleMutablePair cachedSystemBalance = new LongDoubleMutablePair(0L, 0.0);
+    private Map<UUID, LongDoubleMutablePair> cachedPlayerBalances = new HashMap<>();
 
     private TaskExecutor taskExecutor;
     private PlayTimeTrackerController controller;
@@ -272,6 +280,53 @@ public final class PlayTimeTracker extends JavaPlugin implements IEconomyCorePro
         return i18n;
     }
 
+    /**
+     * Static helper method for balance caching that can be reused in tests.
+     * 
+     * @param uuid the UUID of the player vault, or null for system vault
+     * @param timestamp the current timestamp in milliseconds
+     * @param cacheKeep the cache duration in milliseconds. If <= 0, no caching is used
+     * @param ecore the EconomyCore instance to fetch balance from if cache is expired
+     * @param cachedSystemBalance the mutable cache for system balance (timestamp, balance)
+     * @param cachedPlayerBalances the mutable cache map for player balances
+     * @return the cached or fresh balance
+     */
+    public static double getBalanceWithCache(@Nullable UUID uuid, long timestamp, long cacheKeep, EconomyCore ecore,
+                                             LongDoubleMutablePair cachedSystemBalance,
+                                             Map<UUID, LongDoubleMutablePair> cachedPlayerBalances) {
+        if(uuid == null) {
+            if(cacheKeep <= 0) {
+                return ecore.getSystemBalance();
+            }
+            if(timestamp - cachedSystemBalance.leftLong() > cacheKeep) {
+                double balance = ecore.getSystemBalance();
+                cachedSystemBalance.right(balance);
+                cachedSystemBalance.left(timestamp);
+                return balance;
+            }
+            return cachedSystemBalance.rightDouble();
+        } else {
+            if(cacheKeep <= 0) {
+                return ecore.getPlayerBalance(uuid);
+            }
+            LongDoubleMutablePair pair = cachedPlayerBalances.compute(uuid, (k, v) -> {
+               if(v == null || timestamp - v.leftLong() > cacheKeep) {
+                   double balance = ecore.getPlayerBalance(uuid);
+                   return new LongDoubleMutablePair(timestamp, balance);
+               } else {
+                   return v;
+               }
+            });
+            return pair.rightDouble();
+        }
+    }
+
+    @Override
+    public double getBalance(@Nullable UUID uuid, long timestamp, EconomyCore ecore) {
+        long cacheKeep = (pttConfiguration != null && pttConfiguration.missionConfig != null) ? pttConfiguration.missionConfig.syncRefCacheTime : 0;
+        return getBalanceWithCache(uuid, timestamp, cacheKeep, ecore, cachedSystemBalance, cachedPlayerBalances);
+    }
+
     @Override
     public void onDisable() {
 
@@ -319,6 +374,11 @@ public final class PlayTimeTracker extends JavaPlugin implements IEconomyCorePro
             this.afkManager = null;
         }
         PlayerAFKManager.setInstance(null);
+
+        // Clear balance cache
+        if (cachedPlayerBalances != null) {
+            cachedPlayerBalances.clear();
+        }
     }
 
     public void onReload() {

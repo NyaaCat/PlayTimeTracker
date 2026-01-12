@@ -156,11 +156,11 @@ public class TestRewardOperate {
 
 
         ((DemoPTT.FakeEcore)plugin.getEconomyCore()).init();
+        plugin.getPttConfiguration().missionConfig.syncRefCacheTime = 0;
         ecoRewardData = new EcoRewardData();
         ecoRewardData.min = 10;
         ecoRewardData.max = 500;
         ecoRewardData.ratio = 0.01;
-        ecoRewardData.syncRefCacheTime = 0;
         results = List.of(
                 DoubleObjectImmutablePair.of(100, true),
                 DoubleObjectImmutablePair.of(99, true),
@@ -169,11 +169,11 @@ public class TestRewardOperate {
         testEcoRewardTransferInner(ecoRewardData, 5, results, players);
 
         ((DemoPTT.FakeEcore)plugin.getEconomyCore()).init();
+        plugin.getPttConfiguration().missionConfig.syncRefCacheTime = 1000;
         ecoRewardData = new EcoRewardData();
         ecoRewardData.min = 10;
         ecoRewardData.max = 500;
         ecoRewardData.ratio = 0.01;
-        ecoRewardData.syncRefCacheTime = 1000;
         results = List.of(
                 DoubleObjectImmutablePair.of(100, true),
                 DoubleObjectImmutablePair.of(100, true),

@@ -18,6 +18,9 @@ public class MissionConfig extends FileConfigure implements ISerializableExt {
 
     @Serializable(name = "login-check-delay-ticks")
     public int loginCheckDelayTicks = 20;
+    
+    @Serializable(name = "sync-ref-cache-time")
+    public long syncRefCacheTime = 256 * 50; // sync ref vault by cache its value, keeps $value milliseconds; default set to 4 * 64 gt
 
     public MissionConfig(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -40,6 +43,9 @@ public class MissionConfig extends FileConfigure implements ISerializableExt {
         }
         if(loginCheckDelayTicks < 0) {
             throw new IllegalArgumentException("loginCheckDelayTicks must be non-negative");
+        }
+        if(syncRefCacheTime < 0) {
+            throw new IllegalArgumentException("syncRefCacheTime must be non-negative");
         }
     }
 }
