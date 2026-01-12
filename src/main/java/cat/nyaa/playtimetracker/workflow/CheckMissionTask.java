@@ -129,10 +129,10 @@ public class CheckMissionTask implements ITask {
         if (model.lastCompletedTime < time.getSameDayStart() && this.missionData.resetDaily) {
             return true;
         }
-        if (model.lastCompletedTime < time.getSameWeekStart() && !this.missionData.resetWeekly) {
+        if (model.lastCompletedTime < time.getSameWeekStart() && this.missionData.resetWeekly) {
             return true;
         }
-        if (model.lastCompletedTime < time.getSameMonthStart() && !this.missionData.resetMonthly) {
+        if (model.lastCompletedTime < time.getSameMonthStart() && this.missionData.resetMonthly) {
             return true;
         }
         return false;
