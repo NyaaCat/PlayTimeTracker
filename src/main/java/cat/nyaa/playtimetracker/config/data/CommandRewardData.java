@@ -12,7 +12,7 @@ public class CommandRewardData implements ISerializableExt {
     public String command = "";
 
     {
-        command = "/tell %%player_name%% hello, world!";
+        command = "tell %player_name% hello, world!";
     }
 
     public CommandRewardData() {
