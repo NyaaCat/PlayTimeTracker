@@ -19,7 +19,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.util.List;
 
-@Disabled("Temporarily disabling all tests in this class")
 public class TestDatabaseWrapper extends AbstractTestDatabase {
 
     @BeforeEach

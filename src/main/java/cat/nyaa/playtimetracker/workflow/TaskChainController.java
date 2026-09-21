@@ -105,8 +105,13 @@ public abstract class TaskChainController implements AutoCloseable {
     }
 
     public int pushWorkflowTaskBatch(UUID[] playerUUIDs, ITask[] tasks, int size) {
-        if (size <= 0 || playerUUIDs.length < size || tasks.length < size) {
+        if (size < 0 || playerUUIDs.length < size || tasks.length < size) {
             throw new IllegalArgumentException("Invalid arguments for pushWorkflowTaskBatch");
+        }
+        if (size == 0) {
+            // updateAll() sizes its arrays by the online player count but skips AFK players, so an
+            // empty batch is a legitimate no-op (nobody online, or everybody AFK).
+            return 0;
         }
         Node[] toRuns = new Node[size];
         Object[] legacyHandles = new Object[size];

@@ -1,6 +1,6 @@
 package cat.nyaa.playtimetracker;
 
-import be.seeseemelk.mockbukkit.MockPlugin;
+import org.mockbukkit.mockbukkit.plugin.PluginMock;
 import cat.nyaa.ecore.EconomyCore;
 import cat.nyaa.ecore.ServiceFeePreference;
 import cat.nyaa.ecore.TransactionResult;
@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-public class DemoPTT extends MockPlugin implements IEconomyCoreProvider, IBalanceCache {
+public class DemoPTT extends PluginMock implements IEconomyCoreProvider, IBalanceCache {
 
     FakeEcore ecore = new FakeEcore();
     private PTTConfiguration pttConfiguration;

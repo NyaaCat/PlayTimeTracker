@@ -1,7 +1,7 @@
 package cat.nyaa.playtimetracker.reward;
 
-import be.seeseemelk.mockbukkit.MockBukkit;
-import be.seeseemelk.mockbukkit.ServerMock;
+import org.mockbukkit.mockbukkit.MockBukkit;
+import org.mockbukkit.mockbukkit.ServerMock;
 import cat.nyaa.playtimetracker.DemoPTT;
 import cat.nyaa.playtimetracker.config.data.EcoRewardData;
 import it.unimi.dsi.fastutil.doubles.DoubleObjectImmutablePair;

@@ -180,7 +180,7 @@ public class PlayerRewardManager {
                     builder.append(
                         Component.text()
                                 .content(cmd)
-                                .clickEvent(ClickEvent.clickEvent(ClickEvent.Action.SUGGEST_COMMAND, cmd))
+                                .clickEvent(ClickEvent.suggestCommand(cmd))
                     );
                     player.sendMessage(builder.build());
                 }, delayTicks);

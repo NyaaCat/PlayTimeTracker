@@ -8,7 +8,6 @@ import org.junit.jupiter.api.*;
 
 import java.util.List;
 
-@Disabled("Temporarily disabling all tests in this class")
 public class TestDatabase extends AbstractTestDatabase {
 
     @BeforeEach

@@ -196,8 +196,7 @@ public class PlayerMissionManager {
             builder.append(
                 Component.text()
                         .content(command)
-                        .clickEvent(ClickEvent.clickEvent(ClickEvent.Action.SUGGEST_COMMAND, command)
-                )
+                        .clickEvent(ClickEvent.suggestCommand(command))
             );
             player.sendMessage(builder.build());
         }

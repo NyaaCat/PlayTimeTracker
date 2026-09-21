@@ -1,8 +1,8 @@
 package cat.nyaa.playtimetracker.db;
 
-import be.seeseemelk.mockbukkit.MockBukkit;
-import be.seeseemelk.mockbukkit.MockPlugin;
-import be.seeseemelk.mockbukkit.ServerMock;
+import org.mockbukkit.mockbukkit.MockBukkit;
+import org.mockbukkit.mockbukkit.plugin.PluginMock;
+import org.mockbukkit.mockbukkit.ServerMock;
 import cat.nyaa.playtimetracker.db.model.CompletedMissionDbModel;
 import cat.nyaa.playtimetracker.db.model.RewardDbModel;
 import cat.nyaa.playtimetracker.db.model.TimeTrackerDbModel;
@@ -22,7 +22,7 @@ public abstract class AbstractTestDatabase {
 
     protected Logger logger;
     protected ServerMock server;
-    protected MockPlugin plugin;
+    protected PluginMock plugin;
     protected HikariDataSource ds;
 
 

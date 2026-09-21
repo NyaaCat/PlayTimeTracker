@@ -52,8 +52,7 @@ public class NotifyRewardTask extends AbstractOnceTrigger implements ITask {
         builder.append(
                 Component.text()
                         .content(command)
-                        .clickEvent(ClickEvent.clickEvent(ClickEvent.Action.SUGGEST_COMMAND, command)
-                        )
+                        .clickEvent(ClickEvent.suggestCommand(command))
         );
         player.sendMessage(builder.build());
     }

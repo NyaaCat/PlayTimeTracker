@@ -1,8 +1,8 @@
 package cat.nyaa.playtimetracker.config;
 
-import be.seeseemelk.mockbukkit.MockBukkit;
-import be.seeseemelk.mockbukkit.MockPlugin;
-import be.seeseemelk.mockbukkit.ServerMock;
+import org.mockbukkit.mockbukkit.MockBukkit;
+import org.mockbukkit.mockbukkit.plugin.PluginMock;
+import org.mockbukkit.mockbukkit.ServerMock;
 import cat.nyaa.playtimetracker.condition.ICondition;
 import cat.nyaa.playtimetracker.config.data.MissionData;
 import cat.nyaa.playtimetracker.workflow.LimitedTimeTrackerModel;
@@ -18,7 +18,7 @@ import java.io.IOException;
 public class TestConfig {
 
     private ServerMock server;
-    private MockPlugin plugin;
+    private PluginMock plugin;
     private File root;
 
     @BeforeEach
